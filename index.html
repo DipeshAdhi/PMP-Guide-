@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMP Guide - Project Management Learning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            padding-top: 40px;
+        }
+
+        header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .buttons-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .button-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .button-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .button-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .button-card p {
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .button-card button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            font-weight: 600;
+        }
+
+        .button-card button:hover {
+            opacity: 0.9;
+        }
+
+        .content-section {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .back-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 30px;
+            font-size: 1em;
+            font-weight: 600;
+        }
+
+        .back-button:hover {
+            background: #764ba2;
+        }
+
+        .content-section h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+
+        .content-section h3 {
+            color: #764ba2;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .content-section p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .content-section ul, .content-section ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .content-section li {
+            margin-bottom: 10px;
+        }
+
+        .constraint-box {
+            background: #f8f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+
+        .constraint-box strong {
+            color: #667eea;
+            display: block;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .wbs-section {
+            background: #f8f9ff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+            border-left: 4px solid #764ba2;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        table th {
+            background: #667eea;
+            color: white;
+        }
+
+        table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 PMP Guide</h1>
+            <p>Master Project Management Fundamentals & Exam Preparation</p>
+        </header>
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="buttons-section">
+            <div class="button-card">
+                <h2>🚀 Starting Learner</h2>
+                <p>Begin your journey into project management with fundamental concepts, SDLC overview, and key methodologies used in the industry.</p>
+                <button onclick="showContent('starter')">Start Learning</button>
+            </div>
+
+            <div class="button-card">
+                <h2>🎯 PMP Exam Preparation</h2>
+                <p>Comprehensive guide tailored for PMP certification exam. Learn constraints, frameworks, and best practices with detailed examples.</p>
+                <button onclick="showContent('pmp')">Prepare for Exam</button>
+            </div>
+        </div>
+
+        <!-- Starting Learner Content -->
+        <div id="starterContent" class="content-section">
+            <button class="back-button" onclick="showMenu()">← Back to Menu</button>
+
+            <h2>Starting Learner: Project Management Fundamentals</h2>
+
+            <h3>1. Introduction to Software Project Management</h3>
+            <p>Software Project Management is the discipline of planning, organizing, and managing software development projects to deliver quality products on time and within budget.</p>
+
+            <p><strong>Key Roles:</strong></p>
+            <ul>
+                <li>Project Manager - Oversees planning, execution, and monitoring</li>
+                <li>Team Lead - Manages technical team and day-to-day activities</li>
+                <li>Business Analyst - Gathers requirements and defines scope</li>
+                <li>Quality Assurance - Ensures product meets quality standards</li>
+            </ul>
+
+            <h3>2. Software Development Life Cycle (SDLC)</h3>
+            <p>SDLC is a structured process that defines the stages involved in software development, from conception to deployment and maintenance.</p>
+
+            <p><strong>Main Stages:</strong></p>
+            <ul>
+                <li><strong>Planning & Requirements:</strong> Define project scope, objectives, and gather requirements</li>
+                <li><strong>Analysis:</strong> Analyze requirements and create detailed specifications</li>
+                <li><strong>Design:</strong> Create architecture and design documents</li>
+                <li><strong>Development:</strong> Write and code the software</li>
+                <li><strong>Testing:</strong> Quality assurance and testing phases</li>
+                <li><strong>Deployment:</strong> Release to production environment</li>
+                <li><strong>Maintenance:</strong> Support and updates post-deployment</li>
+            </ul>
+
+            <h3>3. Project Management Lifecycle</h3>
+            <p>Projects go through distinct phases that help in organizing and controlling the work:</p>
+
+            <div class="constraint-box">
+                <strong>Project Initiation</strong>
+                Define project goals, stakeholders, and business case
+            </div>
+
+            <div class="constraint-box">
+                <strong>Project Planning</strong>
+                Develop schedule, budget, resources, and risk management plans
+            </div>
+
+            <div class="constraint-box">
+                <strong>Project Execution</strong>
+                Execute project work and deliver project outputs
+            </div>
+
+            <div class="constraint-box">
+                <strong>Project Monitoring & Controlling</strong>
+                Track progress, manage changes, and ensure compliance
+            </div>
+
+            <div class="constraint-box">
+                <strong>Project Closure</strong>
+                Finalize deliverables, document lessons learned, archive project information
+            </div>
+
+            <h3>4. What is a Project?</h3>
+            <p>A project is a temporary endeavor undertaken to create a unique product, service, or result. Key characteristics:</p>
+            <ul>
+                <li>Temporary - Has defined start and end dates</li>
+                <li>Unique - Creates unique deliverables</li>
+                <li>Defined Objectives - Clear goals and success criteria</li>
+                <li>Resource Constrained - Limited budget, time, and resources</li>
+            </ul>
+
+            <h3>5. The Triple Constraint Triangle</h3>
+            <p>Every project is constrained by three primary factors that must be balanced:</p>
+
+            <div class="constraint-box">
+                <strong>⏱️ Time</strong>
+                The schedule and deadline. Includes duration of tasks, milestones, and project completion date. Shorter timelines increase risk and cost.
+            </div>
+
+            <div class="constraint-box">
+                <strong>💰 Cost</strong>
+                The budget and resources. Includes personnel, equipment, software, and other expenses. Limited budget constrains scope and timeline.
+            </div>
+
+            <div class="constraint-box">
+                <strong>📋 Scope</strong>
+                What will be delivered. Includes features, functions, and requirements. Expanding scope requires more time and resources.
+            </div>
+
+            <p style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 6px;">
+                <strong>⚡ Key Insight:</strong> Project managers must balance these three constraints. Changing one typically impacts the others. For example, reducing time may require increasing cost or reducing scope.
+            </p>
+
+            <h3>6. Software Quality Management</h3>
+            <p>Quality management ensures that the software product meets defined standards and customer expectations.</p>
+
+            <p><strong>Components:</strong></p>
+            <ul>
+                <li><strong>Quality Assurance (QA):</strong> Process-focused, preventive approach to maintain quality standards</li>
+                <li><strong>Quality Control (QC):</strong> Product-focused, inspective approach to verify deliverables meet requirements</li>
+            </ul>
+
+            <h3>7. Configuration Management</h3>
+            <p>Manages changes to software components throughout the project lifecycle.</p>
+
+            <ul>
+                <li>Version Control - Track different versions of code and documents</li>
+                <li>Change Control - Manage and approve changes systematically</li>
+                <li>Build Management - Automate build and deployment processes</li>
+            </ul>
+
+            <h3>8. Release Management</h3>
+            <p>Manages the planning, testing, and deployment of software releases.</p>
+
+            <ul>
+                <li>Planning - Define release scope and schedule</li>
+                <li>Execution - Prepare and test release package</li>
+                <li>Deployment - Release to production environment</li>
+            </ul>
+
+            <h3>9. Common Project Management Methodologies</h3>
+
+            <p><strong>Agile Methodology:</strong></p>
+            <ul>
+                <li>Iterative and incremental development</li>
+                <li>Frequent releases and continuous feedback</li>
+                <li>Flexible to changing requirements</li>
+                <li>Self-organizing teams</li>
+            </ul>
+
+            <p><strong>Prototype Methodology:</strong></p>
+            <ul>
+                <li>Build proof-of-concept prototypes early</li>
+                <li>Gather user feedback iteratively</li>
+                <li>Refine and develop based on feedback</li>
+                <li>Reduces risk by validating concepts</li>
+            </ul>
+
+            <p><strong>Waterfall Methodology:</strong></p>
+            <ul>
+                <li>Sequential, phase-by-phase approach</li>
+                <li>Each phase completed before next begins</li>
+                <li>Detailed documentation at each stage</li>
+                <li>Best for well-defined, stable requirements</li>
+            </ul>
+
+            <h3>10. Key Takeaways</h3>
+            <ul>
+                <li>Project management balances time, cost, and scope constraints</li>
+                <li>SDLC provides structure for software development</li>
+                <li>Clear planning and communication are critical for success</li>
+                <li>Quality management ensures customer satisfaction</li>
+                <li>Configuration management controls changes systematically</li>
+                <li>Different methodologies suit different project types</li>
+            </ul>
+        </div>
+
+        <!-- PMP Exam Preparation Content -->
+        <div id="pmpContent" class="content-section">
+            <button class="back-button" onclick="showMenu()">← Back to Menu</button>
+
+            <h2>PMP Exam Preparation: Advanced Project Management</h2>
+
+            <h3>1. The Triple Constraint Triangle - Deep Dive</h3>
+            <p>Understanding the triple constraints is fundamental for the PMP exam. Every project decision must consider these three dimensions:</p>
+
+            <div class="constraint-box">
+                <strong>⏱️ TIME CONSTRAINT</strong>
+                <p><strong>Definition:</strong> The project schedule and deadline - when deliverables must be completed.</p>
+                <p><strong>Key Concepts:</strong></p>
+                <ul>
+                    <li>Duration - Total time from start to finish</li>
+                    <li>Milestone - Significant point in project timeline</li>
+                    <li>Critical Path - Sequence of activities that determines project duration</li>
+                    <li>Schedule Variance - Difference between planned and actual schedule</li>
+                </ul>
+                <p><strong>Impact:</strong> Shorter timelines increase cost and risk, may reduce scope.</p>
+            </div>
+
+            <div class="constraint-box">
+                <strong>💰 COST CONSTRAINT</strong>
+                <p><strong>Definition:</strong> The project budget and resources required to execute the project.</p>
+                <p><strong>Key Concepts:</strong></p>
+                <ul>
+                    <li>Budget - Total financial resources allocated</li>
+                    <li>Resources - Personnel, equipment, software needed</li>
+                    <li>Cost Variance - Difference between budgeted and actual costs</li>
+                    <li>ROI - Return on investment considerations</li>
+                </ul>
+                <p><strong>Impact:</strong> Limited budget may require extended timeline or reduced scope.</p>
+            </div>
+
+            <div class="constraint-box">
+                <strong>📋 SCOPE CONSTRAINT</strong>
+                <p><strong>Definition:</strong> The work that must be performed to deliver the product - all features, functions, and requirements.</p>
+                <p><strong>Key Concepts:</strong></p>
+                <ul>
+                    <li>Scope Creep - Uncontrolled expansion of project scope</li>
+                    <li>Scope Baseline - Approved project scope</li>
+                    <li>Change Control - Process for managing scope changes</li>
+                    <li>Scope Management Plan - How scope will be managed</li>
+                </ul>
+                <p><strong>Impact:</strong> Expanding scope requires more time and resources.</p>
+            </div>
+
+            <p style="background: #e7f3ff; padding: 15px; border-radius: 6px; margin-top: 20px;">
+                <strong>For PMP Exam:</strong> You must understand that these constraints are interdependent. A change in one constraint affects the others. Project managers must communicate trade-offs to stakeholders and make informed decisions.
+            </p>
+
+            <h3>2. Work Breakdown Structure (WBS)</h3>
+            <p>WBS is a hierarchical decomposition of project work into manageable components. It's a foundational tool in project management.</p>
+
+            <p><strong>Key Characteristics:</strong></p>
+            <ul>
+                <li>100% rule - All project work is included, nothing is left out</li>
+                <li>Hierarchical - Organized in levels from high-level to detailed tasks</li>
+                <li>Deliverable-focused - Focuses on what will be delivered</li>
+                <li>Mutually exclusive - No overlap between components</li>
+            </ul>
+
+            <p><strong>WBS Levels Typically Include:</strong></p>
+            <table>
+                <tr>
+                    <th>Level</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td>Level 1</td>
+                    <td>Project Name</td>
+                    <td>School Management System</td>
+                </tr>
+                <tr>
+                    <td>Level 2</td>
+                    <td>Major Phases/Components</td>
+                    <td>Requirements, Design, Development</td>
+                </tr>
+                <tr>
+                    <td>Level 3</td>
+                    <td>Deliverables</td>
+                    <td>Requirements Document, System Design</td>
+                </tr>
+                <tr>
+                    <td>Level 4+</td>
+                    <td>Tasks and Activities</td>
+                    <td>Analyze User Roles, Create Wireframes</td>
+                </tr>
+            </table>
+
+            <p><strong>Example WBS for School Management System Project:</strong></p>
+            <div class="wbs-section">
+                <strong>School Management System</strong>
+                <ul>
+                    <li><strong>1. Planning & Requirements</strong>
+                        <ul>
+                            <li>1.1 Project Charter Development</li>
+                            <li>1.2 Stakeholder Identification</li>
+                            <li>1.3 Requirements Elicitation</li>
+                            <li>1.4 Requirements Documentation</li>
+                            <li>1.5 Scope Approval</li>
+                        </ul>
+                    </li>
+                    <li><strong>2. Analysis & Design</strong>
+                        <ul>
+                            <li>2.1 Requirements Analysis</li>
+                            <li>2.2 System Architecture Design</li>
+                            <li>2.3 Database Design</li>
+                            <li>2.4 UI/UX Design</li>
+                            <li>2.5 Design Review & Approval</li>
+                        </ul>
+                    </li>
+                    <li><strong>3. Prototype Development</strong>
+                        <ul>
+                            <li>3.1 User Registration Module</li>
+                            <li>3.2 Course Selection Module</li>
+                            <li>3.3 Attendance Tracking Module</li>
+                            <li>3.4 Fee Management Module</li>
+                            <li>3.5 Library Management Module</li>
+                            <li>3.6 Prototype Integration</li>
+                        </ul>
+                    </li>
+                    <li><strong>4. Feedback & Refinement</strong>
+                        <ul>
+                            <li>4.1 User Feedback Collection</li>
+                            <li>4.2 Feedback Analysis</li>
+                            <li>4.3 Design Refinement</li>
+                            <li>4.4 Approval & Sign-off</li>
+                        </ul>
+                    </li>
+                    <li><strong>5. Testing</strong>
+                        <ul>
+                            <li>5.1 Unit Testing</li>
+                            <li>5.2 Integration Testing</li>
+                            <li>5.3 System Testing</li>
+                            <li>5.4 User Acceptance Testing (UAT)</li>
+                            <li>5.5 Test Report Generation</li>
+                        </ul>
+                    </li>
+                    <li><strong>6. Deployment</strong>
+                        <ul>
+                            <li>6.1 Production Environment Setup</li>
+                            <li>6.2 Data Migration</li>
+                            <li>6.3 System Deployment</li>
+                            <li>6.4 Go-live Support</li>
+                        </ul>
+                    </li>
+                    <li><strong>7. Documentation & Training</strong>
+                        <ul>
+                            <li>7.1 User Documentation</li>
+                            <li>7.2 Technical Documentation</li>
+                            <li>7.3 Training Materials</li>
+                            <li>7.4 Training Sessions</li>
+                        </ul>
+                    </li>
+                    <li><strong>8. Project Closure</strong>
+                        <ul>
+                            <li>8.1 Lessons Learned Documentation</li>
+                            <li>8.2 Project Archive</li>
+                            <li>8.3 Final Reporting</li>
+                            <li>8.4 Resource Release</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <h3>3. Project Management Processes (PMBOK Framework)</h3>
+            <p>The Project Management Body of Knowledge (PMBOK) defines 5 process groups and 10 knowledge areas essential for project management.</p>
+
+            <p><strong>5 Process Groups:</strong></p>
+            <ul>
+                <li><strong>Initiating:</strong> Define project, obtain authorization, identify stakeholders</li>
+                <li><strong>Planning:</strong> Develop project management plan, define scope, schedule, budget</li>
+                <li><strong>Executing:</strong> Perform project work, produce deliverables, manage team</li>
+                <li><strong>Monitoring & Controlling:</strong> Track progress, manage changes, ensure quality</li>
+                <li><strong>Closing:</strong> Finalize deliverables, document lessons learned, formally close project</li>
+            </ul>
+
+            <h3>4. Key Project Management Knowledge Areas</h3>
+            <ul>
+                <li><strong>Integration Management:</strong> Coordinate all project elements</li>
+                <li><strong>Scope Management:</strong> Control what's included/excluded from project</li>
+                <li><strong>Time Management:</strong> Develop schedule and manage timeline</li>
+                <li><strong>Cost Management:</strong> Plan and control project costs</li>
+                <li><strong>Quality Management:</strong> Ensure project meets quality standards</li>
+                <li><strong>Resource Management:</strong> Acquire and manage project team</li>
+                <li><strong>Communications Management:</strong> Manage project information and stakeholder communication</li>
+                <li><strong>Risk Management:</strong> Identify and manage project risks</li>
+                <li><strong>Procurement Management:</strong> Acquire goods and services</li>
+                <li><strong>Stakeholder Management:</strong> Engage and manage stakeholder expectations</li>
+            </ul>
+
+            <h3>5. Software Development Methodologies</h3>
+            <p><strong>Prototype Methodology (Used in Scholar Academy Case Study):</strong></p>
+            <ul>
+                <li>Build working prototypes early to validate concepts</li>
+                <li>Iteratively gather user feedback</li>
+                <li>Refine design based on feedback cycles</li>
+                <li>Reduces risk by validating assumptions</li>
+                <li>Best for projects with unclear or evolving requirements</li>
+            </ul>
+
+            <p><strong>Agile Methodology:</strong></p>
+            <ul>
+                <li>Iterative development in short sprints (1-4 weeks)</li>
+                <li>Continuous delivery of working software</li>
+                <li>Embraces changing requirements</li>
+                <li>Daily standups and regular retrospectives</li>
+                <li>Best for innovative projects with dynamic requirements</li>
+            </ul>
+
+            <h3>6. Change Management</h3>
+            <p>Formal process for managing changes to project scope, schedule, and cost:</p>
+            <ul>
+                <li><strong>Identify Change:</strong> Recognize need for change</li>
+                <li><strong>Submit Request:</strong> Document change formally</li>
+                <li><strong>Analyze Impact:</strong> Assess impact on time, cost, quality</li>
+                <li><strong>Approval Process:</strong> Obtain necessary approvals</li>
+                <li><strong>Implement Change:</strong> Execute approved changes</li>
+                <li><strong>Communicate Impact:</strong> Inform all stakeholders of changes</li>
+            </ul>
+
+            <h3>7. Risk Management Process</h3>
+            <ul>
+                <li><strong>Identify Risks:</strong> Brainstorm potential risks</li>
+                <li><strong>Analyze Risks:</strong> Assess probability and impact</li>
+                <li><strong>Plan Response:</strong> Develop mitigation strategies (Avoid, Mitigate, Transfer, Accept)</li>
+                <li><strong>Monitor Risks:</strong> Track identified and new risks throughout project</li>
+            </ul>
+
+            <h3>8. Quality Assurance vs Quality Control</h3>
+            <table>
+                <tr>
+                    <th>Aspect</th>
+                    <th>Quality Assurance</th>
+                    <th>Quality Control</th>
+                </tr>
+                <tr>
+                    <td>Focus</td>
+                    <td>Process</td>
+                    <td>Product</td>
+                </tr>
+                <tr>
+                    <td>Timing</td>
+                    <td>Before work is done</td>
+                    <td>After work is done</td>
+                </tr>
+                <tr>
+                    <td>Approach</td>
+                    <td>Preventive</td>
+                    <td>Inspective</td>
+                </tr>
+                <tr>
+                    <td>Owner</td>
+                    <td>Management/PM</td>
+                    <td>QA Team</td>
+                </tr>
+                <tr>
+                    <td>Goal</td>
+                    <td>Ensure process is correct</td>
+                    <td>Verify product quality</td>
+                </tr>
+            </table>
+
+            <h3>9. PMP Exam Tips</h3>
+            <ul>
+                <li>Understand the triple constraints and their interdependencies</li>
+                <li>Master the 5 process groups and their sequence</li>
+                <li>Know the 10 knowledge areas in depth</li>
+                <li>Understand different methodologies and when to apply them</li>
+                <li>Study project management formulas and calculations</li>
+                <li>Practice with sample exam questions and simulations</li>
+                <li>Familiarize yourself with PMBOK terminology and definitions</li>
+                <li>Understand earned value management and variance calculations</li>
+            </ul>
+
+            <h3>10. Quick Reference: Project Success Factors</h3>
+            <ul>
+                <li>Clear project charter and objectives</li>
+                <li>Well-defined scope and WBS</li>
+                <li>Realistic schedule and budget</li>
+                <li>Active stakeholder engagement</li>
+                <li>Effective communication and reporting</li>
+                <li>Strong project team and leadership</li>
+                <li>Risk identification and mitigation</li>
+                <li>Quality management throughout project</li>
+                <li>Regular monitoring and controlling</li>
+                <li>Formal project closure and documentation</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function showContent(contentType) {
+            document.getElementById('mainMenu').style.display = 'none';
+
+            if (contentType === 'starter') {
+                document.getElementById('starterContent').classList.add('active');
+                document.getElementById('pmpContent').classList.remove('active');
+            } else if (contentType === 'pmp') {
+                document.getElementById('pmpContent').classList.add('active');
+                document.getElementById('starterContent').classList.remove('active');
+            }
+
+            window.scrollTo(0, 0);
+        }
+
+        function showMenu() {
+            document.getElementById('mainMenu').style.display = 'grid';
+            document.getElementById('starterContent').classList.remove('active');
+            document.getElementById('pmpContent').classList.remove('active');
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
