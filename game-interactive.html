@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMP Game - Interactive Project Management Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --indigo: #2C3E50;
+            --coral: #FF6B5B;
+            --teal: #20B2AA;
+            --gold: #FFB700;
+            --purple: #A78BFA;
+            --white: #F9F7F4;
+            --charcoal: #3D3D3D;
+            --light-gray: #E8E6E1;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--indigo) 0%, #1a2942 50%, var(--teal) 100%);
+            min-height: 100vh;
+            color: var(--charcoal);
+            overflow-x: hidden;
+        }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--gold);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8em;
+            font-weight: 700;
+            color: var(--gold);
+            animation: pulse-glow 2s infinite;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { 
+                text-shadow: 0 0 10px rgba(255, 183, 0, 0.5),
+                            0 0 20px rgba(255, 183, 0, 0.3);
+            }
+            50% { 
+                text-shadow: 0 0 20px rgba(255, 183, 0, 0.8),
+                            0 0 40px rgba(255, 183, 0, 0.5);
+            }
+        }
+        
+        .nav-right {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .score-badge {
+            background: linear-gradient(135deg, var(--coral), #FF8566);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(255, 107, 91, 0.4);
+            animation: score-pulse 0.5s ease;
+        }
+        
+        @keyframes score-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        header {
+            margin-top: 6rem;
+            text-align: center;
+            color: white;
+            padding: 3rem 0;
+        }
+        
+        header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.5em;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: slide-down 0.8s ease;
+        }
+        
+        @keyframes slide-down {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+            margin-bottom: 1rem;
+        }
+        
+        .game-intro {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 2px solid var(--gold);
+            margin-top: 2rem;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-intro strong {
+            color: var(--gold);
+            font-size: 1.2em;
+        }
+        
+        /* Section Title */
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.2em;
+            font-weight: 700;
+            color: white;
+            margin: 3rem 0 2rem;
+            text-align: center;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Game Arena */
+        .game-arena {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 247, 244, 0.98) 100%);
+            border-radius: 15px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+            border: 3px dashed var(--gold);
+        }
+        
+        .game-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.2em;
+            color: var(--indigo);
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        /* Objects Grid */
+        .objects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .clickable-object {
+            perspective: 1000px;
+            height: 220px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .object-card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .object-card::before {
+            content: 'CLICK ME!';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gold);
+            color: var(--indigo);
+            padding: 5px 15px;
+            border-radius: 0 0 12px 12px;
+            font-weight: 700;
+            font-size: 0.8em;
+            white-space: nowrap;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+        
+        .clickable-object:hover .object-card::before {
+            opacity: 1;
+            top: 0;
+        }
+        
+        .clickable-object:nth-child(1) .object-card {
+            background: linear-gradient(135deg, var(--coral) 0%, #FF8566 100%);
+        }
+        
+        .clickable-object:nth-child(2) .object-card {
+            background: linear-gradient(135deg, var(--teal) 0%, #1a9b8f 100%);
+        }
+        
+        .clickable-object:nth-child(3) .object-card {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFC700 100%);
+        }
+        
+        .clickable-object:nth-child(4) .object-card {
+            background: linear-gradient(135deg, var(--purple) 0%, #9370DB 100%);
+        }
+        
+        .clickable-object:nth-child(5) .object-card {
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+        }
+        
+        .clickable-object:nth-child(6) .object-card {
+            background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+        }
+        
+        .object-card:hover {
+            transform: translateY(-15px) scale(1.08) rotateY(5deg);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.35);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .object-card:active {
+            transform: translateY(-5px) scale(0.98);
+        }
+        
+        .object-icon {
+            font-size: 4em;
+            margin-bottom: 0.75rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .object-label {
+            color: white;
+            font-weight: 700;
+            font-size: 1.2em;
+            font-family: 'Syne', sans-serif;
+            margin-bottom: 0.5rem;
+        }
+        
+        .object-points {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 1.1em;
+            margin-top: 0.5rem;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+        
+        .tooltip {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.9em;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 10;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--gold);
+        }
+        
+        .clickable-object:hover .tooltip {
+            opacity: 1;
+        }
+        
+        /* Floating Points Animation */
+        .floating-points {
+            position: fixed;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 2em;
+            color: var(--gold);
+            pointer-events: none;
+            z-index: 9999;
+            text-shadow: 0 2px 10px rgba(255, 183, 0, 0.6);
+            animation: float-up 1.5s ease-out forwards;
+        }
+        
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.5);
+            }
+        }
+        
+        /* Quiz Section */
+        .quiz-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 247, 244, 0.98) 100%);
+            border-radius: 15px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .quiz-card {
+            background: white;
+            border-left: 5px solid var(--indigo);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-card:hover {
+            transform: translateX(8px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .quiz-question {
+            font-weight: 700;
+            color: var(--indigo);
+            margin-bottom: 1.5rem;
+            font-size: 1.2em;
+            font-family: 'Syne', sans-serif;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .quiz-option {
+            background: #f5f5f5;
+            border: 2px solid var(--light-gray);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .quiz-option:hover {
+            border-color: var(--indigo);
+            background: #f0f8ff;
+            transform: translateX(5px);
+        }
+        
+        .quiz-option input {
+            margin-right: 1rem;
+            cursor: pointer;
+        }
+        
+        .quiz-option.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        
+        .quiz-option.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        
+        .feedback-text {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        .feedback-correct {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .feedback-incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        /* Case Studies */
+        .case-studies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .case-study-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        
+        .case-study-card:nth-child(1) { border-color: var(--coral); }
+        .case-study-card:nth-child(2) { border-color: var(--teal); }
+        .case-study-card:nth-child(3) { border-color: var(--gold); }
+        .case-study-card:nth-child(4) { border-color: var(--purple); }
+        
+        .case-study-card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        }
+        
+        .case-study-header {
+            color: white;
+            padding: 2rem 1.5rem;
+        }
+        
+        .case-study-card:nth-child(1) .case-study-header {
+            background: linear-gradient(135deg, var(--coral) 0%, #FF8566 100%);
+        }
+        
+        .case-study-card:nth-child(2) .case-study-header {
+            background: linear-gradient(135deg, var(--teal) 0%, #1a9b8f 100%);
+        }
+        
+        .case-study-card:nth-child(3) .case-study-header {
+            background: linear-gradient(135deg, var(--gold) 0%, #FFB700 100%);
+        }
+        
+        .case-study-card:nth-child(4) .case-study-header {
+            background: linear-gradient(135deg, var(--purple) 0%, #9370DB 100%);
+        }
+        
+        .case-study-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6em;
+            font-weight: 700;
+        }
+        
+        .case-study-body {
+            padding: 1.5rem;
+        }
+        
+        .case-study-scenario {
+            font-weight: 700;
+            color: var(--indigo);
+            margin-bottom: 1rem;
+            font-size: 1em;
+        }
+        
+        .case-study-description {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .case-study-challenge {
+            background: #fffbf0;
+            border-left: 3px solid var(--gold);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.95em;
+        }
+        
+        .case-study-solution {
+            background: #f0f8ff;
+            border-left: 3px solid var(--teal);
+            padding: 1rem;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+        
+        /* Footer */
+        footer {
+            background: rgba(44, 62, 80, 0.95);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 3rem;
+            border-top: 3px solid var(--gold);
+        }
+        
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        footer a:hover {
+            text-decoration: underline;
+        }
+        
+        .back-button {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--gold), #FFB700);
+            color: var(--indigo);
+            padding: 14px 28px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 1.1em;
+            box-shadow: 0 4px 15px rgba(255, 183, 0, 0.3);
+        }
+        
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(255, 183, 0, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.2em;
+            }
+            
+            .objects-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+            
+            .game-arena, .quiz-section {
+                padding: 1.5rem;
+            }
+            
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-right {
+                flex-direction: column;
+                gap: 1rem;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">🎮 PMP GAME</div>
+        <div class="nav-right">
+            <div class="score-badge">🏆 Points: <span id="score">0</span></div>
+        </div>
+    </nav>
+    
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <h1>🎯 Project Management Master Game</h1>
+            <p>Click Cards • Answer Quizzes • Earn Points • Learn PM!</p>
+            <div class="game-intro">
+                <strong>⭐ CLICK THE COLORFUL CARDS BELOW ⭐</strong><br>
+                Each card is clickable! Hover to see "CLICK ME!" message. Watch your score go up! Then take the quiz and read case studies to master PM concepts.
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Container -->
+    <div class="container">
+        
+        <!-- Game Arena -->
+        <div class="game-arena">
+            <h2 class="game-title">🎪 Click Each Concept - Earn Points!</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 2rem; font-size: 1.1em;">
+                ✋ <strong>Hover over each card to see "CLICK ME!"</strong> • Click to earn points • They're all clickable!
+            </p>
+            
+            <div class="objects-grid">
+                <!-- Scope -->
+                <div class="clickable-object" onclick="clickObject(this, 10)">
+                    <div class="object-card">
+                        <div class="object-icon">📋</div>
+                        <div class="object-label">SCOPE</div>
+                        <div class="object-points">+10 Points</div>
+                    </div>
+                    <div class="tooltip">Define what's included in the project</div>
+                </div>
+                
+                <!-- Timeline -->
+                <div class="clickable-object" onclick="clickObject(this, 15)">
+                    <div class="object-card">
+                        <div class="object-icon">⏰</div>
+                        <div class="object-label">TIMELINE</div>
+                        <div class="object-points">+15 Points</div>
+                    </div>
+                    <div class="tooltip">Create schedules & milestones</div>
+                </div>
+                
+                <!-- Budget -->
+                <div class="clickable-object" onclick="clickObject(this, 12)">
+                    <div class="object-card">
+                        <div class="object-icon">💰</div>
+                        <div class="object-label">BUDGET</div>
+                        <div class="object-points">+12 Points</div>
+                    </div>
+                    <div class="tooltip">Allocate & manage resources</div>
+                </div>
+                
+                <!-- Team -->
+                <div class="clickable-object" onclick="clickObject(this, 20)">
+                    <div class="object-card">
+                        <div class="object-icon">👥</div>
+                        <div class="object-label">TEAM</div>
+                        <div class="object-points">+20 Points</div>
+                    </div>
+                    <div class="tooltip">Build & lead winning teams</div>
+                </div>
+                
+                <!-- Goals -->
+                <div class="clickable-object" onclick="clickObject(this, 18)">
+                    <div class="object-card">
+                        <div class="object-icon">🎯</div>
+                        <div class="object-label">GOALS</div>
+                        <div class="object-points">+18 Points</div>
+                    </div>
+                    <div class="tooltip">Define clear project objectives</div>
+                </div>
+                
+                <!-- Quality -->
+                <div class="clickable-object" onclick="clickObject(this, 25)">
+                    <div class="object-card">
+                        <div class="object-icon">⭐</div>
+                        <div class="object-label">QUALITY</div>
+                        <div class="object-points">+25 Points</div>
+                    </div>
+                    <div class="tooltip">Ensure excellence in delivery</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quiz Challenge -->
+        <div class="section-title">❓ Quick Quiz - Earn Bonus Points!</div>
+        <div class="quiz-section">
+            
+            <div class="quiz-card">
+                <div class="quiz-question">1️⃣ What are the three main constraints in project management?</div>
+                <div class="quiz-options" id="q1">
+                    <label class="quiz-option">
+                        <input type="radio" name="q1" value="correct" onclick="checkAnswer(this, 'q1-feedback')">
+                        ✅ Time, Cost, and Scope
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q1" value="wrong" onclick="checkAnswer(this, 'q1-feedback')">
+                        ❌ Budget, Timeline, and People
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q1" value="wrong" onclick="checkAnswer(this, 'q1-feedback')">
+                        ❌ Quality, Risk, and Communication
+                    </label>
+                </div>
+                <div id="q1-feedback"></div>
+            </div>
+            
+            <div class="quiz-card">
+                <div class="quiz-question">2️⃣ Which SDLC phase involves testing and quality assurance?</div>
+                <div class="quiz-options" id="q2">
+                    <label class="quiz-option">
+                        <input type="radio" name="q2" value="wrong" onclick="checkAnswer(this, 'q2-feedback')">
+                        ❌ Planning & Requirements
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q2" value="correct" onclick="checkAnswer(this, 'q2-feedback')">
+                        ✅ Testing
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q2" value="wrong" onclick="checkAnswer(this, 'q2-feedback')">
+                        ❌ Deployment
+                    </label>
+                </div>
+                <div id="q2-feedback"></div>
+            </div>
+            
+            <div class="quiz-card">
+                <div class="quiz-question">3️⃣ What is a Work Breakdown Structure (WBS)?</div>
+                <div class="quiz-options" id="q3">
+                    <label class="quiz-option">
+                        <input type="radio" name="q3" value="correct" onclick="checkAnswer(this, 'q3-feedback')">
+                        ✅ Hierarchical decomposition of project work
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q3" value="wrong" onclick="checkAnswer(this, 'q3-feedback')">
+                        ❌ A list of all project risks
+                    </label>
+                    <label class="quiz-option">
+                        <input type="radio" name="q3" value="wrong" onclick="checkAnswer(this, 'q3-feedback')">
+                        ❌ The project budget breakdown
+                    </label>
+                </div>
+                <div id="q3-feedback"></div>
+            </div>
+        </div>
+        
+        <!-- Case Studies -->
+        <div class="section-title">📚 Real-World Case Studies</div>
+        <div class="case-studies-grid">
+            <div class="case-study-card">
+                <div class="case-study-header">
+                    <div class="case-study-title">🎓 Scholar Academy</div>
+                </div>
+                <div class="case-study-body">
+                    <div class="case-study-scenario">School Management System</div>
+                    <div class="case-study-description">
+                        A school needed an online system to manage academic and administrative operations. Using Prototype Methodology, they built iterative prototypes with student feedback.
+                    </div>
+                    <div class="case-study-challenge">
+                        <strong>Challenge:</strong> Balance full features with limited time & budget
+                    </div>
+                    <div class="case-study-solution">
+                        <strong>Solution:</strong> MVP approach - release core features first, add others iteratively
+                    </div>
+                </div>
+            </div>
+            
+            <div class="case-study-card">
+                <div class="case-study-header">
+                    <div class="case-study-title">🛒 QuickShop E-Commerce</div>
+                </div>
+                <div class="case-study-body">
+                    <div class="case-study-scenario">High-Pressure Launch</div>
+                    <div class="case-study-description">
+                        E-commerce startup needed to launch in 60 days to catch holiday season. Aggressive timeline required tight scope management.
+                    </div>
+                    <div class="case-study-challenge">
+                        <strong>Challenge:</strong> Tight deadline, limited team, full expectations
+                    </div>
+                    <div class="case-study-solution">
+                        <strong>Solution:</strong> Agile sprints, prioritize must-haves, enhance later
+                    </div>
+                </div>
+            </div>
+            
+            <div class="case-study-card">
+                <div class="case-study-header">
+                    <div class="case-study-title">🏥 MediCare Platform</div>
+                </div>
+                <div class="case-study-body">
+                    <div class="case-study-scenario">Complex & Regulated</div>
+                    <div class="case-study-description">
+                        Healthcare provider built patient management system with strict compliance requirements. Quality was non-negotiable despite budget limits.
+                    </div>
+                    <div class="case-study-challenge">
+                        <strong>Challenge:</strong> Regulations, quality needs, limited budget
+                    </div>
+                    <div class="case-study-solution">
+                        <strong>Solution:</strong> Extended timeline, reduced scope, invested in QA
+                    </div>
+                </div>
+            </div>
+            
+            <div class="case-study-card">
+                <div class="case-study-header">
+                    <div class="case-study-title">🚀 DataFlow SaaS</div>
+                </div>
+                <div class="case-study-body">
+                    <div class="case-study-scenario">Funded Expansion</div>
+                    <div class="case-study-description">
+                        SaaS company with adequate funding needed comprehensive platform. Could invest in team, time, and full features.
+                    </div>
+                    <div class="case-study-challenge">
+                        <strong>Challenge:</strong> Scale team, maintain quality, deliver all features
+                    </div>
+                    <div class="case-study-solution">
+                        <strong>Solution:</strong> Hired strong team, 18-month timeline, full v1.0 release
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <button class="back-button" onclick="navigateTo('dashboard.html')">← Back to Dashboard</button>
+        <p>&copy; 2026 PMP Game - Learn Project Management Through Interactive Play</p>
+        <p><a href="index.html">📚 Full Learning Guide</a> | <a href="triple-constraint-advanced.html">🔺 Interactive Tools</a></p>
+    </footer>
+    
+    <script>
+        let score = 0;
+        
+        function clickObject(element, points) {
+            // Update score
+            score += points;
+            document.getElementById('score').textContent = score;
+            
+            // Animate the badge
+            const badge = document.querySelector('.score-badge');
+            badge.style.animation = 'none';
+            setTimeout(() => {
+                badge.style.animation = 'score-pulse 0.5s ease';
+            }, 10);
+            
+            // Create floating points
+            const rect = element.getBoundingClientRect();
+            const floatingText = document.createElement('div');
+            floatingText.textContent = '+' + points + ' POINTS! 🎯';
+            floatingText.className = 'floating-points';
+            floatingText.style.left = (rect.left + rect.width / 2) + 'px';
+            floatingText.style.top = (rect.top + rect.height / 2) + 'px';
+            document.body.appendChild(floatingText);
+            
+            setTimeout(() => floatingText.remove(), 1500);
+            
+            // Add bounce to card
+            const card = element.querySelector('.object-card');
+            card.style.animation = 'none';
+            setTimeout(() => {
+                card.style.animation = 'bounce 0.6s ease';
+            }, 10);
+        }
+        
+        function checkAnswer(element, feedbackId) {
+            const feedback = document.getElementById(feedbackId);
+            const isCorrect = element.value === 'correct';
+            
+            if (isCorrect) {
+                score += 50;
+                document.getElementById('score').textContent = score;
+                feedback.innerHTML = '<div class="feedback-text feedback-correct">✅ CORRECT! +50 BONUS POINTS 🎉</div>';
+                element.parentElement.classList.add('correct');
+            } else {
+                feedback.innerHTML = '<div class="feedback-text feedback-incorrect">❌ Try again! Read the material and guess again.</div>';
+                element.parentElement.classList.add('incorrect');
+            }
+        }
+        
+        function navigateTo(url) {
+            window.location.href = url;
+        }
+        
+        // Add animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes bounce {
+                0%, 100% { transform: scale(1); }
+                25% { transform: scale(1.15); }
+                50% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

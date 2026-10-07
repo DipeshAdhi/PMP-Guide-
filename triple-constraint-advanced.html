@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Interactive Triple Constraint Triangle - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --indigo: #2C3E50;
+            --coral: #FF6B5B;
+            --teal: #20B2AA;
+            --gold: #FFB700;
+            --white: #F9F7F4;
+            --charcoal: #3D3D3D;
+            --light-gray: #E8E6E1;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--white);
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--light-gray);
+            padding: 1.5rem 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--coral), var(--teal), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95em;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--indigo);
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding-top: 6rem;
+            padding-bottom: 2rem;
+            background: linear-gradient(135deg, var(--indigo) 0%, rgba(44, 62, 80, 0.9) 100%);
+        }
+        
+        header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .back-button {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .back-button:hover {
+            background: white;
+            color: var(--indigo);
+        }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 40px 2rem;
+            margin-bottom: 40px;
+        }
+        
+        .triangle-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .controls-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+        
+        .title {
+            font-family: 'Syne', sans-serif;
+            color: var(--indigo);
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        svg {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+        }
+        
+        .control-card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid var(--light-gray);
+            transition: all 0.3s;
+        }
+        
+        .control-card:hover {
+            border-color: var(--indigo);
+            background: #f8f9ff;
+        }
+        
+        .control-card.time {
+            border-top: 4px solid var(--coral);
+        }
+        
+        .control-card.cost {
+            border-top: 4px solid var(--teal);
+        }
+        
+        .control-card.scope {
+            border-top: 4px solid var(--gold);
+        }
+        
+        .control-label {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-label.time { color: var(--coral); }
+        .control-label.cost { color: var(--teal); }
+        .control-label.scope { color: var(--gold); }
+        
+        .value-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .value-box {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .value-number {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+        
+        .value-label {
+            font-size: 0.8em;
+            color: #666;
+            text-transform: uppercase;
+        }
+        
+        .value-box.time .value-number { color: var(--coral); }
+        .value-box.cost .value-number { color: var(--teal); }
+        .value-box.scope .value-number { color: var(--gold); }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: var(--light-gray);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--indigo);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+        }
+        
+        .impact-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        
+        .arrow {
+            font-size: 1.3em;
+            font-weight: bold;
+            min-width: 25px;
+            text-align: center;
+        }
+        
+        .reset-btn {
+            background: var(--indigo);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-family: 'Syne', sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            align-self: flex-start;
+        }
+        
+        .reset-btn:hover {
+            background: var(--coral);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .scenarios-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            grid-column: 1 / -1;
+            margin: 0 2rem;
+            margin-bottom: 40px;
+        }
+        
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .scenario-btn {
+            padding: 15px;
+            border: 2px solid var(--light-gray);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+        }
+        
+        .scenario-btn:hover {
+            border-color: var(--indigo);
+            background: #f8f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .quality-indicator {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #e7f3ff 0%, #f0e7ff 100%);
+            border-radius: 8px;
+            border-left: 4px solid var(--indigo);
+        }
+        
+        .quality-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            color: var(--indigo);
+            margin-bottom: 10px;
+        }
+        
+        .quality-bar {
+            width: 100%;
+            height: 25px;
+            background: var(--light-gray);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        
+        .quality-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--indigo) 0%, var(--coral) 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.85em;
+        }
+        
+        .info-panel {
+            background: #e7f3ff;
+            border-left: 4px solid var(--indigo);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        
+        .info-panel strong {
+            color: var(--indigo);
+        }
+        
+        footer {
+            background: var(--indigo);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 50px;
+        }
+        
+        footer a {
+            color: var(--coral);
+            text-decoration: none;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .main-layout {
+                gap: 20px;
+                margin: 20px 1rem;
+            }
+            
+            .scenarios-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">PMP Guide</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Learning</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+    </nav>
+    
+    <header>
+        <h1>🔺 Interactive Triple Constraint Triangle</h1>
+        <p>Fully interconnected constraints - change one and watch the others adjust automatically</p>
+    </header>
+    
+    <div class="container">
+        <div class="main-layout">
+            <!-- Triangle Visualization -->
+            <div class="triangle-container">
+                <div class="title">Live Constraint Visualization</div>
+                <svg viewBox="0 0 400 450" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="triGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f8f9ff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#e7f3ff;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <polygon points="200,30 50,380 350,380" fill="url(#triGradient)" stroke="#ccc" stroke-width="2"/>
+                    
+                    <!-- Time Vertex -->
+                    <g id="timeVertex">
+                        <circle cx="200" cy="30" r="40" fill="#FF6B5B" opacity="0.15" stroke="#FF6B5B" stroke-width="3"/>
+                        <text x="200" y="20" text-anchor="middle" font-size="28" fill="#FF6B5B">⏱️</text>
+                        <text x="200" y="45" text-anchor="middle" font-size="14" font-weight="bold" fill="#FF6B5B">TIME</text>
+                        <text x="200" y="62" text-anchor="middle" font-size="12" fill="#FF6B5B" id="timeSVG">50%</text>
+                    </g>
+                    
+                    <!-- Cost Vertex -->
+                    <g id="costVertex">
+                        <circle cx="50" cy="380" r="40" fill="#20B2AA" opacity="0.15" stroke="#20B2AA" stroke-width="3"/>
+                        <text x="50" y="370" text-anchor="middle" font-size="28" fill="#20B2AA">💰</text>
+                        <text x="50" y="395" text-anchor="middle" font-size="14" font-weight="bold" fill="#20B2AA">COST</text>
+                        <text x="50" y="412" text-anchor="middle" font-size="12" fill="#20B2AA" id="costSVG">50%</text>
+                    </g>
+                    
+                    <!-- Scope Vertex -->
+                    <g id="scopeVertex">
+                        <circle cx="350" cy="380" r="40" fill="#FFB700" opacity="0.15" stroke="#FFB700" stroke-width="3"/>
+                        <text x="350" y="370" text-anchor="middle" font-size="28" fill="#FFB700">📋</text>
+                        <text x="350" y="395" text-anchor="middle" font-size="14" font-weight="bold" fill="#FFB700">SCOPE</text>
+                        <text x="350" y="412" text-anchor="middle" font-size="12" fill="#FFB700" id="scopeSVG">50%</text>
+                    </g>
+                    
+                    <text x="200" y="245" text-anchor="middle" font-size="16" fill="#666" font-weight="600">Quality</text>
+                    <circle cx="200" cy="230" r="4" fill="#2C3E50"/>
+                </svg>
+                
+                <div class="quality-indicator">
+                    <div class="quality-title">⭐ Overall Quality & Project Success</div>
+                    <div class="quality-bar">
+                        <div class="quality-fill" id="qualityFill" style="width: 75%;">75%</div>
+                    </div>
+                    <div style="font-size: 0.9em; color: #555; text-align: center;" id="qualityText">Good - Balanced constraints maintaining quality</div>
+                </div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="controls-container">
+                <div class="title">Adjust Constraints Interactively</div>
+                
+                <!-- Time Control -->
+                <div class="control-card time">
+                    <div class="control-label time">⏱️ PROJECT TIME (Schedule)</div>
+                    <div class="value-display">
+                        <div class="value-box time">
+                            <div class="value-number" id="timeDisplay">50</div>
+                            <div class="value-label">Days</div>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-number" id="timePercent">50</div>
+                            <div class="value-label">% Available</div>
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="timeSlider" min="20" max="100" value="50" class="slider">
+                    </div>
+                    <div class="impact-indicator">
+                        <span class="arrow" id="timeArrow">→</span>
+                        <span id="timeImpact">Neutral impact on other constraints</span>
+                    </div>
+                </div>
+                
+                <!-- Cost Control -->
+                <div class="control-card cost">
+                    <div class="control-label cost">💰 PROJECT COST (Budget)</div>
+                    <div class="value-display">
+                        <div class="value-box cost">
+                            <div class="value-number" id="costDisplay">$50K</div>
+                            <div class="value-label">Budget</div>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-number" id="costPercent">50</div>
+                            <div class="value-label">% Available</div>
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="costSlider" min="20" max="100" value="50" class="slider">
+                    </div>
+                    <div class="impact-indicator">
+                        <span class="arrow" id="costArrow">→</span>
+                        <span id="costImpact">Neutral impact on other constraints</span>
+                    </div>
+                </div>
+                
+                <!-- Scope Control -->
+                <div class="control-card scope">
+                    <div class="control-label scope">📋 PROJECT SCOPE (Features)</div>
+                    <div class="value-display">
+                        <div class="value-box scope">
+                            <div class="value-number" id="scopeDisplay">50%</div>
+                            <div class="value-label">Features</div>
+                        </div>
+                        <div class="value-box">
+                            <div class="value-number" id="scopePercent">50</div>
+                            <div class="value-label">% Scope</div>
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="scopeSlider" min="20" max="100" value="50" class="slider">
+                    </div>
+                    <div class="impact-indicator">
+                        <span class="arrow" id="scopeArrow">→</span>
+                        <span id="scopeImpact">Neutral impact on other constraints</span>
+                    </div>
+                </div>
+                
+                <button class="reset-btn" onclick="resetToBaseline()">↻ Reset to Baseline</button>
+                
+                <div class="info-panel">
+                    <strong>💡 How It Works:</strong> These constraints are interconnected. When you change one, the system calculates realistic impacts on quality.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Scenarios Section -->
+        <div class="scenarios-section">
+            <div class="title">📌 Quick Scenarios - Click to Apply</div>
+            <div class="scenarios-grid">
+                <button class="scenario-btn" onclick="applyScenario(20, 40, 100)">🔴 RUSH<br><small>Tight schedule, low budget</small></button>
+                <button class="scenario-btn" onclick="applyScenario(80, 30, 80)">💚 BUDGET CUT<br><small>Reduce features when limited</small></button>
+                <button class="scenario-btn" onclick="applyScenario(50, 50, 50)">🎯 BALANCED<br><small>Realistic constraints</small></button>
+                <button class="scenario-btn" onclick="applyScenario(70, 80, 100)">🚀 PREMIUM<br><small>Adequate time & budget</small></button>
+                <button class="scenario-btn" onclick="applyScenario(40, 70, 60)">⚡ ITERATIVE<br><small>MVP approach</small></button>
+                <button class="scenario-btn" onclick="applyScenario(60, 60, 70)">📈 GROWTH<br><small>Balanced growth</small></button>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2026 PMP Guide. Interactive project management learning.</p>
+        <p><a href="index.html">← Back to Main Guide</a></p>
+    </footer>
+    
+    <script>
+        const timeSlider = document.getElementById('timeSlider');
+        const costSlider = document.getElementById('costSlider');
+        const scopeSlider = document.getElementById('scopeSlider');
+        
+        function calculateConstraints(time, cost, scope) {
+            const avg = (time + cost + scope) / 3;
+            const timeDeviation = Math.abs(time - avg);
+            const costDeviation = Math.abs(cost - avg);
+            const scopeDeviation = Math.abs(scope - avg);
+            const totalDeviation = timeDeviation + costDeviation + scopeDeviation;
+            const quality = Math.max(20, 100 - (totalDeviation / 3));
+            return { quality };
+        }
+        
+        function updateDisplay() {
+            const time = parseInt(timeSlider.value);
+            const cost = parseInt(costSlider.value);
+            const scope = parseInt(scopeSlider.value);
+            
+            document.getElementById('timeDisplay').textContent = Math.round(15 + (time * 1.7));
+            document.getElementById('costDisplay').textContent = '$' + Math.round(20000 + (cost * 800));
+            document.getElementById('scopeDisplay').textContent = scope + '%';
+            
+            document.getElementById('timePercent').textContent = time;
+            document.getElementById('costPercent').textContent = cost;
+            document.getElementById('scopePercent').textContent = scope;
+            
+            document.getElementById('timeSVG').textContent = time + '%';
+            document.getElementById('costSVG').textContent = cost + '%';
+            document.getElementById('scopeSVG').textContent = scope + '%';
+            
+            const { quality } = calculateConstraints(time, cost, scope);
+            
+            if (time < 35) {
+                document.getElementById('timeArrow').textContent = '⬆️';
+                document.getElementById('timeImpact').textContent = 'Cost ⬆️ & Scope ⬇️ (Resources needed urgently)';
+            } else if (time > 65) {
+                document.getElementById('timeArrow').textContent = '⬇️';
+                document.getElementById('timeImpact').textContent = 'Cost ⬇️ & Scope ⬆️ (More time for features)';
+            } else {
+                document.getElementById('timeArrow').textContent = '➡️';
+                document.getElementById('timeImpact').textContent = 'Balanced timeline supporting normal development';
+            }
+            
+            if (cost < 35) {
+                document.getElementById('costArrow').textContent = '⬆️';
+                document.getElementById('costImpact').textContent = 'Time ⬆️ & Scope ⬇️ (Limited resources = more time)';
+            } else if (cost > 65) {
+                document.getElementById('costArrow').textContent = '⬇️';
+                document.getElementById('costImpact').textContent = 'Time ⬇️ & Scope ⬆️ (Hire more team = faster delivery)';
+            } else {
+                document.getElementById('costArrow').textContent = '➡️';
+                document.getElementById('costImpact').textContent = 'Adequate budget for balanced resources';
+            }
+            
+            if (scope < 35) {
+                document.getElementById('scopeArrow').textContent = '⬇️';
+                document.getElementById('scopeImpact').textContent = 'Time ⬇️ & Cost ⬇️ (MVP approach - quick delivery)';
+            } else if (scope > 75) {
+                document.getElementById('scopeArrow').textContent = '⬆️';
+                document.getElementById('scopeImpact').textContent = 'Time ⬆️ & Cost ⬆️ (More features = longer timeline)';
+            } else {
+                document.getElementById('scopeArrow').textContent = '➡️';
+                document.getElementById('scopeImpact').textContent = 'Moderate scope - reasonable feature set';
+            }
+            
+            const qualityPercent = Math.round(quality);
+            document.getElementById('qualityFill').style.width = qualityPercent + '%';
+            document.getElementById('qualityFill').textContent = qualityPercent + '%';
+            
+            if (qualityPercent >= 80) {
+                document.getElementById('qualityText').textContent = '✅ EXCELLENT - Well balanced project';
+            } else if (qualityPercent >= 60) {
+                document.getElementById('qualityText').textContent = '✓ GOOD - Acceptable balance';
+            } else if (qualityPercent >= 40) {
+                document.getElementById('qualityText').textContent = '⚠️ FAIR - Some constraints are tight';
+            } else {
+                document.getElementById('qualityText').textContent = '🔴 CRITICAL - Dangerous imbalance';
+            }
+        }
+        
+        function applyScenario(time, cost, scope) {
+            timeSlider.value = time;
+            costSlider.value = cost;
+            scopeSlider.value = scope;
+            updateDisplay();
+        }
+        
+        function resetToBaseline() {
+            timeSlider.value = 50;
+            costSlider.value = 50;
+            scopeSlider.value = 50;
+            updateDisplay();
+        }
+        
+        timeSlider.addEventListener('input', updateDisplay);
+        costSlider.addEventListener('input', updateDisplay);
+        scopeSlider.addEventListener('input', updateDisplay);
+        
+        updateDisplay();
+    </script>
+</body>
+</html>

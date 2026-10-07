@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PMP Guide - Project Management Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,11 +12,63 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --indigo: #2C3E50;
+            --coral: #FF6B5B;
+            --teal: #20B2AA;
+            --gold: #FFB700;
+            --white: #F9F7F4;
+            --charcoal: #3D3D3D;
+            --light-gray: #E8E6E1;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background: var(--white);
+            color: var(--charcoal);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--light-gray);
+            padding: 1.5rem 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--coral), var(--teal), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95em;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--indigo);
         }
 
         .container {
@@ -26,14 +79,17 @@
         header {
             text-align: center;
             color: white;
-            margin-bottom: 50px;
-            padding-top: 40px;
+            margin-bottom: 0;
+            padding-top: 8rem;
+            padding-bottom: 4rem;
+            background: linear-gradient(135deg, var(--indigo) 0%, rgba(44, 62, 80, 0.9) 100%);
         }
 
         header h1 {
+            font-family: 'Syne', sans-serif;
             font-size: 3.5em;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
         }
 
         header p {
@@ -41,11 +97,30 @@
             opacity: 0.95;
         }
 
+        .header-cta {
+            display: inline-block;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 2px solid white;
+            transition: all 0.3s;
+        }
+
+        .header-cta:hover {
+            background: white;
+            color: var(--indigo);
+        }
+
         .buttons-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
-            margin-bottom: 50px;
+            margin: 50px auto;
+            padding: 0 2rem;
         }
 
         .button-card {
@@ -53,21 +128,40 @@
             border-radius: 12px;
             padding: 40px 30px;
             text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             cursor: pointer;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: all 0.3s;
+            border-left: 4px solid var(--light-gray);
+        }
+
+        .button-card:nth-child(1) {
+            border-left-color: var(--coral);
+        }
+
+        .button-card:nth-child(2) {
+            border-left-color: var(--teal);
+        }
+
+        .button-card:nth-child(3) {
+            border-left-color: var(--gold);
         }
 
         .button-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
         .button-card h2 {
-            color: #667eea;
-            margin-bottom: 15px;
+            font-family: 'Syne', sans-serif;
             font-size: 1.8em;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--indigo);
         }
+
+        .button-card:nth-child(1) h2 { color: var(--coral); }
+        .button-card:nth-child(2) h2 { color: var(--teal); }
+        .button-card:nth-child(3) h2 { color: var(--gold); }
 
         .button-card p {
             color: #555;
@@ -76,19 +170,21 @@
         }
 
         .button-card button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--indigo) 0%, rgba(44, 62, 80, 0.8) 100%);
             color: white;
             border: none;
             padding: 12px 30px;
-            font-size: 1.1em;
+            font-family: 'Syne', sans-serif;
+            font-size: 1em;
             border-radius: 6px;
             cursor: pointer;
-            transition: opacity 0.3s;
+            transition: all 0.3s;
             font-weight: 600;
         }
 
         .button-card button:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .content-section {
@@ -96,7 +192,8 @@
             background: white;
             border-radius: 12px;
             padding: 50px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin: 0 2rem 50px;
         }
 
         .content-section.active {
@@ -104,7 +201,7 @@
         }
 
         .back-button {
-            background: #667eea;
+            background: var(--indigo);
             color: white;
             border: none;
             padding: 10px 20px;
@@ -116,20 +213,24 @@
         }
 
         .back-button:hover {
-            background: #764ba2;
+            background: var(--teal);
         }
 
         .content-section h2 {
-            color: #667eea;
+            font-family: 'Syne', sans-serif;
+            color: var(--indigo);
             margin-bottom: 30px;
             font-size: 2.2em;
+            font-weight: 700;
         }
 
         .content-section h3 {
-            color: #764ba2;
+            font-family: 'Syne', sans-serif;
+            color: var(--coral);
             margin-top: 30px;
             margin-bottom: 15px;
             font-size: 1.5em;
+            font-weight: 600;
         }
 
         .content-section p {
@@ -151,76 +252,188 @@
 
         .constraint-box {
             background: #f8f9ff;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid var(--coral);
             padding: 20px;
             margin: 20px 0;
             border-radius: 6px;
         }
 
         .constraint-box strong {
-            color: #667eea;
+            color: var(--coral);
             display: block;
             font-size: 1.1em;
             margin-bottom: 8px;
         }
 
-        .wbs-section {
-            background: #f8f9ff;
+        .section-highlight {
+            background: linear-gradient(135deg, rgba(255, 107, 91, 0.1), rgba(32, 178, 170, 0.1));
+            border-left: 4px solid var(--teal);
             padding: 20px;
-            margin: 20px 0;
             border-radius: 6px;
-            border-left: 4px solid #764ba2;
+            margin: 20px 0;
+        }
+
+        .section-highlight strong {
+            color: var(--teal);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-radius: 6px;
+            overflow: hidden;
         }
 
         table th, table td {
-            border: 1px solid #ddd;
+            border: 1px solid var(--light-gray);
             padding: 12px;
             text-align: left;
         }
 
         table th {
-            background: #667eea;
+            background: var(--indigo);
             color: white;
+            font-weight: 600;
         }
 
         table tr:nth-child(even) {
-            background: #f9f9f9;
+            background: #fafafa;
+        }
+
+        table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .interactive-link {
+            display: inline-block;
+            margin-top: 12px;
+            background: var(--indigo);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+            font-size: 1em;
+        }
+
+        .interactive-link:hover {
+            background: var(--coral);
+            transform: translateY(-2px);
+        }
+
+        .info-panel {
+            background: #e7f3ff;
+            border-left: 4px solid var(--indigo);
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .info-panel strong {
+            color: var(--indigo);
+        }
+
+        footer {
+            background: var(--indigo);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            margin-top: 50px;
+        }
+
+        footer a {
+            color: var(--coral);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9em;
+            }
+
+            header h1 {
+                font-size: 2.2em;
+            }
+
+            .buttons-section {
+                grid-template-columns: 1fr;
+            }
+
+            .content-section {
+                padding: 30px;
+            }
+
+            .content-section h2 {
+                font-size: 1.8em;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">PMP Guide</div>
+        <ul class="nav-links">
+            <li><a href="project-simulator.html" style="color: var(--coral); font-weight: 700;">🎮 PLAY SIMULATOR</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="triple-constraint-advanced.html">Interactive Tools</a></li>
+            <li><a href="#mainMenu">Learn</a></li>
+        </ul>
+    </nav>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
             <h1>📚 PMP Guide</h1>
             <p>Master Project Management Fundamentals & Exam Preparation</p>
-        </header>
+            <a href="dashboard.html" class="header-cta">✨ View Three Pillars Dashboard</a>
+        </div>
+    </header>
 
-        <!-- Main Menu -->
-        <div id="mainMenu" class="buttons-section">
-            <div class="button-card">
-                <h2>🚀 Starting Learner</h2>
-                <p>Begin your journey into project management with fundamental concepts, SDLC overview, and key methodologies used in the industry.</p>
-                <button onclick="showContent('starter')">Start Learning</button>
-            </div>
-
-            <div class="button-card">
-                <h2>🎯 PMP Exam Preparation</h2>
-                <p>Comprehensive guide tailored for PMP certification exam. Learn constraints, frameworks, and best practices with detailed examples.</p>
-                <button onclick="showContent('pmp')">Prepare for Exam</button>
-            </div>
+    <!-- Main Menu -->
+    <div id="mainMenu" class="buttons-section">
+        <div class="button-card">
+            <h2>🚀 Starting Learner</h2>
+            <p>Begin your journey into project management with fundamental concepts, SDLC overview, and key methodologies used in the industry.</p>
+            <button onclick="showContent('starter')">Start Learning</button>
         </div>
 
-        <!-- Starting Learner Content -->
-        <div id="starterContent" class="content-section">
+        <div class="button-card">
+            <h2>🎯 PMP Exam Preparation</h2>
+            <p>Comprehensive guide tailored for PMP certification exam. Learn constraints, frameworks, and best practices with detailed examples.</p>
+            <button onclick="showContent('pmp')">Prepare for Exam</button>
+        </div>
+
+        <div class="button-card">
+            <h2>🔺 Interactive Triangle</h2>
+            <p>Fully interactive constraint triangle! Change constraints and watch impacts on quality in real-time with scenario simulations.</p>
+            <button onclick="window.location.href='triple-constraint-advanced.html'">Launch Tool</button>
+        </div>
+    </div>
+
+    <!-- Starting Learner Content -->
+    <div id="starterContent" class="content-section">
+        <div class="container">
             <button class="back-button" onclick="showMenu()">← Back to Menu</button>
 
-            <h2>Starting Learner: Project Management Fundamentals</h2>
+            <h2>🚀 Starting Learner: Project Management Fundamentals</h2>
 
             <h3>1. Introduction to Software Project Management</h3>
             <p>Software Project Management is the discipline of planning, organizing, and managing software development projects to deliver quality products on time and within budget.</p>
@@ -275,14 +488,36 @@
                 Finalize deliverables, document lessons learned, archive project information
             </div>
 
-            <h3>4. What is a Project?</h3>
-            <p>A project is a temporary endeavor undertaken to create a unique product, service, or result. Key characteristics:</p>
-            <ul>
-                <li>Temporary - Has defined start and end dates</li>
-                <li>Unique - Creates unique deliverables</li>
-                <li>Defined Objectives - Clear goals and success criteria</li>
-                <li>Resource Constrained - Limited budget, time, and resources</li>
-            </ul>
+            <h3>4. The Four Pillars of Project Success</h3>
+            <p>Great projects require balance between four interconnected elements:</p>
+
+            <table>
+                <tr>
+                    <th>Pillar</th>
+                    <th>Focus</th>
+                    <th>Key Activities</th>
+                </tr>
+                <tr>
+                    <td><strong>👥 PEOPLE</strong></td>
+                    <td>Team & Leadership</td>
+                    <td>Recruitment, training, stakeholder engagement, communication</td>
+                </tr>
+                <tr>
+                    <td><strong>⚙️ PROCESS</strong></td>
+                    <td>SDLC & Methods</td>
+                    <td>Planning, workflows, quality gates, change management</td>
+                </tr>
+                <tr>
+                    <td><strong>📊 PROJECT</strong></td>
+                    <td>Constraints & Goals</td>
+                    <td>Scope, schedule, budget, risk management, WBS</td>
+                </tr>
+                <tr>
+                    <td><strong>📦 PRODUCT</strong></td>
+                    <td>Deliverables & Value</td>
+                    <td>Requirements, features, quality, user satisfaction</td>
+                </tr>
+            </table>
 
             <h3>5. The Triple Constraint Triangle</h3>
             <p>Every project is constrained by three primary factors that must be balanced:</p>
@@ -302,9 +537,15 @@
                 What will be delivered. Includes features, functions, and requirements. Expanding scope requires more time and resources.
             </div>
 
-            <p style="margin-top: 20px; background: #fff3cd; padding: 15px; border-radius: 6px;">
+            <div class="section-highlight">
                 <strong>⚡ Key Insight:</strong> Project managers must balance these three constraints. Changing one typically impacts the others. For example, reducing time may require increasing cost or reducing scope.
-            </p>
+            </div>
+
+            <div class="info-panel">
+                <strong>🎯 Try the Interactive Triple Constraint Triangle!</strong><br>
+                <p style="margin-top: 10px;">Change any constraint and watch the others adjust automatically! See real-time impacts on project quality, budget, timeline, and features.</p>
+                <a href="triple-constraint-advanced.html" class="interactive-link">→ Launch Interactive Tool</a>
+            </div>
 
             <h3>6. Software Quality Management</h3>
             <p>Quality management ensures that the software product meets defined standards and customer expectations.</p>
@@ -315,25 +556,7 @@
                 <li><strong>Quality Control (QC):</strong> Product-focused, inspective approach to verify deliverables meet requirements</li>
             </ul>
 
-            <h3>7. Configuration Management</h3>
-            <p>Manages changes to software components throughout the project lifecycle.</p>
-
-            <ul>
-                <li>Version Control - Track different versions of code and documents</li>
-                <li>Change Control - Manage and approve changes systematically</li>
-                <li>Build Management - Automate build and deployment processes</li>
-            </ul>
-
-            <h3>8. Release Management</h3>
-            <p>Manages the planning, testing, and deployment of software releases.</p>
-
-            <ul>
-                <li>Planning - Define release scope and schedule</li>
-                <li>Execution - Prepare and test release package</li>
-                <li>Deployment - Release to production environment</li>
-            </ul>
-
-            <h3>9. Common Project Management Methodologies</h3>
+            <h3>7. Common Project Management Methodologies</h3>
 
             <p><strong>Agile Methodology:</strong></p>
             <ul>
@@ -359,22 +582,23 @@
                 <li>Best for well-defined, stable requirements</li>
             </ul>
 
-            <h3>10. Key Takeaways</h3>
+            <h3>8. Key Takeaways</h3>
             <ul>
-                <li>Project management balances time, cost, and scope constraints</li>
+                <li>Project management requires balance between People, Process, Project, and Product</li>
+                <li>Triple constraints (time, cost, scope) must be managed interdependently</li>
                 <li>SDLC provides structure for software development</li>
                 <li>Clear planning and communication are critical for success</li>
-                <li>Quality management ensures customer satisfaction</li>
-                <li>Configuration management controls changes systematically</li>
                 <li>Different methodologies suit different project types</li>
             </ul>
         </div>
+    </div>
 
-        <!-- PMP Exam Preparation Content -->
-        <div id="pmpContent" class="content-section">
+    <!-- PMP Exam Preparation Content -->
+    <div id="pmpContent" class="content-section">
+        <div class="container">
             <button class="back-button" onclick="showMenu()">← Back to Menu</button>
 
-            <h2>PMP Exam Preparation: Advanced Project Management</h2>
+            <h2>🎯 PMP Exam Preparation: Advanced Project Management</h2>
 
             <h3>1. The Triple Constraint Triangle - Deep Dive</h3>
             <p>Understanding the triple constraints is fundamental for the PMP exam. Every project decision must consider these three dimensions:</p>
@@ -382,45 +606,28 @@
             <div class="constraint-box">
                 <strong>⏱️ TIME CONSTRAINT</strong>
                 <p><strong>Definition:</strong> The project schedule and deadline - when deliverables must be completed.</p>
-                <p><strong>Key Concepts:</strong></p>
-                <ul>
+                <p style="margin-top: 8px;"><strong>Key Concepts:</strong></p>
+                <ul style="margin-top: 5px;">
                     <li>Duration - Total time from start to finish</li>
                     <li>Milestone - Significant point in project timeline</li>
                     <li>Critical Path - Sequence of activities that determines project duration</li>
                     <li>Schedule Variance - Difference between planned and actual schedule</li>
                 </ul>
-                <p><strong>Impact:</strong> Shorter timelines increase cost and risk, may reduce scope.</p>
+                <p style="margin-top: 8px;"><strong>Impact:</strong> Shorter timelines increase cost and risk, may reduce scope.</p>
             </div>
 
             <div class="constraint-box">
                 <strong>💰 COST CONSTRAINT</strong>
                 <p><strong>Definition:</strong> The project budget and resources required to execute the project.</p>
-                <p><strong>Key Concepts:</strong></p>
-                <ul>
+                <p style="margin-top: 8px;"><strong>Key Concepts:</strong></p>
+                <ul style="margin-top: 5px;">
                     <li>Budget - Total financial resources allocated</li>
                     <li>Resources - Personnel, equipment, software needed</li>
                     <li>Cost Variance - Difference between budgeted and actual costs</li>
                     <li>ROI - Return on investment considerations</li>
                 </ul>
-                <p><strong>Impact:</strong> Limited budget may require extended timeline or reduced scope.</p>
+                <p style="margin-top: 8px;"><strong>Impact:</strong> Limited budget may require extended timeline or reduced scope.</p>
             </div>
-
-            <div class="constraint-box">
-                <strong>📋 SCOPE CONSTRAINT</strong>
-                <p><strong>Definition:</strong> The work that must be performed to deliver the product - all features, functions, and requirements.</p>
-                <p><strong>Key Concepts:</strong></p>
-                <ul>
-                    <li>Scope Creep - Uncontrolled expansion of project scope</li>
-                    <li>Scope Baseline - Approved project scope</li>
-                    <li>Change Control - Process for managing scope changes</li>
-                    <li>Scope Management Plan - How scope will be managed</li>
-                </ul>
-                <p><strong>Impact:</strong> Expanding scope requires more time and resources.</p>
-            </div>
-
-            <p style="background: #e7f3ff; padding: 15px; border-radius: 6px; margin-top: 20px;">
-                <strong>For PMP Exam:</strong> You must understand that these constraints are interdependent. A change in one constraint affects the others. Project managers must communicate trade-offs to stakeholders and make informed decisions.
-            </p>
 
             <h3>2. Work Breakdown Structure (WBS)</h3>
             <p>WBS is a hierarchical decomposition of project work into manageable components. It's a foundational tool in project management.</p>
@@ -432,111 +639,6 @@
                 <li>Deliverable-focused - Focuses on what will be delivered</li>
                 <li>Mutually exclusive - No overlap between components</li>
             </ul>
-
-            <p><strong>WBS Levels Typically Include:</strong></p>
-            <table>
-                <tr>
-                    <th>Level</th>
-                    <th>Description</th>
-                    <th>Example</th>
-                </tr>
-                <tr>
-                    <td>Level 1</td>
-                    <td>Project Name</td>
-                    <td>School Management System</td>
-                </tr>
-                <tr>
-                    <td>Level 2</td>
-                    <td>Major Phases/Components</td>
-                    <td>Requirements, Design, Development</td>
-                </tr>
-                <tr>
-                    <td>Level 3</td>
-                    <td>Deliverables</td>
-                    <td>Requirements Document, System Design</td>
-                </tr>
-                <tr>
-                    <td>Level 4+</td>
-                    <td>Tasks and Activities</td>
-                    <td>Analyze User Roles, Create Wireframes</td>
-                </tr>
-            </table>
-
-            <p><strong>Example WBS for School Management System Project:</strong></p>
-            <div class="wbs-section">
-                <strong>School Management System</strong>
-                <ul>
-                    <li><strong>1. Planning & Requirements</strong>
-                        <ul>
-                            <li>1.1 Project Charter Development</li>
-                            <li>1.2 Stakeholder Identification</li>
-                            <li>1.3 Requirements Elicitation</li>
-                            <li>1.4 Requirements Documentation</li>
-                            <li>1.5 Scope Approval</li>
-                        </ul>
-                    </li>
-                    <li><strong>2. Analysis & Design</strong>
-                        <ul>
-                            <li>2.1 Requirements Analysis</li>
-                            <li>2.2 System Architecture Design</li>
-                            <li>2.3 Database Design</li>
-                            <li>2.4 UI/UX Design</li>
-                            <li>2.5 Design Review & Approval</li>
-                        </ul>
-                    </li>
-                    <li><strong>3. Prototype Development</strong>
-                        <ul>
-                            <li>3.1 User Registration Module</li>
-                            <li>3.2 Course Selection Module</li>
-                            <li>3.3 Attendance Tracking Module</li>
-                            <li>3.4 Fee Management Module</li>
-                            <li>3.5 Library Management Module</li>
-                            <li>3.6 Prototype Integration</li>
-                        </ul>
-                    </li>
-                    <li><strong>4. Feedback & Refinement</strong>
-                        <ul>
-                            <li>4.1 User Feedback Collection</li>
-                            <li>4.2 Feedback Analysis</li>
-                            <li>4.3 Design Refinement</li>
-                            <li>4.4 Approval & Sign-off</li>
-                        </ul>
-                    </li>
-                    <li><strong>5. Testing</strong>
-                        <ul>
-                            <li>5.1 Unit Testing</li>
-                            <li>5.2 Integration Testing</li>
-                            <li>5.3 System Testing</li>
-                            <li>5.4 User Acceptance Testing (UAT)</li>
-                            <li>5.5 Test Report Generation</li>
-                        </ul>
-                    </li>
-                    <li><strong>6. Deployment</strong>
-                        <ul>
-                            <li>6.1 Production Environment Setup</li>
-                            <li>6.2 Data Migration</li>
-                            <li>6.3 System Deployment</li>
-                            <li>6.4 Go-live Support</li>
-                        </ul>
-                    </li>
-                    <li><strong>7. Documentation & Training</strong>
-                        <ul>
-                            <li>7.1 User Documentation</li>
-                            <li>7.2 Technical Documentation</li>
-                            <li>7.3 Training Materials</li>
-                            <li>7.4 Training Sessions</li>
-                        </ul>
-                    </li>
-                    <li><strong>8. Project Closure</strong>
-                        <ul>
-                            <li>8.1 Lessons Learned Documentation</li>
-                            <li>8.2 Project Archive</li>
-                            <li>8.3 Final Reporting</li>
-                            <li>8.4 Resource Release</li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
 
             <h3>3. Project Management Processes (PMBOK Framework)</h3>
             <p>The Project Management Body of Knowledge (PMBOK) defines 5 process groups and 10 knowledge areas essential for project management.</p>
@@ -550,59 +652,7 @@
                 <li><strong>Closing:</strong> Finalize deliverables, document lessons learned, formally close project</li>
             </ul>
 
-            <h3>4. Key Project Management Knowledge Areas</h3>
-            <ul>
-                <li><strong>Integration Management:</strong> Coordinate all project elements</li>
-                <li><strong>Scope Management:</strong> Control what's included/excluded from project</li>
-                <li><strong>Time Management:</strong> Develop schedule and manage timeline</li>
-                <li><strong>Cost Management:</strong> Plan and control project costs</li>
-                <li><strong>Quality Management:</strong> Ensure project meets quality standards</li>
-                <li><strong>Resource Management:</strong> Acquire and manage project team</li>
-                <li><strong>Communications Management:</strong> Manage project information and stakeholder communication</li>
-                <li><strong>Risk Management:</strong> Identify and manage project risks</li>
-                <li><strong>Procurement Management:</strong> Acquire goods and services</li>
-                <li><strong>Stakeholder Management:</strong> Engage and manage stakeholder expectations</li>
-            </ul>
-
-            <h3>5. Software Development Methodologies</h3>
-            <p><strong>Prototype Methodology (Used in Scholar Academy Case Study):</strong></p>
-            <ul>
-                <li>Build working prototypes early to validate concepts</li>
-                <li>Iteratively gather user feedback</li>
-                <li>Refine design based on feedback cycles</li>
-                <li>Reduces risk by validating assumptions</li>
-                <li>Best for projects with unclear or evolving requirements</li>
-            </ul>
-
-            <p><strong>Agile Methodology:</strong></p>
-            <ul>
-                <li>Iterative development in short sprints (1-4 weeks)</li>
-                <li>Continuous delivery of working software</li>
-                <li>Embraces changing requirements</li>
-                <li>Daily standups and regular retrospectives</li>
-                <li>Best for innovative projects with dynamic requirements</li>
-            </ul>
-
-            <h3>6. Change Management</h3>
-            <p>Formal process for managing changes to project scope, schedule, and cost:</p>
-            <ul>
-                <li><strong>Identify Change:</strong> Recognize need for change</li>
-                <li><strong>Submit Request:</strong> Document change formally</li>
-                <li><strong>Analyze Impact:</strong> Assess impact on time, cost, quality</li>
-                <li><strong>Approval Process:</strong> Obtain necessary approvals</li>
-                <li><strong>Implement Change:</strong> Execute approved changes</li>
-                <li><strong>Communicate Impact:</strong> Inform all stakeholders of changes</li>
-            </ul>
-
-            <h3>7. Risk Management Process</h3>
-            <ul>
-                <li><strong>Identify Risks:</strong> Brainstorm potential risks</li>
-                <li><strong>Analyze Risks:</strong> Assess probability and impact</li>
-                <li><strong>Plan Response:</strong> Develop mitigation strategies (Avoid, Mitigate, Transfer, Accept)</li>
-                <li><strong>Monitor Risks:</strong> Track identified and new risks throughout project</li>
-            </ul>
-
-            <h3>8. Quality Assurance vs Quality Control</h3>
+            <h3>4. Quality Assurance vs Quality Control</h3>
             <table>
                 <tr>
                     <th>Aspect</th>
@@ -624,19 +674,9 @@
                     <td>Preventive</td>
                     <td>Inspective</td>
                 </tr>
-                <tr>
-                    <td>Owner</td>
-                    <td>Management/PM</td>
-                    <td>QA Team</td>
-                </tr>
-                <tr>
-                    <td>Goal</td>
-                    <td>Ensure process is correct</td>
-                    <td>Verify product quality</td>
-                </tr>
             </table>
 
-            <h3>9. PMP Exam Tips</h3>
+            <h3>5. PMP Exam Tips</h3>
             <ul>
                 <li>Understand the triple constraints and their interdependencies</li>
                 <li>Master the 5 process groups and their sequence</li>
@@ -644,25 +684,17 @@
                 <li>Understand different methodologies and when to apply them</li>
                 <li>Study project management formulas and calculations</li>
                 <li>Practice with sample exam questions and simulations</li>
-                <li>Familiarize yourself with PMBOK terminology and definitions</li>
-                <li>Understand earned value management and variance calculations</li>
-            </ul>
-
-            <h3>10. Quick Reference: Project Success Factors</h3>
-            <ul>
-                <li>Clear project charter and objectives</li>
-                <li>Well-defined scope and WBS</li>
-                <li>Realistic schedule and budget</li>
-                <li>Active stakeholder engagement</li>
-                <li>Effective communication and reporting</li>
-                <li>Strong project team and leadership</li>
-                <li>Risk identification and mitigation</li>
-                <li>Quality management throughout project</li>
-                <li>Regular monitoring and controlling</li>
-                <li>Formal project closure and documentation</li>
             </ul>
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 PMP Guide. Comprehensive project management learning platform.</p>
+            <p><a href="dashboard.html">← Back to Dashboard</a></p>
+        </div>
+    </footer>
 
     <script>
         function showContent(contentType) {

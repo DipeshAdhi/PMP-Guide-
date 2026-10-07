@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMP Guide - Three Pillars of Project Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --indigo: #2C3E50;
+            --coral: #FF6B5B;
+            --teal: #20B2AA;
+            --gold: #FFB700;
+            --white: #F9F7F4;
+            --charcoal: #3D3D3D;
+            --light-gray: #E8E6E1;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--white);
+            color: var(--charcoal);
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-bottom: 1px solid var(--light-gray);
+            padding: 1.5rem 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--coral), var(--teal), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--charcoal);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95em;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--indigo);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--indigo);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 6rem;
+            padding: 4rem 2rem;
+            text-align: center;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.5em;
+            font-weight: 700;
+            color: var(--indigo);
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        .hero-subtitle {
+            font-size: 1.3em;
+            color: var(--charcoal);
+            margin-bottom: 2rem;
+            font-weight: 300;
+            max-width: 700px;
+        }
+
+        .hero-equation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .pillar-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+            border-radius: 12px;
+            background: white;
+            border: 2px solid var(--light-gray);
+            min-width: 180px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .pillar-preview:hover {
+            transform: translateY(-8px);
+            border-color: currentColor;
+        }
+
+        .pillar-preview.people {
+            color: var(--coral);
+            border-color: var(--coral);
+        }
+
+        .pillar-preview.process {
+            color: var(--teal);
+            border-color: var(--teal);
+        }
+
+        .pillar-preview.project {
+            color: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .pillar-icon {
+            font-size: 3em;
+        }
+
+        .pillar-name {
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .pillar-desc {
+            font-size: 0.85em;
+            opacity: 0.8;
+        }
+
+        .equation-plus {
+            font-family: 'Syne', sans-serif;
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--light-gray);
+        }
+
+        .equals-sign {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--indigo);
+            margin: 0 1rem;
+        }
+
+        .success-outcome {
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.05), rgba(255, 107, 91, 0.05));
+            border-radius: 12px;
+            border: 2px solid var(--indigo);
+            min-width: 200px;
+        }
+
+        .success-outcome-emoji {
+            font-size: 3em;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-outcome-text {
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 1.1em;
+            color: var(--indigo);
+        }
+
+        /* Pillars Section */
+        .pillars-section {
+            padding: 6rem 2rem;
+            background: var(--indigo);
+            color: white;
+        }
+
+        .pillars-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 4rem;
+            text-align: center;
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .pillar-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid;
+            padding: 2.5rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pillar-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, currentColor, transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .pillar-card:hover::before {
+            opacity: 1;
+        }
+
+        .pillar-card.people {
+            border-left-color: var(--coral);
+            color: var(--coral);
+        }
+
+        .pillar-card.process {
+            border-left-color: var(--teal);
+            color: var(--teal);
+        }
+
+        .pillar-card.project {
+            border-left-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .pillar-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(8px);
+        }
+
+        .pillar-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .pillar-icon-large {
+            font-size: 2.5em;
+        }
+
+        .pillar-card p {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .pillar-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .pillar-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.95em;
+        }
+
+        .pillar-item::before {
+            content: '→';
+            flex-shrink: 0;
+            opacity: 0.6;
+        }
+
+        /* Interactive Diagram Section */
+        .connection-section {
+            padding: 6rem 2rem;
+            background: var(--white);
+        }
+
+        .connection-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .connection-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.2em;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            color: var(--indigo);
+        }
+
+        .venn-diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .venn-item {
+            background: var(--light-gray);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .venn-item:hover {
+            transform: scale(1.05);
+            background: var(--indigo);
+            color: white;
+        }
+
+        .venn-item.people {
+            border-top: 4px solid var(--coral);
+        }
+
+        .venn-item.process {
+            border-top: 4px solid var(--teal);
+        }
+
+        .venn-item.project {
+            border-top: 4px solid var(--gold);
+        }
+
+        .venn-item.center {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(255, 107, 91, 0.1), rgba(32, 178, 170, 0.1), rgba(255, 183, 0, 0.1));
+            border: 2px dashed var(--indigo);
+            color: var(--indigo);
+        }
+
+        .venn-item.center:hover {
+            background: var(--indigo);
+            color: white;
+            border-color: var(--indigo);
+        }
+
+        .venn-emoji {
+            font-size: 2.5em;
+            margin-bottom: 0.75rem;
+        }
+
+        .venn-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .venn-desc {
+            font-size: 0.9em;
+            line-height: 1.5;
+            opacity: 0.8;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, var(--indigo), rgba(44, 62, 80, 0.8));
+            color: white;
+            text-align: center;
+        }
+
+        .cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .cta-text {
+            font-size: 1.1em;
+            margin-bottom: 2rem;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-btn {
+            padding: 1rem 2rem;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 1em;
+            border: 2px solid white;
+            background: transparent;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-btn.primary {
+            background: white;
+            color: var(--indigo);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 4rem 2rem;
+            background: var(--white);
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Syne', sans-serif;
+            font-size: 3em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--coral), var(--teal), var(--gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            color: var(--charcoal);
+            font-weight: 500;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--indigo);
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: var(--coral);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9em;
+            }
+
+            .hero h1 {
+                font-size: 2.2em;
+            }
+
+            .hero-equation {
+                gap: 1rem;
+            }
+
+            .pillar-preview {
+                min-width: 140px;
+                padding: 1.5rem;
+            }
+
+            .section-title {
+                font-size: 1.8em;
+            }
+
+            .pillar-card h3 {
+                font-size: 1.3em;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cta-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">PMP Guide</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Learning Paths</a></li>
+            <li><a href="triple-constraint-advanced.html">Interactive Triangle</a></li>
+            <li><a href="#learn">Learn More</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Three Pillars of Project Success</h1>
+        <p class="hero-subtitle">Master the interconnected elements that make projects succeed: managing people, executing process, and controlling constraints.</p>
+
+        <div class="hero-equation">
+            <div class="pillar-preview people">
+                <div class="pillar-icon">👥</div>
+                <div class="pillar-name">PEOPLE</div>
+                <div class="pillar-desc">Teams & Leadership</div>
+            </div>
+
+            <div class="equation-plus">+</div>
+
+            <div class="pillar-preview process">
+                <div class="pillar-icon">⚙️</div>
+                <div class="pillar-name">PROCESS</div>
+                <div class="pillar-desc">SDLC & Methods</div>
+            </div>
+
+            <div class="equation-plus">+</div>
+
+            <div class="pillar-preview project">
+                <div class="pillar-icon">📊</div>
+                <div class="pillar-name">PROJECT</div>
+                <div class="pillar-desc">Constraints & Goals</div>
+            </div>
+
+            <div class="equals-sign">=</div>
+
+            <div class="success-outcome">
+                <div class="success-outcome-emoji">🎯</div>
+                <div class="success-outcome-text">Successful Project</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pillars Deep Dive -->
+    <section class="pillars-section" id="learn">
+        <div class="pillars-container">
+            <h2 class="section-title">The Three Pillars</h2>
+
+            <div class="pillars-grid">
+                <!-- People Pillar -->
+                <div class="pillar-card people">
+                    <h3>
+                        <span class="pillar-icon-large">👥</span>
+                        PEOPLE
+                    </h3>
+                    <p>Building and managing high-performing teams that deliver results.</p>
+                    <div class="pillar-items">
+                        <div class="pillar-item">Project Manager & Leadership</div>
+                        <div class="pillar-item">Team Members & Specialists</div>
+                        <div class="pillar-item">Stakeholders & Users</div>
+                        <div class="pillar-item">Communication & Engagement</div>
+                        <div class="pillar-item">Organizational Culture</div>
+                    </div>
+                </div>
+
+                <!-- Process Pillar -->
+                <div class="pillar-card process">
+                    <h3>
+                        <span class="pillar-icon-large">⚙️</span>
+                        PROCESS
+                    </h3>
+                    <p>Establishing structured methodologies and workflows for delivery.</p>
+                    <div class="pillar-items">
+                        <div class="pillar-item">SDLC Stages & Phases</div>
+                        <div class="pillar-item">Agile, Waterfall, Hybrid</div>
+                        <div class="pillar-item">Planning & Estimation</div>
+                        <div class="pillar-item">Quality Management</div>
+                        <div class="pillar-item">Change Control</div>
+                    </div>
+                </div>
+
+                <!-- Project Pillar -->
+                <div class="pillar-card project">
+                    <h3>
+                        <span class="pillar-icon-large">📊</span>
+                        PROJECT
+                    </h3>
+                    <p>Balancing scope, time, cost, and quality constraints.</p>
+                    <div class="pillar-items">
+                        <div class="pillar-item">Triple Constraints</div>
+                        <div class="pillar-item">Work Breakdown Structure</div>
+                        <div class="pillar-item">Schedule Management</div>
+                        <div class="pillar-item">Budget & Resources</div>
+                        <div class="pillar-item">Risk Management</div>
+                    </div>
+                </div>
+
+                <!-- Product Pillar -->
+                <div class="pillar-card" style="border-left-color: #A78BFA; color: #A78BFA;">
+                    <h3 style="color: #A78BFA;">
+                        <span class="pillar-icon-large">📦</span>
+                        PRODUCT
+                    </h3>
+                    <p>Creating deliverables that provide real value to users.</p>
+                    <div class="pillar-items">
+                        <div class="pillar-item">Requirements & Features</div>
+                        <div class="pillar-item">User Experience & Design</div>
+                        <div class="pillar-item">Quality & Acceptance</div>
+                        <div class="pillar-item">User Satisfaction</div>
+                        <div class="pillar-item">Business Value & ROI</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How They Connect -->
+    <section class="connection-section">
+        <div class="connection-container">
+            <h2 class="connection-title">How They Connect</h2>
+
+            <div class="venn-diagram">
+                <div class="venn-item people">
+                    <div class="venn-emoji">👥</div>
+                    <div class="venn-title">People Focus</div>
+                    <div class="venn-desc">Team engagement, clear roles, effective communication</div>
+                </div>
+
+                <div class="venn-item process">
+                    <div class="venn-emoji">⚙️</div>
+                    <div class="venn-title">Process Focus</div>
+                    <div class="venn-desc">Structured workflows, methodologies, quality gates</div>
+                </div>
+
+                <div class="venn-item project">
+                    <div class="venn-emoji">📊</div>
+                    <div class="venn-title">Project Focus</div>
+                    <div class="venn-desc">Clear objectives, measurable deliverables, constraints</div>
+                </div>
+
+                <div class="venn-item center">
+                    <div class="venn-emoji">⭐</div>
+                    <div class="venn-title">Project Excellence</div>
+                    <div class="venn-desc">When all three pillars work together, you deliver value on time, within budget, with high quality and team satisfaction</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-number">89%</div>
+                <div class="stat-label">of successful projects prioritize people management</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">76%</div>
+                <div class="stat-label">success improvement with structured processes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3x</div>
+                <div class="stat-label">better outcomes with constraint balance</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2 class="cta-title">Ready to Master Project Management?</h2>
+            <p class="cta-text">Choose your learning path and start building the skills that make projects succeed. Whether you're preparing for PMP certification or improving your project leadership, we have the tools you need.</p>
+
+            <div class="cta-buttons">
+                <a href="index.html#mainMenu" class="cta-btn primary">Explore Learning Paths</a>
+                <a href="triple-constraint-advanced.html" class="cta-btn">Try Interactive Tools</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 PMP Guide. Comprehensive project management learning platform.</p>
+        <p><a href="index.html">Back to Main Guide</a></p>
+    </footer>
+</body>
+</html>

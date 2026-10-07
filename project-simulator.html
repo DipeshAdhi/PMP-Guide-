@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management Simulator - Make Real Decisions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --indigo: #2C3E50;
+            --coral: #FF6B5B;
+            --teal: #20B2AA;
+            --gold: #FFB700;
+            --purple: #A78BFA;
+            --white: #F9F7F4;
+            --charcoal: #3D3D3D;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--indigo) 0%, #1a2942 100%);
+            min-height: 100vh;
+            color: var(--charcoal);
+        }
+        
+        nav {
+            background: rgba(44, 62, 80, 0.95);
+            padding: 1.5rem 2rem;
+            border-bottom: 3px solid var(--gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Syne', sans-serif;
+            color: var(--gold);
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+        
+        header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3em;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Game Screen */
+        .game-screen {
+            display: none;
+        }
+        
+        .game-screen.active {
+            display: block;
+        }
+        
+        .game-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-box {
+            background: linear-gradient(135deg, #f5f5f5 0%, white 100%);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--indigo);
+            text-align: center;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 700;
+            font-family: 'Syne', sans-serif;
+        }
+        
+        .stat-box.time { border-left-color: var(--coral); }
+        .stat-box.time .stat-value { color: var(--coral); }
+        
+        .stat-box.cost { border-left-color: var(--teal); }
+        .stat-box.cost .stat-value { color: var(--teal); }
+        
+        .stat-box.scope { border-left-color: var(--gold); }
+        .stat-box.scope .stat-value { color: var(--gold); }
+        
+        .stat-box.quality { border-left-color: var(--purple); }
+        .stat-box.quality .stat-value { color: var(--purple); }
+        
+        .progress-bar {
+            background: #e0e0e0;
+            height: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--indigo), var(--teal));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8em;
+            transition: width 0.3s;
+        }
+        
+        .scenario-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8em;
+            color: var(--indigo);
+            margin-bottom: 1rem;
+        }
+        
+        .scenario-description {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            font-size: 1.05em;
+        }
+        
+        .challenge-box {
+            background: #fff3cd;
+            border-left: 4px solid var(--gold);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .challenge-title {
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+        
+        .decisions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .decision-card {
+            background: white;
+            border: 3px solid var(--light-gray);
+            border-radius: 10px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .decision-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--indigo);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .decision-icon {
+            font-size: 2.5em;
+            margin-bottom: 1rem;
+        }
+        
+        .decision-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--indigo);
+            margin-bottom: 0.75rem;
+        }
+        
+        .decision-description {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+        
+        .decision-impact {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 6px;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .impact-item {
+            margin: 0.3rem 0;
+        }
+        
+        .impact-positive { color: #28a745; font-weight: 600; }
+        .impact-negative { color: #dc3545; font-weight: 600; }
+        
+        .decision-button {
+            background: linear-gradient(135deg, var(--indigo), var(--teal));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .decision-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Results Screen */
+        .results-screen {
+            display: none;
+        }
+        
+        .results-screen.active {
+            display: block;
+        }
+        
+        .results-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .result-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5em;
+            margin-bottom: 1rem;
+        }
+        
+        .result-score {
+            font-size: 4em;
+            font-weight: 700;
+            font-family: 'Syne', sans-serif;
+            margin: 1rem 0;
+        }
+        
+        .result-message {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .final-stats {
+            background: #f5f5f5;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+        
+        .final-stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            font-size: 1.1em;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .restart-button {
+            background: var(--coral);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 8px;
+            font-family: 'Syne', sans-serif;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .restart-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 107, 91, 0.3);
+        }
+        
+        /* Start Screen */
+        .start-screen {
+            display: none;
+        }
+        
+        .start-screen.active {
+            display: block;
+        }
+        
+        .start-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            margin: 2rem auto;
+        }
+        
+        .start-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5em;
+            color: var(--indigo);
+            margin-bottom: 1rem;
+        }
+        
+        .start-description {
+            color: #555;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+        
+        .scenario-buttons {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .scenario-button {
+            background: linear-gradient(135deg, var(--indigo), var(--teal));
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1em;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+        
+        .scenario-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="logo">🎮 PROJECT SIMULATOR</div>
+        <a href="index.html" style="color: var(--gold); text-decoration: none; font-weight: 600;">← Back</a>
+    </nav>
+    
+    <header>
+        <div class="container">
+            <h1>🎯 Project Management Simulator</h1>
+            <p style="color: white; font-size: 1.2em; margin-top: 1rem;">Make real decisions. See real consequences. Learn project management.</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        
+        <!-- Start Screen -->
+        <div class="start-screen active">
+            <div class="start-panel">
+                <div class="start-title">🚀 Choose Your Project Challenge</div>
+                <div class="start-description">
+                    You're a project manager. You've been given a project brief with constraints. Make strategic decisions and manage your triple constraints (time, cost, scope). Your choices matter. See what happens!
+                </div>
+                <div class="scenario-buttons">
+                    <button class="scenario-button" onclick="startGame('scholarship')">
+                        🎓 SCHOOL SYSTEM (MVP Approach)
+                    </button>
+                    <button class="scenario-button" onclick="startGame('ecommerce')">
+                        🛒 E-COMMERCE LAUNCH (Timeline Pressure)
+                    </button>
+                    <button class="scenario-button" onclick="startGame('healthcare')">
+                        🏥 HEALTHCARE PLATFORM (Quality First)
+                    </button>
+                    <button class="scenario-button" onclick="startGame('saas')">
+                        🚀 SAAS PLATFORM (Funded Startup)
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div class="game-screen">
+            <div class="game-panel">
+                <div class="stats-grid">
+                    <div class="stat-box time">
+                        <div class="stat-label">⏱️ TIME REMAINING</div>
+                        <div class="stat-value" id="timeRemaining">6</div>
+                        <div style="font-size: 0.9em; color: #666;">months</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="timeBar" style="width: 100%; background: linear-gradient(90deg, var(--coral), #FF8566);"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-box cost">
+                        <div class="stat-label">💰 BUDGET LEFT</div>
+                        <div class="stat-value" id="budgetLeft">$100K</div>
+                        <div style="font-size: 0.9em; color: #666;">of total</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="costBar" style="width: 100%; background: linear-gradient(90deg, var(--teal), #1a9b8f);"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-box scope">
+                        <div class="stat-label">📋 SCOPE COMPLETION</div>
+                        <div class="stat-value" id="scopeDone">0%</div>
+                        <div style="font-size: 0.9em; color: #666;">features delivered</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="scopeBar" style="width: 0%; background: linear-gradient(90deg, var(--gold), #FFB700);"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-box quality">
+                        <div class="stat-label">⭐ QUALITY SCORE</div>
+                        <div class="stat-value" id="qualityScore">100%</div>
+                        <div style="font-size: 0.9em; color: #666;">defects/problems</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="qualityBar" style="width: 100%; background: linear-gradient(90deg, var(--purple), #9370DB);"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-panel">
+                <div class="scenario-title" id="scenarioTitle">Project Challenge</div>
+                <div class="scenario-description" id="scenarioDesc">Loading...</div>
+                
+                <div class="challenge-box">
+                    <div class="challenge-title">⚠️ CURRENT CHALLENGE:</div>
+                    <div id="challenge">You need to make a decision...</div>
+                </div>
+                
+                <div class="decisions-grid" id="decisionsGrid">
+                    <!-- Decision cards will be inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Screen -->
+        <div class="results-screen">
+            <div class="results-panel">
+                <div class="result-title" id="resultTitle">Project Complete!</div>
+                <div class="result-score" id="resultScore">85/100</div>
+                <div class="result-message" id="resultMessage">You delivered a successful project!</div>
+                
+                <div class="final-stats" id="finalStats">
+                    <!-- Final stats will be inserted here -->
+                </div>
+                
+                <button class="restart-button" onclick="location.reload()">🔄 Play Again</button>
+                <a href="index.html" style="display: inline-block; margin-left: 1rem; color: var(--indigo); text-decoration: none; font-weight: 600; padding: 16px 40px; border: 2px solid var(--indigo); border-radius: 8px;">← Back to Guide</a>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>💡 This simulator teaches real project management through decision-making and consequences.</p>
+    </footer>
+    
+    <script>
+        const scenarios = {
+            scholarship: {
+                name: '🎓 Scholar Academy - School Management System',
+                description: 'You\'re hired to build a school management system. The school needs: user registration, course selection, attendance tracking, fee management, and library system. They have limited budget and want it done in 6 months.',
+                timeLimit: 6,
+                budgetLimit: 100000,
+                scopeRequirements: 5,
+                challenges: [
+                    {
+                        title: 'Budget Decision',
+                        description: 'Your client says: "We need ALL 5 features in 6 months." Your analysis shows this costs $150K but they only have $100K. What do you do?',
+                        options: [
+                            { name: 'Cut Scope (MVP)', desc: 'Release 3 core features in 6 months, add others later.', time: -0, cost: 0, scope: -40, quality: 10 },
+                            { name: 'Extend Timeline', desc: 'Negotiate 9 months instead of 6 for full scope.', time: 3, cost: 0, scope: 0, quality: 5 },
+                            { name: 'Cut Corners', desc: 'Try to do everything in 6 months with less testing.', time: 0, cost: 0, scope: 0, quality: -30 },
+                        ]
+                    },
+                    {
+                        title: 'Team Conflict',
+                        description: 'Your QA lead says: "We need more time for testing. The current schedule is unrealistic." Your dev lead says: "We\'re on track."',
+                        options: [
+                            { name: 'Trust QA Lead', desc: 'Add 2 weeks for testing despite dev confidence.', time: 0.5, cost: 5000, scope: 0, quality: 20 },
+                            { name: 'Trust Dev Lead', desc: 'Keep the schedule. QA will handle issues post-launch.', time: 0, cost: 0, scope: 0, quality: -25 },
+                            { name: 'Compromise', desc: 'Add 1 week and cut one feature.', time: 0.25, cost: 2500, scope: -20, quality: 10 },
+                        ]
+                    },
+                    {
+                        title: 'Final Decision',
+                        description: 'With your choices made, the project is ready. How do you deliver?',
+                        options: [
+                            { name: 'Big Bang Launch', desc: 'Release everything at once.', time: 0, cost: 0, scope: 0, quality: -10 },
+                            { name: 'Phased Release', desc: 'Release MVP first, then add features monthly.', time: 0, cost: 5000, scope: 0, quality: 15 },
+                            { name: 'Pilot First', desc: 'Test with one department before full launch.', time: 0.5, cost: 3000, scope: 0, quality: 25 },
+                        ]
+                    }
+                ]
+            },
+            ecommerce: {
+                name: '🛒 QuickShop - E-Commerce Launch',
+                description: 'Holiday season is coming. You have 60 days to launch an e-commerce platform. Missing the deadline = missing holiday sales (millions in revenue lost). You have a $50K budget and 5 features to build.',
+                timeLimit: 2,
+                budgetLimit: 50000,
+                scopeRequirements: 5,
+                challenges: [
+                    {
+                        title: 'Timeline Pressure',
+                        description: 'CEO to you: "We MUST launch in 60 days. No exceptions." Your plan shows 90 days minimum. What\'s your move?',
+                        options: [
+                            { name: 'Push Back', desc: 'Present data. Negotiate 75 days with CEO.', time: 1.25, cost: 0, scope: 0, quality: 10 },
+                            { name: 'Commit to 60 Days', desc: 'Say yes. Add team and work weekends.', time: 0, cost: 15000, scope: 0, quality: -20 },
+                            { name: 'Scope Reduction', desc: 'Cut to 3 essential features for 60 days.', time: 0, cost: 0, scope: -40, quality: 5 },
+                        ]
+                    },
+                    {
+                        title: 'Scope Creep',
+                        description: 'Midway through project, Marketing wants "just one more feature" - customer wishlists. Dev says it\'s 2 weeks.',
+                        options: [
+                            { name: 'Add It', desc: 'Push team harder. Add the feature.', time: -0.5, cost: 8000, scope: 20, quality: -15 },
+                            { name: 'Say No', desc: 'Feature goes in v2.0 post-launch.', time: 0, cost: 0, scope: 0, quality: 5 },
+                            { name: 'Trade Off', desc: 'Add feature, cut another to keep timeline.', time: 0, cost: 0, scope: 0, quality: -5 },
+                        ]
+                    },
+                    {
+                        title: 'Quality vs Launch',
+                        description: '2 weeks before launch, testing reveals payment issues. Fixing takes 1 week but launches on-time with bugs.',
+                        options: [
+                            { name: 'Fix Everything', desc: 'Delay launch 1 week. Full quality.', time: 0.25, cost: 3000, scope: 0, quality: 30 },
+                            { name: 'Launch & Patch', desc: 'Go live, patch bugs within 48 hours.', time: 0, cost: 1000, scope: 0, quality: -40 },
+                            { name: 'Limited Launch', desc: 'Launch with reduced features, fix payment fully.', time: 0, cost: 2000, scope: -20, quality: 5 },
+                        ]
+                    }
+                ]
+            },
+            healthcare: {
+                name: '🏥 MediCare - Healthcare Platform',
+                description: 'You\'re building a patient management system for a hospital. HIPAA compliance is mandatory. No shortcuts allowed. Budget is $200K, timeline is flexible, but quality is NON-NEGOTIABLE.',
+                timeLimit: 12,
+                budgetLimit: 200000,
+                scopeRequirements: 5,
+                challenges: [
+                    {
+                        title: 'Compliance Decision',
+                        description: 'Your security lead says: "HIPAA testing adds $40K and 2 months." CFO says: "That\'s expensive. Can\'t we do it faster?"',
+                        options: [
+                            { name: 'Full Compliance', desc: 'Do everything right. Full testing, certifications.', time: 2, cost: 40000, scope: 0, quality: 40 },
+                            { name: 'Cut Corners', desc: 'Basic security. Hope for the best.', time: 0, cost: 0, scope: 0, quality: -50 },
+                            { name: 'Phased Compliance', desc: 'Launch core features compliant, add others later.', time: 0.5, cost: 20000, scope: -20, quality: 20 },
+                        ]
+                    },
+                    {
+                        title: 'Testing Challenges',
+                        description: 'Your QA team discovers critical bugs in patient data handling. Fixing requires $15K more and 3 weeks.',
+                        options: [
+                            { name: 'Fix All', desc: 'Quality is not negotiable in healthcare.', time: 0.75, cost: 15000, scope: 0, quality: 35 },
+                            { name: 'Workaround', desc: 'Find a quick patch instead of full fix.', time: 0.25, cost: 3000, scope: 0, quality: -30 },
+                            { name: 'MVP Then Fix', desc: 'Launch with limited features, improve later.', time: 0, cost: 5000, scope: -30, quality: 5 },
+                        ]
+                    },
+                    {
+                        title: 'Go-Live Strategy',
+                        description: 'Time to deploy. How do you roll out the system?',
+                        options: [
+                            { name: 'Pilot Department', desc: 'Test with one department first (safest).', time: 1, cost: 5000, scope: 0, quality: 25 },
+                            { name: 'Full Rollout', desc: 'Deploy hospital-wide immediately.', time: 0, cost: 0, scope: 0, quality: -20 },
+                            { name: 'Gradual Deploy', desc: 'Week 1 pilot, week 2 partial, week 3 full.', time: 0.75, cost: 3000, scope: 0, quality: 15 },
+                        ]
+                    }
+                ]
+            },
+            saas: {
+                name: '🚀 DataFlow - SaaS Platform',
+                description: 'You\'re well-funded. $500K budget. 18 months timeline. Build a comprehensive data analytics platform with all features. Your job: deliver excellence.',
+                timeLimit: 18,
+                budgetLimit: 500000,
+                scopeRequirements: 5,
+                challenges: [
+                    {
+                        title: 'Team Investment',
+                        description: 'You have resources. Do you hire the best team or go lean?',
+                        options: [
+                            { name: 'Build A-Team', desc: 'Hire top talent, invest in training and tools.', time: 0, cost: 100000, scope: 0, quality: 30 },
+                            { name: 'Go Lean', desc: 'Smaller team, still resourced well.', time: 0.5, cost: 40000, scope: 0, quality: 10 },
+                            { name: 'Mixed Approach', desc: 'Core A-team, augment with contractors.', time: 0, cost: 60000, scope: 0, quality: 20 },
+                        ]
+                    },
+                    {
+                        title: 'Scope Expansion',
+                        description: 'You have time and budget. Customer research reveals demand for additional features. Add them?',
+                        options: [
+                            { name: 'Expand Scope', desc: 'Add 2-3 more features to v1.0.', time: 3, cost: 40000, scope: 40, quality: 5 },
+                            { name: 'Stick to Plan', desc: 'Keep original scope, deliver v1 excellently.', time: 0, cost: 0, scope: 0, quality: 20 },
+                            { name: 'Phase Approach', desc: 'v1 has core, v2 roadmap has extras.', time: 0, cost: 10000, scope: 20, quality: 15 },
+                        ]
+                    },
+                    {
+                        title: 'Quality Investment',
+                        description: 'Should you invest heavily in testing and reliability?',
+                        options: [
+                            { name: 'Full Investment', desc: 'Enterprise-grade QA, automated testing, infrastructure.', time: 2, cost: 80000, scope: 0, quality: 40 },
+                            { name: 'Standard QA', desc: 'Normal testing procedures.', time: 0, cost: 30000, scope: 0, quality: 15 },
+                            { name: 'Minimal QA', desc: 'Get it out, improve based on user feedback.', time: 0, cost: 10000, scope: 0, quality: -20 },
+                        ]
+                    }
+                ]
+            }
+        };
+        
+        let currentScenario = null;
+        let gameState = {
+            timeLeft: 0,
+            budgetLeft: 0,
+            scopeDone: 0,
+            qualityScore: 100,
+            decisions: 0
+        };
+        
+        function startGame(scenarioKey) {
+            currentScenario = scenarios[scenarioKey];
+            gameState = {
+                timeLeft: currentScenario.timeLimit,
+                budgetLeft: currentScenario.budgetLimit,
+                scopeDone: 0,
+                qualityScore: 100,
+                decisions: 0,
+                scenarioKey: scenarioKey
+            };
+            
+            document.querySelector('.start-screen').classList.remove('active');
+            document.querySelector('.game-screen').classList.add('active');
+            
+            showChallenge();
+        }
+        
+        function showChallenge() {
+            if (gameState.decisions >= currentScenario.challenges.length) {
+                endGame();
+                return;
+            }
+            
+            const challenge = currentScenario.challenges[gameState.decisions];
+            
+            document.getElementById('scenarioTitle').textContent = currentScenario.name;
+            document.getElementById('scenarioDesc').textContent = currentScenario.description;
+            document.getElementById('challenge').textContent = challenge.description;
+            
+            const decisionsGrid = document.getElementById('decisionsGrid');
+            decisionsGrid.innerHTML = '';
+            
+            challenge.options.forEach(option => {
+                const card = document.createElement('div');
+                card.className = 'decision-card';
+                
+                const impact = `
+                    ${option.time > 0 ? `<div class="impact-item"><span class="impact-positive">⏱️ +${option.time} months</span></div>` : ''}
+                    ${option.time < 0 ? `<div class="impact-item"><span class="impact-positive">⏱️ ${option.time} months (faster!)</span></div>` : ''}
+                    ${option.cost > 0 ? `<div class="impact-item"><span class="impact-negative">💰 $${option.cost} cost</span></div>` : ''}
+                    ${option.scope !== 0 ? `<div class="impact-item"><span class="${option.scope > 0 ? 'impact-positive' : 'impact-negative'}">📋 ${option.scope > 0 ? '+' : ''}${option.scope}% scope</span></div>` : ''}
+                    ${option.quality > 0 ? `<div class="impact-item"><span class="impact-positive">⭐ +${option.quality}% quality</span></div>` : ''}
+                    ${option.quality < 0 ? `<div class="impact-item"><span class="impact-negative">⭐ ${option.quality}% quality (risk!)</span></div>` : ''}
+                `;
+                
+                card.innerHTML = `
+                    <div class="decision-icon">${challenge.options.indexOf(option) === 0 ? '🟢' : challenge.options.indexOf(option) === 1 ? '🟡' : '🔴'}</div>
+                    <div class="decision-title">${option.name}</div>
+                    <div class="decision-description">${option.desc}</div>
+                    <div class="decision-impact">${impact}</div>
+                    <button class="decision-button" onclick="makeDecision(${gameState.decisions}, ${challenge.options.indexOf(option)})">Choose This →</button>
+                `;
+                
+                decisionsGrid.appendChild(card);
+            });
+            
+            updateStats();
+        }
+        
+        function makeDecision(challengeIndex, optionIndex) {
+            const challenge = currentScenario.challenges[challengeIndex];
+            const option = challenge.options[optionIndex];
+            
+            gameState.timeLeft += option.time;
+            gameState.budgetLeft -= option.cost;
+            gameState.scopeDone += option.scope;
+            gameState.qualityScore += option.quality;
+            
+            // Clamp values
+            gameState.timeLeft = Math.max(0, gameState.timeLeft);
+            gameState.budgetLeft = Math.max(0, gameState.budgetLeft);
+            gameState.scopeDone = Math.min(100, Math.max(0, gameState.scopeDone));
+            gameState.qualityScore = Math.min(100, Math.max(0, gameState.qualityScore));
+            
+            gameState.decisions++;
+            showChallenge();
+        }
+        
+        function updateStats() {
+            document.getElementById('timeRemaining').textContent = gameState.timeLeft.toFixed(1);
+            document.getElementById('budgetLeft').textContent = '$' + gameState.budgetLeft.toLocaleString();
+            document.getElementById('scopeDone').textContent = gameState.scopeDone + '%';
+            document.getElementById('qualityScore').textContent = gameState.qualityScore + '%';
+            
+            document.getElementById('timeBar').style.width = (gameState.timeLeft / currentScenario.timeLimit * 100) + '%';
+            document.getElementById('costBar').style.width = (gameState.budgetLeft / currentScenario.budgetLimit * 100) + '%';
+            document.getElementById('scopeBar').style.width = gameState.scopeDone + '%';
+            document.getElementById('qualityBar').style.width = gameState.qualityScore + '%';
+        }
+        
+        function endGame() {
+            document.querySelector('.game-screen').classList.remove('active');
+            document.querySelector('.results-screen').classList.add('active');
+            
+            // Calculate final score
+            let score = 0;
+            const scopeScore = gameState.scopeDone >= 80 ? 25 : gameState.scopeDone >= 50 ? 15 : 5;
+            const qualityScore = gameState.qualityScore >= 80 ? 25 : gameState.qualityScore >= 50 ? 15 : 5;
+            const timeScore = gameState.timeLeft >= 0 ? 25 : 10;
+            const budgetScore = gameState.budgetLeft >= 0 ? 25 : 10;
+            
+            score = scopeScore + qualityScore + timeScore + budgetScore;
+            
+            const resultTitle = score >= 80 ? '✅ PROJECT SUCCESS!' : score >= 60 ? '⚠️ PROJECT COMPLETED' : '❌ PROJECT FAILED';
+            const resultMessage = score >= 80 ? 'You delivered an excellent project! Your decisions were balanced and strategic.' : score >= 60 ? 'You delivered a working solution but with compromises. Learn from your choices.' : 'Your project struggled. Review your decisions for next time.';
+            
+            document.getElementById('resultTitle').textContent = resultTitle;
+            document.getElementById('resultScore').textContent = score + '/100';
+            document.getElementById('resultMessage').textContent = resultMessage;
+            
+            document.getElementById('finalStats').innerHTML = `
+                <div class="final-stat-item">
+                    <span>⏱️ Time Remaining:</span>
+                    <strong>${gameState.timeLeft.toFixed(1)} months ${gameState.timeLeft < 0 ? '(DELAYED!)' : '(On time)'}</strong>
+                </div>
+                <div class="final-stat-item">
+                    <span>💰 Budget Left:</span>
+                    <strong>$${gameState.budgetLeft.toLocaleString()} ${gameState.budgetLeft < 0 ? '(OVER BUDGET!)' : '(Within budget)'}</strong>
+                </div>
+                <div class="final-stat-item">
+                    <span>📋 Scope Delivered:</span>
+                    <strong>${gameState.scopeDone}% of features</strong>
+                </div>
+                <div class="final-stat-item">
+                    <span>⭐ Quality Score:</span>
+                    <strong>${gameState.qualityScore}% (${gameState.qualityScore >= 80 ? 'Excellent' : gameState.qualityScore >= 60 ? 'Good' : 'Poor'})</strong>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
