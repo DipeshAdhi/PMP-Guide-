@@ -75,7 +75,7 @@
 
         /* ─── Layout ─── */
         .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
-        section { padding: 4.5rem 0; border-bottom: 1px solid var(--line); }
+        section { padding: 4.5rem 0; border-bottom: 1px solid var(--line); scroll-margin-top: 70px; }
         .section-header { margin-bottom: 2.2rem; max-width: 760px; }
         .eyebrow {
             display: inline-block; font-weight: 700; font-size: 0.78em; letter-spacing: 0.12em;
@@ -287,10 +287,13 @@
         @keyframes fall { to { transform: translateY(105vh) rotate(720deg); } }
 
         @media (max-width: 860px) {
-            nav { flex-direction: column; align-items: flex-start; padding: 0.8rem 1rem; }
+            nav { position: static; flex-direction: column; align-items: stretch; gap: 0.5rem; padding: 0.8rem 1rem; }
+            .nav-links { flex-wrap: nowrap; overflow-x: auto; gap: 1.1rem; padding-bottom: 4px; white-space: nowrap; }
+            section { scroll-margin-top: 0; padding: 3rem 0; }
+            .reset-progress { margin-left: 0; }
             .progress-strip { padding: 0.7rem 1rem; }
-            .hero h1 { font-size: 2.2em; }
-            .section-header h2 { font-size: 1.8em; }
+            .hero h1 { font-size: clamp(1.6em, 7.5vw, 2.2em); overflow-wrap: break-word; }
+            .section-header h2 { font-size: clamp(1.4em, 6vw, 1.8em); }
             .challenge-layout, .model-card, .builder { grid-template-columns: 1fr; }
             .score-panel { position: static; }
             .pros-cons { grid-template-columns: 1fr; }
