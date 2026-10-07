@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RACI Matrix - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        :root { --accent: var(--coral); --tab-color: var(--coral); }
+        .raci-table { min-width: 760px; }
+        .raci-table th { text-align: center; font-size: 0.85em; }
+        .raci-table th:first-child { text-align: left; }
+        .raci-table td { text-align: center; padding: 0.45rem; vertical-align: middle; }
+        .raci-table td.task { text-align: left; font-weight: 600; color: var(--indigo); padding-left: 0.9rem; min-width: 190px; }
+        .raci-table td.task span { display: block; font-weight: 400; font-size: 0.82em; color: var(--muted); }
+        .cell {
+            width: 46px; height: 40px; border-radius: 8px; border: 1.5px dashed var(--line); background: var(--white);
+            font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1em; color: var(--muted);
+            transition: transform 0.1s ease;
+        }
+        .cell:hover { border-color: var(--indigo); }
+        .cell:active { transform: scale(0.94); }
+        .cell[data-v="R"] { background: var(--teal); border: none; color: #fff; }
+        .cell[data-v="A"] { background: var(--coral); border: none; color: #fff; }
+        .cell[data-v="C"] { background: var(--gold); border: none; color: var(--indigo); }
+        .cell[data-v="I"] { background: var(--purple); border: none; color: #fff; }
+        .row-status { font-size: 1.1em; width: 40px; }
+        tr.row-error td.task { box-shadow: inset 4px 0 0 var(--bad); }
+        tr.row-warn td.task { box-shadow: inset 4px 0 0 var(--gold); }
+        .col-load { font-size: 0.78em; color: var(--muted); }
+        .col-load.warn { color: var(--warn); font-weight: 700; }
+        .raci-tools { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+        .how { font-size: 0.88em; color: var(--muted); }
+        .steps-list { counter-reset: s; list-style: none; margin: 0 !important; }
+        .steps-list li { counter-increment: s; position: relative; padding-left: 2.4rem; margin-bottom: 0.9rem; }
+        .steps-list li::before {
+            content: counter(s); position: absolute; left: 0; top: 0; width: 1.7rem; height: 1.7rem; border-radius: 50%;
+            background: var(--coral); color: #fff; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.85em;
+            display: flex; align-items: center; justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html" aria-current="page">PM Tools</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="pm-tools.html">Overview</a>
+        <a href="raci.html" aria-current="page">👥 RACI matrix</a>
+        <a href="milestones.html">🏁 Milestones</a>
+        <a href="gantt.html">📊 Gantt chart</a>
+        <a href="cpm.html">🛤️ Critical path (CPM)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Tool 1 · People · Who does what</span>
+            <h1>RACI matrix</h1>
+            <p class="lead">A RACI matrix is a grid that shows, for every task or deliverable, who does the work, who owns the result, who gives input, and who just needs to be kept informed. It stops two common problems: work that nobody owns, and decisions that everyone thinks someone else is making.</p>
+            <div class="definition"><strong>PMBOK term:</strong> RACI is the most common type of <strong>Responsibility Assignment Matrix (RAM)</strong>. It's created in <em>Plan Resource Management</em> and becomes part of the resource management plan.</div>
+        </div>
+    </header>
+
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>The four letters</h2>
+                    <p>Each cell in the matrix holds one letter for one person on one task.</p>
+                </div>
+                <div class="grid-4">
+                    <div class="card letter-card" style="--c: var(--teal);">
+                        <div class="big">R</div>
+                        <h3>Responsible</h3>
+                        <p>Does the work. A task can have several people responsible, but must have at least one.</p>
+                        <p style="margin-top: 0.5rem; color: var(--muted);"><em>e.g. the developer who writes the code.</em></p>
+                    </div>
+                    <div class="card letter-card" style="--c: var(--coral);">
+                        <div class="big">A</div>
+                        <h3>Accountable</h3>
+                        <p>Owns the result and signs off. <strong>Exactly one person per task.</strong> The buck stops here.</p>
+                        <p style="margin-top: 0.5rem; color: var(--muted);"><em>e.g. the project manager approving the build.</em></p>
+                    </div>
+                    <div class="card letter-card" style="--c: var(--gold);">
+                        <div class="big">C</div>
+                        <h3>Consulted</h3>
+                        <p>Gives input <em>before</em> the work is done. Two-way communication.</p>
+                        <p style="margin-top: 0.5rem; color: var(--muted);"><em>e.g. teachers asked what the grade screen needs.</em></p>
+                    </div>
+                    <div class="card letter-card" style="--c: var(--purple);">
+                        <div class="big">I</div>
+                        <h3>Informed</h3>
+                        <p>Told about progress or the outcome <em>after</em> decisions are made. One-way communication.</p>
+                        <p style="margin-top: 0.5rem; color: var(--muted);"><em>e.g. the sponsor receiving the weekly status report.</em></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block" id="exercise">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Fix this RACI matrix</h2>
+                    <p>This RACI matrix for the Scholar Academy school system has five common mistakes. Click a cell to cycle through R → A → C → I → blank, or select it and type R, A, C or I (Delete to clear). The checker updates as you go.</p>
+                </div>
+                <div class="card">
+                    <div class="raci-tools">
+                        <span class="how">Status column: ✓ valid · ⚠ works but risky · ✗ broken</span>
+                        <div class="btn-row">
+                            <button class="btn btn-ghost" id="resetBtn">Restart exercise</button>
+                            <button class="btn btn-ghost" id="clearBtn">Clear all</button>
+                            <button class="btn btn-primary" id="modelBtn">Show a model answer</button>
+                        </div>
+                    </div>
+                    <div class="scroll-x">
+                        <table class="data raci-table" id="raciTable"></table>
+                    </div>
+                    <div id="raciFeedback"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container grid-2">
+                <div class="card">
+                    <h3>How to build a RACI matrix</h3>
+                    <ol class="steps-list" style="margin-top: 1rem;">
+                        <li><strong>List the work.</strong> Use deliverables or work packages from the WBS as rows.</li>
+                        <li><strong>List the roles.</strong> Use roles (Business Analyst) rather than names, so the matrix survives people changing.</li>
+                        <li><strong>Assign A first.</strong> Exactly one accountable person per row.</li>
+                        <li><strong>Assign R.</strong> Who will actually do the work?</li>
+                        <li><strong>Add C and I sparingly.</strong> Each C slows the work; each I adds a message to send.</li>
+                        <li><strong>Review it with the team.</strong> Everyone should agree with their letters before work starts.</li>
+                    </ol>
+                </div>
+                <div class="card">
+                    <h3>How to read the finished matrix</h3>
+                    <ul>
+                        <li><strong>Read across a row</strong> to see who's involved in one task.</li>
+                        <li><strong>Read down a column</strong> to see one person's workload. A column full of R's means that person is overloaded.</li>
+                        <li><strong>A row with no A</strong>: nobody will make the final call.</li>
+                        <li><strong>A row with two A's</strong>: conflicting decisions and finger-pointing.</li>
+                        <li><strong>A column with no letters</strong>: does that person need to be on the project?</li>
+                    </ul>
+                    <h3 style="margin-top: 1.4rem;">Variants you may see</h3>
+                    <ul>
+                        <li><strong>RASCI</strong>: adds <em>S</em> for Support (helps the person who's responsible).</li>
+                        <li><strong>RACI-VS</strong>: adds Verifier and Signatory.</li>
+                        <li><strong>DACI</strong>: Driver, Approver, Contributor, Informed, used for decisions.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="exam-tips">
+                    <h3>📝 PMP exam tips</h3>
+                    <ul>
+                        <li>"Only one person can be <strong>Accountable</strong>" is the rule most often tested.</li>
+                        <li>RACI is a type of <strong>RAM</strong>. A RAM can also be organized by WBS work package and show only "who"; RACI adds the type of involvement.</li>
+                        <li>Created during <strong>Plan Resource Management</strong>; documented in the <strong>resource management plan</strong>.</li>
+                        <li>If a question describes confusion over who approves deliverables or team members doing duplicate work, the answer is often "review or create the RACI chart".</li>
+                        <li>R and A can be the same person on small tasks. Some organizations write this as "A/R".</li>
+                    </ul>
+                </div>
+                <div class="next-tool">
+                    <a href="pm-tools.html">← All PM tools</a>
+                    <a href="milestones.html">Next: Milestones →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · PM Tools</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a></p>
+    </footer>
+
+<script>
+const ROLES = ['Sponsor (Principal)', 'Project Manager', 'Business Analyst', 'Developer', 'QA Tester', 'Teachers'];
+const TASKS = [
+    ['Approve project charter', 'Initiating'],
+    ['Gather requirements', 'Planning'],
+    ['Design the database', 'Executing'],
+    ['Build the software', 'Executing'],
+    ['Test the system', 'Monitoring & Controlling'],
+    ['Train teachers', 'Executing'],
+    ['Approve go-live', 'Closing']
+];
+const CYCLE = ['', 'R', 'A', 'C', 'I'];
+
+// Five deliberate mistakes: two A's, no A, no R, too many C's, an empty row
+const BROKEN = [
+    ['A', 'A', '', '', '', ''],
+    ['', '', 'R', '', '', 'C'],
+    ['', 'A', 'C', 'R', '', ''],
+    ['I', 'A', 'C', 'R', 'I', ''],
+    ['', 'A', '', 'C', 'C', ''],
+    ['C', 'A', 'R', 'C', 'C', 'C'],
+    ['', '', '', '', '', '']
+];
+const MODEL = [
+    ['A', 'R', 'C', '', '', 'I'],
+    ['C', 'A', 'R', 'C', '', 'C'],
+    ['', 'A', 'C', 'R', 'I', ''],
+    ['I', 'A', 'C', 'R', 'I', ''],
+    ['', 'A', 'C', 'C', 'R', 'I'],
+    ['I', 'A', 'R', '', '', 'C'],
+    ['A', 'R', 'I', 'I', 'C', 'C']
+];
+const MODEL_NOTES = [
+    'The sponsor authorizes the project (A); the PM drafts the charter (R).',
+    'The BA runs the sessions (R); teachers and the sponsor give input (C).',
+    'Developers design it (R); the PM owns the deliverable (A).',
+    'Same pattern: one A, the people doing the work are R.',
+    'QA runs the tests (R); developers and BA answer questions (C).',
+    'The BA prepares and delivers training (R); teachers say when they can attend (C).',
+    'The sponsor makes the go-live call (A); the PM prepares the readiness review (R).'
+];
+
+let grid = BROKEN.map(r => [...r]);
+
+function renderTable() {
+    const table = document.getElementById('raciTable');
+    table.innerHTML = `
+        <thead><tr><th>Task</th>${ROLES.map(r => `<th>${r}</th>`).join('')}<th>Status</th></tr></thead>
+        <tbody>${TASKS.map(([task, group], ri) => `
+            <tr data-row="${ri}">
+                <td class="task">${task}<span>${group}</span></td>
+                ${ROLES.map((role, ci) => `<td><button class="cell" data-r="${ri}" data-c="${ci}" data-v="${grid[ri][ci]}" aria-label="${task}, ${role}: ${grid[ri][ci] || 'blank'}">${grid[ri][ci]}</button></td>`).join('')}
+                <td class="row-status" aria-live="polite"></td>
+            </tr>`).join('')}
+        </tbody>
+        <tfoot><tr><td class="task">Workload (R count)</td>${ROLES.map((_, ci) => `<td class="col-load" data-col="${ci}"></td>`).join('')}<td></td></tr></tfoot>`;
+
+    table.querySelectorAll('.cell').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const r = +btn.dataset.r, c = +btn.dataset.c;
+            setCell(r, c, CYCLE[(CYCLE.indexOf(grid[r][c]) + 1) % CYCLE.length]);
+        });
+        btn.addEventListener('keydown', e => {
+            const k = e.key.toUpperCase();
+            const r = +btn.dataset.r, c = +btn.dataset.c;
+            if (['R', 'A', 'C', 'I'].includes(k)) { e.preventDefault(); setCell(r, c, k); }
+            else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); setCell(r, c, ''); }
+        });
+    });
+    validate();
+}
+
+function setCell(r, c, v) {
+    grid[r][c] = v;
+    const btn = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+    btn.dataset.v = v;
+    btn.textContent = v;
+    btn.setAttribute('aria-label', `${TASKS[r][0]}, ${ROLES[c]}: ${v || 'blank'}`);
+    validate();
+}
+
+function validate() {
+    const errors = [], warnings = [];
+
+    grid.forEach((row, ri) => {
+        const count = l => row.filter(v => v === l).length;
+        const task = TASKS[ri][0];
+        const rowErrors = [], rowWarn = [];
+        if (count('A') === 0) rowErrors.push(`<strong>${task}</strong>: no one is Accountable. Who signs off?`);
+        if (count('A') > 1) rowErrors.push(`<strong>${task}</strong>: ${count('A')} people are Accountable. When everyone owns it, no one does. Keep exactly one A.`);
+        if (count('R') === 0) rowErrors.push(`<strong>${task}</strong>: no one is Responsible. Who actually does the work?`);
+        if (count('C') >= 4) rowWarn.push(`<strong>${task}</strong>: ${count('C')} people consulted. Every C slows the work down; could some be I instead?`);
+
+        const tr = document.querySelector(`tr[data-row="${ri}"]`);
+        tr.classList.toggle('row-error', rowErrors.length > 0);
+        tr.classList.toggle('row-warn', !rowErrors.length && rowWarn.length > 0);
+        tr.querySelector('.row-status').textContent = rowErrors.length ? '✗' : rowWarn.length ? '⚠' : '✓';
+        tr.querySelector('.row-status').style.color = rowErrors.length ? 'var(--bad)' : rowWarn.length ? 'var(--warn)' : 'var(--ok)';
+        errors.push(...rowErrors);
+        warnings.push(...rowWarn);
+    });
+
+    ROLES.forEach((role, ci) => {
+        const col = grid.map(r => r[ci]);
+        const rCount = col.filter(v => v === 'R').length;
+        const cell = document.querySelector(`.col-load[data-col="${ci}"]`);
+        cell.textContent = `${rCount} R`;
+        cell.classList.toggle('warn', rCount >= 4);
+        if (rCount >= 4) warnings.push(`<strong>${role}</strong> is Responsible for ${rCount} tasks: likely overloaded.`);
+        if (col.every(v => !v)) warnings.push(`<strong>${role}</strong> has no role on any task. Do they need to be on the project?`);
+    });
+
+    const fb = document.getElementById('raciFeedback');
+    if (!errors.length && !warnings.length) {
+        fb.innerHTML = '<div class="feedback success">✅ Valid RACI matrix: every task has exactly one A, at least one R, a manageable number of C\'s, and no one is overloaded.</div>';
+    } else {
+        fb.innerHTML = `<div class="feedback ${errors.length ? 'error' : 'partial'}">
+            ${errors.length ? `${errors.length} problem${errors.length > 1 ? 's' : ''} to fix` : 'No broken rows'}${warnings.length ? `, ${warnings.length} warning${warnings.length > 1 ? 's' : ''}` : ''}:
+            <ul>${[...errors, ...warnings].map(m => `<li>${m}</li>`).join('')}</ul></div>`;
+    }
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => { grid = BROKEN.map(r => [...r]); renderTable(); });
+document.getElementById('clearBtn').addEventListener('click', () => { grid = BROKEN.map(r => r.map(() => '')); renderTable(); });
+document.getElementById('modelBtn').addEventListener('click', () => {
+    grid = MODEL.map(r => [...r]);
+    renderTable();
+    document.getElementById('raciFeedback').innerHTML += `<div class="feedback partial" style="color: var(--charcoal);"><strong>Why the model answer looks like this:</strong><ul>${TASKS.map((t, i) => `<li><strong>${t[0]}</strong>: ${MODEL_NOTES[i]}</li>`).join('')}</ul></div>`;
+});
+
+renderTable();
+</script>
+</body>
+</html>

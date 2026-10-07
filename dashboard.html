@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMP Guide - Three Pillars of Project Management</title>
+    <title>PMP Guide - Four Pillars of Project Management</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -349,7 +349,7 @@
 
         .venn-diagram {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 2rem;
             margin-bottom: 3rem;
         }
@@ -378,6 +378,10 @@
 
         .venn-item.project {
             border-top: 4px solid var(--gold);
+        }
+
+        .venn-item.product {
+            border-top: 4px solid var(--purple);
         }
 
         .venn-item.center {
@@ -524,6 +528,185 @@
             text-decoration: underline;
         }
 
+        /* ─── Hero: clickable pillars + detail panel ─── */
+        :root { --purple: #A78BFA; }
+
+        button.pillar-preview, button.success-outcome {
+            font-family: inherit;
+            text-align: center;
+        }
+        .pillar-preview.product { color: var(--purple); border-color: var(--purple); }
+        .pillar-preview.active, .success-outcome.active {
+            background: currentColor;
+            transform: translateY(-8px);
+            box-shadow: 0 12px 28px rgba(44, 62, 80, 0.15);
+        }
+        .pillar-preview.active > *, .success-outcome.active > * { color: white; opacity: 1; }
+        .success-outcome { cursor: pointer; color: var(--indigo); transition: all 0.3s; }
+        .success-outcome:hover { transform: translateY(-8px); }
+        .pillar-preview:focus-visible, .success-outcome:focus-visible { outline: 3px solid var(--indigo); outline-offset: 4px; }
+        .hero-hint { font-size: 0.9em; color: #777; margin-top: -1.5rem; margin-bottom: 2rem; }
+
+        .pillar-detail {
+            width: 100%;
+            max-width: 1150px;
+            text-align: left;
+            background: white;
+            border: 2px solid var(--light-gray);
+            border-top: 6px solid var(--detail-color, var(--indigo));
+            border-radius: 14px;
+            padding: 2.5rem;
+            animation: detail-in 0.35s ease;
+        }
+        @keyframes detail-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .detail-head {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 2.5rem;
+            margin-bottom: 2.2rem;
+        }
+        .detail-eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.78em;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--detail-color, var(--indigo));
+        }
+        .detail-head h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2em;
+            color: var(--indigo);
+            margin: 0.3rem 0 0.8rem;
+        }
+        .detail-head p { line-height: 1.7; }
+        .detail-facts { display: flex; flex-direction: column; gap: 0.8rem; }
+        .fact {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 0.9rem 1.1rem;
+            font-size: 0.92em;
+            line-height: 1.55;
+        }
+        .fact strong {
+            display: block;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--detail-color, var(--indigo));
+            margin-bottom: 0.2rem;
+        }
+        .workflow-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.25em;
+            color: var(--indigo);
+            margin-bottom: 1.2rem;
+        }
+
+        /* Pillar workflow: a real sequence, so steps are numbered */
+        .workflow {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0;
+            counter-reset: step;
+        }
+        .wf-step {
+            position: relative;
+            padding: 0 1rem 0 0;
+        }
+        .wf-step::before {
+            counter-increment: step;
+            content: counter(step);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--detail-color, var(--indigo));
+            color: white;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+        .wf-step::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 34px;
+            right: 0;
+            height: 2px;
+            background: var(--light-gray);
+        }
+        .wf-step:last-child::after { display: none; }
+        .wf-step h4 {
+            font-family: 'Syne', sans-serif;
+            color: var(--indigo);
+            font-size: 1em;
+            margin: 0.8rem 0 0.4rem;
+        }
+        .wf-step p { font-size: 0.86em; line-height: 1.55; color: #555; }
+        .wf-output {
+            display: inline-block;
+            margin-top: 0.6rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.74em;
+            background: var(--white);
+            border-left: 3px solid var(--detail-color, var(--indigo));
+            padding: 3px 8px;
+            border-radius: 3px;
+        }
+        .detail-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--indigo);
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 2px solid var(--detail-color, var(--indigo));
+        }
+
+        /* Integrated view: phases × pillars */
+        .matrix { display: flex; flex-direction: column; gap: 0.5rem; }
+        .matrix-row {
+            display: grid;
+            grid-template-columns: 150px repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+        .matrix-head div {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 0.9em;
+            padding: 0 0.6rem;
+        }
+        .matrix-phase {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            color: var(--indigo);
+            padding: 0.8rem 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .matrix-phase span {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.75em;
+            color: #999;
+        }
+        .matrix-cell {
+            background: var(--white);
+            border-top: 3px solid var(--cell-color);
+            border-radius: 6px;
+            padding: 0.7rem 0.8rem;
+            font-size: 0.86em;
+            line-height: 1.5;
+        }
+        .matrix-cell b { display: none; }
+
         /* Responsive */
         @media (max-width: 768px) {
             nav {
@@ -546,9 +729,27 @@
             }
 
             .pillar-preview {
-                min-width: 140px;
-                padding: 1.5rem;
+                min-width: 130px;
+                padding: 1.2rem;
             }
+
+            .equation-plus, .equals-sign { font-size: 1.5em; margin: 0; }
+            .pillar-detail { padding: 1.5rem 1.2rem; }
+            .detail-head { grid-template-columns: 1fr; gap: 1.2rem; }
+            .detail-head h2 { font-size: 1.6em; }
+
+            /* Workflow becomes a vertical timeline */
+            .workflow { grid-template-columns: 1fr; gap: 1.2rem; }
+            .wf-step { padding: 0 0 0 50px; }
+            .wf-step::before { position: absolute; left: 0; top: 0; }
+            .wf-step::after { top: 34px; left: 16px; right: auto; bottom: -1.2rem; width: 2px; height: auto; }
+            .wf-step h4 { margin-top: 0.4rem; }
+
+            /* Matrix stacks: one card per phase */
+            .matrix-head { display: none !important; }
+            .matrix-row { grid-template-columns: 1fr; border-bottom: 1px solid var(--light-gray); padding-bottom: 0.8rem; }
+            .matrix-phase { padding: 0.4rem 0; }
+            .matrix-cell b { display: block; font-family: 'Syne', sans-serif; color: var(--cell-color); font-size: 0.85em; }
 
             .section-title {
                 font-size: 1.8em;
@@ -576,6 +777,8 @@
         <div class="logo">PMP Guide</div>
         <ul class="nav-links">
             <li><a href="index.html">Learning Paths</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
             <li><a href="triple-constraint-advanced.html">Interactive Triangle</a></li>
             <li><a href="#learn">Learn More</a></li>
         </ul>
@@ -583,45 +786,56 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <h1>Three Pillars of Project Success</h1>
-        <p class="hero-subtitle">Master the interconnected elements that make projects succeed: managing people, executing process, and controlling constraints.</p>
+        <h1>Four Pillars of Project Success</h1>
+        <p class="hero-subtitle">Master the interconnected elements that make projects succeed: leading people, following a process, controlling project constraints, and delivering a product that creates value.</p>
 
-        <div class="hero-equation">
-            <div class="pillar-preview people">
+        <div class="hero-equation" role="tablist" aria-label="Project pillars">
+            <button class="pillar-preview people" data-pillar="people" role="tab">
                 <div class="pillar-icon">👥</div>
                 <div class="pillar-name">PEOPLE</div>
                 <div class="pillar-desc">Teams & Leadership</div>
-            </div>
+            </button>
 
             <div class="equation-plus">+</div>
 
-            <div class="pillar-preview process">
+            <button class="pillar-preview process" data-pillar="process" role="tab">
                 <div class="pillar-icon">⚙️</div>
                 <div class="pillar-name">PROCESS</div>
                 <div class="pillar-desc">SDLC & Methods</div>
-            </div>
+            </button>
 
             <div class="equation-plus">+</div>
 
-            <div class="pillar-preview project">
+            <button class="pillar-preview project" data-pillar="project" role="tab">
                 <div class="pillar-icon">📊</div>
                 <div class="pillar-name">PROJECT</div>
                 <div class="pillar-desc">Constraints & Goals</div>
-            </div>
+            </button>
+
+            <div class="equation-plus">+</div>
+
+            <button class="pillar-preview product" data-pillar="product" role="tab">
+                <div class="pillar-icon">📦</div>
+                <div class="pillar-name">PRODUCT</div>
+                <div class="pillar-desc">Value & Quality</div>
+            </button>
 
             <div class="equals-sign">=</div>
 
-            <div class="success-outcome">
+            <button class="success-outcome" data-pillar="success" role="tab">
                 <div class="success-outcome-emoji">🎯</div>
                 <div class="success-outcome-text">Successful Project</div>
-            </div>
+            </button>
         </div>
+        <p class="hero-hint">Select a pillar to see what it means and its workflow, or select 🎯 to see how all four work together.</p>
+
+        <div class="pillar-detail" id="pillarDetail" role="tabpanel" aria-live="polite"></div>
     </section>
 
     <!-- Pillars Deep Dive -->
     <section class="pillars-section" id="learn">
         <div class="pillars-container">
-            <h2 class="section-title">The Three Pillars</h2>
+            <h2 class="section-title">The Four Pillars</h2>
 
             <div class="pillars-grid">
                 <!-- People Pillar -->
@@ -715,10 +929,16 @@
                     <div class="venn-desc">Clear objectives, measurable deliverables, constraints</div>
                 </div>
 
+                <div class="venn-item product">
+                    <div class="venn-emoji">📦</div>
+                    <div class="venn-title">Product Focus</div>
+                    <div class="venn-desc">User needs, acceptance criteria, business value</div>
+                </div>
+
                 <div class="venn-item center">
                     <div class="venn-emoji">⭐</div>
                     <div class="venn-title">Project Excellence</div>
-                    <div class="venn-desc">When all three pillars work together, you deliver value on time, within budget, with high quality and team satisfaction</div>
+                    <div class="venn-desc">When all four pillars work together, you deliver value on time, within budget, with high quality and team satisfaction</div>
                 </div>
             </div>
         </div>
@@ -760,5 +980,167 @@
         <p>&copy; 2026 PMP Guide. Comprehensive project management learning platform.</p>
         <p><a href="index.html">Back to Main Guide</a></p>
     </footer>
+
+    <script>
+        const PILLARS = {
+            people: {
+                color: 'var(--coral)', icon: '👥', name: 'People',
+                eyebrow: 'Pillar 1 · Teams & Leadership',
+                description: 'Projects are delivered by people, for people. This pillar covers the sponsor who funds the work, the team that builds it, and the stakeholders who use it or are affected by it. Most failed projects trace back to people problems: unclear roles, poor communication, or stakeholders who were never brought on board.',
+                facts: [
+                    ['Who owns it', 'The project manager, with support from the sponsor and functional managers.'],
+                    ['Key question', 'Does everyone know their role, and are the right people engaged at the right time?'],
+                    ['On the PMP exam', 'The People domain is 42% of the exam.']
+                ],
+                steps: [
+                    ['Identify stakeholders', 'List everyone affected and map them by power and interest.', 'Stakeholder register'],
+                    ['Build the team', 'Assign roles and responsibilities so no task is unowned.', 'RACI matrix'],
+                    ['Agree how to work', 'Set ground rules, meeting rhythm, and who gets which updates.', 'Team charter · Comms plan'],
+                    ['Develop the team', 'Coach through forming, storming, norming, performing.', 'Team assessments'],
+                    ['Resolve conflict', 'Collaborate on problems; keep stakeholders engaged.', 'Issue log'],
+                    ['Release & recognize', 'Appraise performance, celebrate, release resources.', 'Lessons learned']
+                ],
+                link: ['game-interactive.html#cases', 'Practice people decisions in the PM Lab →']
+            },
+            process: {
+                color: 'var(--teal)', icon: '⚙️', name: 'Process',
+                eyebrow: 'Pillar 2 · SDLC & Methods',
+                description: 'Process is how work moves from an idea to a delivered result. It includes the life cycle you choose (predictive, agile, or hybrid), the five process groups every project passes through, and the controls (quality checks and change control) that keep the work consistent and predictable.',
+                facts: [
+                    ['Who owns it', 'The project manager, following the organization\'s methods and the PMO\'s standards.'],
+                    ['Key question', 'Is there a clear, repeatable way to plan, build, check, and change the work?'],
+                    ['On the PMP exam', 'The Process domain is 50% of the exam.']
+                ],
+                steps: [
+                    ['Choose the approach', 'Pick predictive, agile, or hybrid based on how clear the requirements are.', 'Development approach'],
+                    ['Initiate', 'Get formal authorization and name the project manager.', 'Project charter'],
+                    ['Plan', 'Define how scope, schedule, cost, quality, and risk will be managed.', 'Project management plan'],
+                    ['Execute', 'Do the work and run quality assurance.', 'Deliverables'],
+                    ['Monitor & control', 'Compare actuals to plan; route every change through change control.', 'Change requests · Reports'],
+                    ['Close', 'Get acceptance, hand over, and archive what you learned.', 'Final report']
+                ],
+                link: ['game-interactive.html#builder', 'Build a workflow for each approach →']
+            },
+            project: {
+                color: 'var(--gold)', icon: '📊', name: 'Project',
+                eyebrow: 'Pillar 3 · Constraints & Goals',
+                description: 'A project is a temporary effort with a defined goal, bounded by scope, time, and cost. This pillar is about defining those constraints clearly, breaking the work into manageable pieces, and keeping all three in balance when something changes, because a change to one always affects the others.',
+                facts: [
+                    ['Who owns it', 'The project manager; the sponsor approves the baselines and major trade-offs.'],
+                    ['Key question', 'What exactly are we delivering, by when, and for how much?'],
+                    ['Key formulas', 'CPI = EV ÷ AC · SPI = EV ÷ PV. Below 1.0 means over budget or behind schedule.']
+                ],
+                steps: [
+                    ['Set objectives', 'Write SMART goals the sponsor agrees to.', 'Charter objectives'],
+                    ['Define scope', 'State what is in and, just as important, what is out.', 'Scope statement'],
+                    ['Create the WBS', 'Break scope down into work packages.', 'WBS'],
+                    ['Estimate time & cost', 'Sequence activities, find the critical path, build the budget.', 'Schedule & cost baselines'],
+                    ['Plan for risk', 'Identify threats and opportunities and plan responses.', 'Risk register'],
+                    ['Track & balance', 'Measure with earned value and trade off scope, time, and cost.', 'Approved changes']
+                ],
+                link: ['triple-constraint-advanced.html', 'Balance scope, time, and cost in the triangle tool →']
+            },
+            product: {
+                color: 'var(--purple)', icon: '📦', name: 'Product',
+                eyebrow: 'Pillar 4 · Value & Quality',
+                description: 'The product is what remains after the project ends: the thing users actually use. A project can finish on time and on budget and still fail if the product doesn\'t solve the user\'s problem. This pillar keeps the focus on requirements, quality, and the business value the project was started for.',
+                facts: [
+                    ['Who owns it', 'The product owner or business sponsor, working with users and the project team.'],
+                    ['Key question', 'Will people use this, and does it deliver the benefits in the business case?'],
+                    ['On the PMP exam', 'Shows up in the Business Environment domain (8%): benefits, value, and compliance.']
+                ],
+                steps: [
+                    ['Understand the problem', 'Confirm the need and the expected benefits.', 'Business case'],
+                    ['Collect requirements', 'Gather what users need and link each one to a deliverable.', 'Traceability matrix'],
+                    ['Prioritize', 'Rank features by value; must-haves first.', 'Product backlog (MoSCoW)'],
+                    ['Build & test', 'Deliver increments and check them against acceptance criteria.', 'Verified deliverables'],
+                    ['Validate with users', 'The customer formally accepts what was built.', 'Accepted deliverables'],
+                    ['Transition & measure', 'Hand over to operations and track whether benefits are realized.', 'Benefits report']
+                ],
+                link: ['project-simulator.html', 'See how product decisions play out in the simulator →']
+            }
+        };
+
+        // What each pillar does in each process group
+        const PHASES = [
+            ['Initiate', ['Identify sponsor & key stakeholders', 'Choose the delivery approach', 'Write the charter and objectives', 'Confirm the business case and user need']],
+            ['Plan', ['Assign roles (RACI) and plan communications', 'Define quality checks and change control', 'Baseline scope, WBS, schedule, and budget', 'Collect and prioritize requirements']],
+            ['Execute', ['Develop the team and resolve conflicts', 'Follow the workflow; assure quality', 'Direct the work and respond to risks', 'Build and test the deliverables']],
+            ['Monitor & Control', ['Keep stakeholders engaged; track team health', 'Run integrated change control', 'Track CPI / SPI and variances', 'Validate deliverables with users']],
+            ['Close', ['Recognize and release the team', 'Record lessons learned', 'Close contracts; write the final report', 'Hand over and measure benefits']]
+        ];
+        const ORDER = ['people', 'process', 'project', 'product'];
+
+        function renderPillar(key) {
+            const panel = document.getElementById('pillarDetail');
+            if (key === 'success') {
+                panel.style.setProperty('--detail-color', 'var(--indigo)');
+                panel.innerHTML = `
+                    <div class="detail-head">
+                        <div>
+                            <div class="detail-eyebrow">All four pillars · Integrated workflow</div>
+                            <h2>🎯 How a successful project comes together</h2>
+                            <p>No pillar works on its own. A strong team with no process creates chaos. A perfect plan that ignores users builds the wrong product. In every phase, the project manager works all four pillars at once. Read across a row to see what happens in that phase.</p>
+                        </div>
+                        <div class="detail-facts">
+                            <div class="fact"><strong>Definition of success</strong>The agreed scope delivered on time and within budget, to the expected quality, with stakeholders satisfied and the business benefits realized.</div>
+                            <div class="fact"><strong>Rule of thumb</strong>If one pillar is weak, the others carry extra load, and eventually they fail too.</div>
+                        </div>
+                    </div>
+                    <h3 class="workflow-title">Workflow: what each pillar does in each phase</h3>
+                    <div class="matrix">
+                        <div class="matrix-row matrix-head">
+                            <div></div>
+                            ${ORDER.map(k => `<div style="color:${PILLARS[k].color}">${PILLARS[k].icon} ${PILLARS[k].name}</div>`).join('')}
+                        </div>
+                        ${PHASES.map(([phase, cells], i) => `
+                            <div class="matrix-row">
+                                <div class="matrix-phase"><span>${i + 1}/5</span>${phase}</div>
+                                ${cells.map((c, j) => `<div class="matrix-cell" style="--cell-color:${PILLARS[ORDER[j]].color}"><b>${PILLARS[ORDER[j]].icon} ${PILLARS[ORDER[j]].name}</b>${c}</div>`).join('')}
+                            </div>`).join('')}
+                    </div>
+                    <a class="detail-link" href="game-interactive.html#process">Explore each phase in the PM Lab →</a>`;
+                return;
+            }
+
+            const p = PILLARS[key];
+            panel.style.setProperty('--detail-color', p.color);
+            panel.innerHTML = `
+                <div class="detail-head">
+                    <div>
+                        <div class="detail-eyebrow">${p.eyebrow}</div>
+                        <h2>${p.icon} ${p.name}</h2>
+                        <p>${p.description}</p>
+                    </div>
+                    <div class="detail-facts">
+                        ${p.facts.map(([label, text]) => `<div class="fact"><strong>${label}</strong>${text}</div>`).join('')}
+                    </div>
+                </div>
+                <h3 class="workflow-title">${p.name} workflow</h3>
+                <div class="workflow">
+                    ${p.steps.map(([title, text, output]) => `
+                        <div class="wf-step">
+                            <h4>${title}</h4>
+                            <p>${text}</p>
+                            <span class="wf-output">→ ${output}</span>
+                        </div>`).join('')}
+                </div>
+                <a class="detail-link" href="${p.link[0]}">${p.link[1]}</a>`;
+        }
+
+        function selectPillar(key) {
+            document.querySelectorAll('[data-pillar]').forEach(b => {
+                const on = b.dataset.pillar === key;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-selected', on);
+            });
+            renderPillar(key);
+        }
+
+        document.querySelectorAll('[data-pillar]').forEach(btn =>
+            btn.addEventListener('click', () => selectPillar(btn.dataset.pillar)));
+
+        selectPillar('success');
+    </script>
 </body>
 </html>
