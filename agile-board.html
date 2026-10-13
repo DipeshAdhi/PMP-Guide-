@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scrum Board - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="agile.css">
+    <style>
+        /* Role switcher */
+        .role-bar { position: sticky; top: 0; z-index: 50; background: var(--white); border-bottom: 1px solid var(--line); padding: 0.7rem 0; }
+        .role-bar .container { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+        .role-bar .label { font-size: 0.8em; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+        .role-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1.5px solid var(--line); background: var(--paper); border-radius: 30px; padding: 6px 14px; font-weight: 600; font-size: 0.88em; color: var(--indigo); }
+        .role-btn[aria-pressed="true"] { background: var(--rc); border-color: var(--rc); color: #fff; }
+        .role-panel { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 1rem; margin-top: 1.2rem; }
+        .role-panel .card { border-top: 4px solid var(--rc); }
+        .role-panel h3 { font-size: 1em; }
+        .role-panel ul { margin-top: 0.4rem; }
+        .role-panel li { font-size: 0.86em; }
+        .sim-note { font-size: 0.78em; color: var(--muted); margin-top: 0.6rem; }
+
+        /* Sprint cycle strip */
+        .cycle { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; margin-bottom: 1rem; }
+        .stage { position: relative; text-align: left; background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.6rem 0.7rem; }
+        .stage:hover { border-color: var(--indigo); }
+        .stage .s-icon { font-size: 1.2em; }
+        .stage .s-name { display: block; font-weight: 700; color: var(--indigo); font-size: 0.85em; margin-top: 0.15rem; }
+        .stage .s-sub { display: block; font-size: 0.72em; color: var(--muted); }
+        .stage.now { background: var(--indigo); border-color: var(--indigo); }
+        .stage.now .s-name { color: var(--gold); }
+        .stage.now .s-sub { color: rgba(255,255,255,0.75); }
+        .stage.ongoing { border-color: var(--teal); }
+        .sprint-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.9rem 1.1rem; margin-bottom: 1rem; }
+        .sprint-head h3 { font-size: 1.1em; }
+        .sprint-head .goal { font-size: 0.92em; color: var(--charcoal); }
+        .timebox { display: flex; gap: 3px; margin-top: 0.4rem; }
+        .timebox span { width: 18px; height: 8px; border-radius: 2px; background: var(--line); }
+        .timebox span.past { background: var(--teal); }
+        .timebox span.today { background: var(--gold); }
+
+        /* Panel tabs */
+        .panel-tabs { display: flex; gap: 0.3rem; overflow-x: auto; border-bottom: 2px solid var(--line); margin-bottom: 1.2rem; }
+        .panel-tab { background: none; border: none; padding: 0.6rem 0.9rem; font-weight: 600; font-size: 0.88em; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+        .panel-tab[aria-selected="true"] { color: var(--indigo); border-bottom-color: var(--teal); }
+        .panel-tab .lk { font-size: 0.85em; }
+
+        /* Backlog */
+        .bl-list { display: flex; flex-direction: column; gap: 0.45rem; }
+        .bl-item { display: grid; grid-template-columns: 34px 1fr 110px 130px; gap: 0.7rem; align-items: center; background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.6rem 0.8rem; }
+        .bl-item.in-sprint { border-left: 4px solid var(--teal); }
+        .bl-rank { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--muted); text-align: center; }
+        .bl-title { font-weight: 700; color: var(--indigo); font-size: 0.93em; }
+        .bl-story { font-size: 0.82em; color: var(--muted); margin-top: 0.1rem; }
+        .bl-ac { font-size: 0.78em; color: var(--charcoal); margin-top: 0.2rem; }
+        .bl-est select { padding: 4px 6px; border-radius: 6px; border: 1.5px solid var(--line); font-family: 'IBM Plex Mono', monospace; }
+        .bl-est .pts { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+        .bl-actions { display: flex; gap: 0.25rem; justify-content: flex-end; flex-wrap: wrap; }
+        .flag { font-size: 0.72em; color: var(--warn); font-weight: 600; display: block; }
+
+        /* Planning */
+        .plan-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .plan-item { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; background: var(--white); border-radius: 8px; padding: 0.5rem 0.7rem; margin-bottom: 0.4rem; font-size: 0.88em; }
+        .plan-item strong { color: var(--indigo); }
+        .capacity { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; margin: 0.4rem 0; }
+        .capacity div { height: 100%; background: var(--teal); transition: width 0.3s ease; }
+        .capacity.over div { background: var(--crit); }
+        .velocity { display: flex; align-items: flex-end; gap: 0.6rem; height: 110px; padding-top: 0.5rem; }
+        .velocity .vb { flex: 1; max-width: 60px; text-align: center; font-size: 0.72em; color: var(--muted); }
+        .velocity .vb div { background: var(--purple); border-radius: 4px 4px 0 0; margin-bottom: 0.2rem; color: #fff; font-weight: 700; font-size: 1.1em; display: flex; align-items: flex-start; justify-content: center; padding-top: 2px; }
+
+        /* Sprint board */
+        .lane { background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 0.8rem; overflow: hidden; }
+        .lane-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.6rem 0.9rem; background: var(--white); border-bottom: 1px solid var(--line); }
+        .lane-head strong { color: var(--indigo); }
+        .lane-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; padding: 0.7rem; }
+        .lane-col h5 { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.4rem; font-family: 'Inter', sans-serif; }
+        .task { background: var(--white); border-left: 3px solid var(--teal); border-radius: 6px; padding: 0.4rem 0.55rem; margin-bottom: 0.35rem; font-size: 0.82em; }
+        .lane-col.doing .task { border-left-color: var(--gold); }
+        .lane-col.done .task { border-left-color: var(--ok); opacity: 0.85; }
+        .task-meta { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.25rem; }
+        .task-meta .who { font-size: 0.85em; color: var(--muted); margin-right: auto; }
+        .add-task { display: grid; grid-template-columns: 1fr 70px 100px auto; gap: 0.4rem; padding: 0 0.7rem 0.7rem; }
+        .add-task input, .add-task select { padding: 5px 7px; border: 1.5px solid var(--line); border-radius: 6px; font-size: 0.82em; }
+        .progress { height: 7px; background: var(--line); border-radius: 4px; overflow: hidden; min-width: 120px; }
+        .progress div { height: 100%; background: var(--teal); }
+        .burndown-wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .burndown svg { width: 100%; height: auto; display: block; }
+
+        /* Standup */
+        .sd-day { margin-bottom: 1rem; }
+        .sd-day h4 { font-size: 0.95em; margin-bottom: 0.4rem; }
+        .sd-entries { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.5rem; }
+        .sd-entry { background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.6rem 0.8rem; font-size: 0.84em; }
+        .sd-entry .who { font-weight: 700; color: var(--indigo); }
+        .sd-entry dt { font-size: 0.78em; font-weight: 700; color: var(--muted); margin-top: 0.3rem; }
+        .sd-entry .blocker { background: var(--bad-bg); color: var(--bad); border-radius: 6px; padding: 0.3rem 0.5rem; margin-top: 0.3rem; }
+        .attendance { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0.5rem 0 1rem; }
+        .attendance span { font-size: 0.8em; padding: 3px 10px; border-radius: 12px; background: var(--white); }
+        .attendance span.in { background: var(--ok-bg); color: var(--ok); font-weight: 600; }
+        .imp { display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; background: var(--paper); border: 1.5px solid var(--line); border-left: 4px solid var(--crit); border-radius: 8px; padding: 0.5rem 0.8rem; margin-bottom: 0.4rem; font-size: 0.86em; }
+        .imp.resolved { border-left-color: var(--ok); opacity: 0.7; }
+
+        /* Review */
+        .rv-story { background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 0.6rem; }
+        .rv-story.accepted { border-color: var(--ok); background: var(--ok-bg); }
+        .dod-checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.3rem 1rem; margin: 0.5rem 0; font-size: 0.84em; }
+        .dod-checks label { display: flex; gap: 0.4rem; align-items: flex-start; }
+        .dod-checks input { accent-color: var(--ok); margin-top: 3px; }
+        .fb-item { background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.7rem 0.9rem; margin-bottom: 0.5rem; font-size: 0.88em; }
+        .fb-item .from { font-weight: 700; color: var(--indigo); }
+
+        /* Retro */
+        .retro-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
+        .retro-col { background: var(--paper); border: 1.5px solid var(--line); border-top: 4px solid var(--c); border-radius: 12px; padding: 0.8rem; }
+        .retro-col h4 { font-size: 0.95em; margin-bottom: 0.5rem; }
+        .note { background: var(--white); border-radius: 6px; padding: 0.4rem 0.55rem; font-size: 0.84em; margin-bottom: 0.35rem; display: flex; justify-content: space-between; gap: 0.4rem; }
+        .note small { color: var(--muted); display: block; }
+        .retro-col form { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.5rem; }
+
+        /* Who sees what */
+        .matrix td, .matrix th { text-align: center; }
+        .matrix td:first-child, .matrix th:first-child { text-align: left; }
+
+        @media (max-width: 900px) {
+            .role-panel { grid-template-columns: 1fr; }
+            .cycle { grid-template-columns: repeat(3, 1fr); }
+            .plan-cols, .burndown-wrap { grid-template-columns: 1fr; }
+            .retro-cols { grid-template-columns: 1fr; }
+            .bl-item { grid-template-columns: 28px 1fr; }
+            .bl-est, .bl-actions { grid-column: 2; justify-content: flex-start; }
+        }
+        @media (max-width: 640px) {
+            .lane-cols { grid-template-columns: 1fr; }
+            .add-task { grid-template-columns: 1fr 1fr; }
+            .cycle { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html">PM Tools</a></li>
+            <li><a href="agile-board.html" aria-current="page">Agile</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="agile-board.html" aria-current="page">🔄 Scrum board</a>
+        <a href="dsdm.html">🧭 DSDM</a>
+        <a href="xp.html">⚡ Extreme Programming (XP)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Agile · Scrum</span>
+            <h1>Scrum board</h1>
+            <p class="lead">Run the Scholar Academy project the Scrum way: order the product backlog, plan equal-length sprints, break stories into tasks, log the daily scrum, review the work with customers, and reflect in a retrospective. Switch roles to see what each person on a Scrum team sees, and what's kept from them.</p>
+            <div id="manifesto" class="manifesto"></div>
+        </div>
+    </header>
+
+    <div class="role-bar">
+        <div class="container" id="roleBar"></div>
+    </div>
+
+    <main>
+        <section class="block" style="padding-top: 1.5rem;">
+            <div class="container">
+                <div id="rolePanel"></div>
+            </div>
+        </section>
+
+        <section class="block" style="padding-top: 2rem;">
+            <div class="container">
+                <div class="cycle" id="cycle"></div>
+                <div class="sprint-head" id="sprintHead"></div>
+                <div class="panel-tabs" role="tablist" id="panelTabs"></div>
+                <div id="panel" role="tabpanel"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · Agile</p>
+        <p><a href="agile-board.html">Scrum board</a> · <a href="dsdm.html">DSDM</a> · <a href="xp.html">Extreme Programming</a> · <a href="pm-tools.html">PM Tools</a></p>
+    </footer>
+
+<script src="agile-common.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  Roles, permissions, and visibility
+// ════════════════════════════════════════════════════════════════════
+const DEVS = ['Aarav', 'Mina', 'Leo'];
+const ROLES = {
+    po: {
+        label: 'Product Owner', person: 'Priya', icon: '🎯', color: '#FF6B5B',
+        duties: ['Maximize the value of the product', 'Own and order the product backlog', 'Write clear user stories and acceptance criteria', 'Propose the sprint goal', 'Accept or reject work at the sprint review', 'Turn customer feedback into backlog items'],
+        can: ['Add, remove, and reorder backlog items', 'Set the sprint goal', 'Accept stories that meet the Definition of Done', 'Triage customer feedback', 'Add retrospective notes, edit the DoD'],
+        cannot: ['Estimate (Developers size their own work)', 'Add or move tasks (Developers self-organize)', 'Post in the daily scrum log (it\'s for Developers)']
+    },
+    sm: {
+        label: 'Scrum Master', person: 'Sam', icon: '🧭', color: '#2C3E50',
+        duties: ['Coach the team on Scrum and agile values', 'Facilitate the Scrum events', 'Remove impediments that block the team', 'Protect the team from interruptions', 'Lead by serving, not by commanding'],
+        can: ['Start the sprint and move it day by day', 'Move to review and retrospective, close the sprint', 'Log blockers as impediments and resolve them', 'Add retrospective notes, edit the DoD'],
+        cannot: ['Order the backlog', 'Estimate or assign tasks: a Scrum Master never assigns work (principle 11)']
+    },
+    dev: {
+        label: 'Developer', person: DEVS.join(', '), icon: '💻', color: '#20B2AA',
+        duties: ['Estimate backlog items', 'Forecast what fits in the sprint', 'Break stories into tasks (the "how")', 'Meet daily to inspect progress toward the sprint goal', 'Build to the Definition of Done'],
+        can: ['Estimate stories', 'Pull stories into the sprint at planning', 'Add and move tasks', 'Post daily scrum updates and raise blockers', 'Tick Definition of Done items', 'Add retrospective notes, edit the DoD'],
+        cannot: ['Reorder the backlog (the PO decides priority)', 'Accept their own work', 'Change the sprint goal']
+    },
+    stk: {
+        label: 'Stakeholder / customer', person: 'Principal Sharma & teachers', icon: '🏫', color: '#A78BFA',
+        duties: ['Tell the Product Owner what matters most', 'Inspect the increment at the sprint review', 'Give honest feedback', 'Use the product and report what works'],
+        can: ['See the product backlog order and the sprint goal', 'See story-level progress and the burndown', 'Submit feedback and see what happened to it'],
+        cannot: ['See estimates', 'See task breakdowns or the daily scrum log', 'See impediments or the retrospective (a safe space for the team)']
+    }
+};
+
+const PERMS = {
+    reorderBacklog: ['po'], editBacklog: ['po'], estimate: ['dev'], pull: ['po', 'dev'], setGoal: ['po'],
+    startSprint: ['sm'], advance: ['sm'], tasks: ['dev'], standup: ['dev'], logImpediment: ['sm'], resolveImpediment: ['sm'],
+    tickDod: ['dev'], accept: ['po'], feedback: ['stk', 'po'], triage: ['po'], retro: ['po', 'sm', 'dev'], editDod: ['po', 'sm', 'dev']
+};
+const HIDDEN = {
+    estimates: ['stk'], planning: ['stk'], tasks: ['stk'], standup: ['stk'], impediments: ['stk'], retro: ['stk']
+};
+
+let role = 'dev';
+try { role = localStorage.getItem('pmScrumRole') || 'dev'; } catch (e) {}
+if (!ROLES[role]) role = 'dev';
+const can = action => PERMS[action].includes(role);
+const hides = what => (HIDDEN[what] || []).includes(role);
+
+// ════════════════════════════════════════════════════════════════════
+//  State
+// ════════════════════════════════════════════════════════════════════
+const SPRINT_DAYS = 10; // every sprint is the same length: 2 weeks / 10 working days
+const KEY = 'pmScrumBoard_v1';
+
+function seed() {
+    const story = (id, title, story, points, type = 'feature', ac = '', doneIn = null) => ({ id, title, story, points, type, ac, doneIn });
+    const t = (id, storyId, title, hours, owner, status) => ({ id, storyId, title, hours, owner, status });
+    return {
+        nextId: 100,
+        dod: [
+            { id: 'd1', text: 'Code reviewed by another developer' },
+            { id: 'd2', text: 'Unit tests written and passing' },
+            { id: 'd3', text: 'Acceptance criteria met' },
+            { id: 'd4', text: 'Works on phone and desktop' },
+            { id: 'd5', text: 'Deployed to the test server' },
+            { id: 'd6', text: 'User guide updated' }
+        ],
+        backlog: [
+            story('S5', 'Enter grades', 'As a teacher, I want to enter grades for my class so that report cards are accurate.', 5, 'feature', 'Grades 0–100 · saved per subject · teacher sees a confirmation'),
+            story('S6', 'Parent portal login', 'As a parent, I want to log in so that I can see my child\'s attendance and grades.', 5, 'feature', 'Login with email · password reset · sees only own child'),
+            story('S7', 'SMS alert when absent', 'As a parent, I want an SMS when my child is marked absent so that I know the same day.', 3, 'feature', 'SMS within 15 minutes · parent can opt out'),
+            story('S8', 'Attendance page slow on phones', 'Teachers report the attendance page takes 8+ seconds on their phones.', 2, 'bug', 'Loads in under 2 seconds on a 4G phone'),
+            story('S14', 'Comments on grades', 'As a teacher, I want to add a short comment to each grade so that parents understand it.', null, 'feedback', 'From teacher feedback at Sprint 1 review'),
+            story('S9', 'Pay fees online', 'As a parent, I want to pay school fees online so that I don\'t have to visit the office.', 8, 'feature', 'Card + mobile wallet · receipt by email'),
+            story('S10', 'Report card PDF', 'As a teacher, I want to download report cards as PDF so that I can print them.', 5),
+            story('S11', 'Class timetable view', 'As a student, I want to see my timetable so that I know where to go.', 3),
+            story('S12', 'Library module', 'As a librarian, I want to manage book loans, fines, and catalog in the system.', 13, 'feature', 'Too big: should be split before planning'),
+            story('S13', 'Message parents', 'As a teacher, I want to message a parent directly so that we can talk about their child.', null),
+            story('S1', 'Teacher login', 'As a teacher, I want to log in securely so that only I can see my classes.', 3, 'feature', '', 1),
+            story('S2', 'Mark daily attendance', 'As a teacher, I want to mark attendance in under a minute.', 5, 'feature', '', 1),
+            story('S3', 'View class list', 'As a teacher, I want to see the students in each class.', 3, 'feature', '', 1),
+            story('S4', 'Attendance report for principal', 'As the principal, I want a daily attendance report.', 5, 'feature', '', 1)
+        ],
+        feedback: [
+            { id: 'F1', from: 'Teachers', text: 'Let us add a comment with each grade.', status: 'added', storyId: 'S14', sprint: 1 },
+            { id: 'F2', from: 'Principal Sharma', text: 'The attendance report should show a monthly percentage for each student.', status: 'new', sprint: 1 }
+        ],
+        sprints: [
+            {
+                n: 1, status: 'closed', goal: 'Teachers can log in and take attendance', day: SPRINT_DAYS, storyIds: ['S1', 'S2', 'S3', 'S4', 'S5'], accepted: ['S1', 'S2', 'S3', 'S4'],
+                velocity: 16, tasks: [], burndown: [60, 57, 52, 48, 41, 36, 30, 22, 15, 10, 7], standups: [], dodChecks: {}, impediments: [],
+                retro: {
+                    well: [{ text: 'Daily scrums kept us aligned', by: 'dev' }, { text: 'Teachers loved the attendance demo', by: 'po' }],
+                    improve: [{ text: 'Enter grades was too big to finish in one sprint', by: 'dev' }, { text: 'We started testing too late', by: 'sm' }],
+                    actions: [{ text: 'Split any story over 8 points before planning', owner: 'Product Owner', by: 'sm' }, { text: 'Write unit tests with the code, not after', owner: 'Developers', by: 'dev' }]
+                }
+            },
+            {
+                n: 2, status: 'active', goal: 'Teachers can enter grades and parents hear about absences the same day', day: 4,
+                storyIds: ['S5', 'S6', 'S7', 'S8'], accepted: [], velocity: null, burndown: [59, 54, 47, 41], dodChecks: {},
+                tasks: [
+                    t('T1', 'S5', 'Grades entry form', 6, 'Mina', 'done'), t('T2', 'S5', 'Save grades API', 8, 'Aarav', 'done'),
+                    t('T3', 'S5', 'Validation (0–100, required)', 3, 'Aarav', 'doing'), t('T4', 'S5', 'Unit tests for grades', 4, 'Mina', 'todo'),
+                    t('T5', 'S6', 'Parent account model', 5, 'Leo', 'done'), t('T6', 'S6', 'Parent login page', 6, 'Mina', 'doing'),
+                    t('T7', 'S6', 'Password reset email', 5, 'Leo', 'todo'), t('T8', 'S6', 'Unit tests for login', 3, 'Leo', 'todo'),
+                    t('T9', 'S7', 'Choose SMS gateway', 2, 'Leo', 'done'), t('T10', 'S7', 'Send SMS when marked absent', 6, 'Leo', 'todo'),
+                    t('T11', 'S7', 'Opt-out setting for parents', 3, 'Aarav', 'todo'),
+                    t('T12', 'S8', 'Profile the page load', 2, 'Aarav', 'done'), t('T13', 'S8', 'Paginate the class list', 4, 'Aarav', 'todo'),
+                    t('T14', 'S8', 'Test on a low-end phone', 2, 'Mina', 'todo')
+                ],
+                standups: [
+                    { id: 'U1', day: 1, member: 'Aarav', yesterday: 'Sprint planning', today: 'Save grades API', blockers: '' },
+                    { id: 'U2', day: 1, member: 'Mina', yesterday: 'Sprint planning', today: 'Grades entry form', blockers: '' },
+                    { id: 'U3', day: 1, member: 'Leo', yesterday: 'Sprint planning', today: 'Parent account model, compare SMS gateways', blockers: '' },
+                    { id: 'U4', day: 2, member: 'Aarav', yesterday: 'Save grades API (most of it)', today: 'Finish API, profile attendance page', blockers: '' },
+                    { id: 'U5', day: 2, member: 'Mina', yesterday: 'Grades entry form', today: 'Parent login page', blockers: '' },
+                    { id: 'U6', day: 2, member: 'Leo', yesterday: 'Parent account model', today: 'Pick SMS gateway', blockers: '' },
+                    { id: 'U7', day: 3, member: 'Aarav', yesterday: 'Finished API, profiled the page', today: 'Grade validation', blockers: '' },
+                    { id: 'U8', day: 3, member: 'Mina', yesterday: 'Started parent login', today: 'Keep going on parent login', blockers: '' },
+                    { id: 'U9', day: 3, member: 'Leo', yesterday: 'Chose the SMS gateway', today: 'Send SMS on absence', blockers: 'Waiting for the SMS gateway API key from the school\'s IT office', logged: true }
+                ],
+                impediments: [{ id: 'I1', text: 'Waiting for the SMS gateway API key from the school\'s IT office', by: 'Leo', day: 3, resolved: false }],
+                retro: { well: [], improve: [], actions: [] }
+            }
+        ]
+    };
+}
+
+let state = load();
+let panel = 'backlog';
+try { panel = localStorage.getItem('pmScrumPanel') || 'backlog'; } catch (e) {}
+
+function load() {
+    try {
+        const s = JSON.parse(localStorage.getItem(KEY));
+        if (s && Array.isArray(s.sprints) && s.sprints.length) return s;
+    } catch (e) {}
+    return seed();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+const uid = p => p + (state.nextId++);
+
+// ─── Derived helpers ───
+const cur = () => state.sprints[state.sprints.length - 1];
+const lastClosed = () => [...state.sprints].reverse().find(s => s.status === 'closed');
+const story = id => state.backlog.find(s => s.id === id);
+const inCurrentSprint = s => !s.doneIn && ['planning', 'active', 'review'].includes(cur().status) && cur().storyIds.includes(s.id);
+const openItems = () => state.backlog.filter(s => !s.doneIn);
+const pts = ids => ids.reduce((sum, id) => sum + (story(id)?.points || 0), 0);
+const remaining = sp => sp.tasks.filter(t => t.status !== 'done').reduce((s, t) => s + Number(t.hours), 0);
+function forecast() {
+    const v = state.sprints.filter(s => s.status === 'closed').slice(-3).map(s => s.velocity);
+    return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : 15;
+}
+const storyTasks = (sp, id) => sp.tasks.filter(t => t.storyId === id);
+const storyReady = (sp, id) => {
+    const tasks = storyTasks(sp, id);
+    const checks = sp.dodChecks[id] || [];
+    return tasks.length > 0 && tasks.every(t => t.status === 'done') && state.dod.every(d => checks.includes(d.id));
+};
+
+// ════════════════════════════════════════════════════════════════════
+//  Rendering
+// ════════════════════════════════════════════════════════════════════
+const PANELS = [
+    { id: 'backlog', label: '📚 Product backlog' },
+    { id: 'planning', label: '🗓️ Sprint planning', hidden: 'planning' },
+    { id: 'board', label: '🧩 Sprint backlog & tasks' },
+    { id: 'standup', label: '☀️ Daily scrum log', hidden: 'standup' },
+    { id: 'review', label: '🔍 Review & feedback' },
+    { id: 'retro', label: '🔁 Retrospective', hidden: 'retro' },
+    { id: 'dod', label: '✅ Definition of Done' },
+    { id: 'guide', label: '📖 Who sees what' }
+];
+
+function render() {
+    renderRoleBar();
+    renderRolePanel();
+    renderCycle();
+    renderSprintHead();
+    document.getElementById('panelTabs').innerHTML = PANELS.map(p => `
+        <button class="panel-tab" role="tab" data-act="panel" data-id="${p.id}" aria-selected="${panel === p.id}">${p.label}${p.hidden && hides(p.hidden) ? ' <span class="lk" title="Hidden for your role">🔒</span>' : ''}</button>`).join('');
+    const el = document.getElementById('panel');
+    const fn = { backlog: panelBacklog, planning: panelPlanning, board: panelBoard, standup: panelStandup, review: panelReview, retro: panelRetro, dod: panelDod, guide: panelGuide }[panel];
+    el.innerHTML = fn();
+}
+
+function lockBox(title, why, extra = '') {
+    return `<div class="lock"><span class="icon">🔒</span><div><strong>${title}</strong><p>${why}</p>${extra}</div></div>`;
+}
+const readonly = (who) => `<span class="readonly-note">👁 View only. ${who}</span>`;
+
+function renderRoleBar() {
+    document.getElementById('roleBar').innerHTML = `<span class="label">View as</span>` + Object.entries(ROLES).map(([k, r]) =>
+        `<button class="role-btn" style="--rc:${r.color}" data-act="role" data-id="${k}" aria-pressed="${role === k}">${r.icon} ${r.label}</button>`).join('');
+}
+
+function renderRolePanel() {
+    const r = ROLES[role];
+    document.getElementById('rolePanel').innerHTML = `
+        <div class="role-panel" style="--rc:${r.color}">
+            <div class="card"><h3>${r.icon} You are the ${r.label} <span style="font-weight: 400; color: var(--muted);">(${r.person})</span></h3><ul>${r.duties.map(d => `<li>${d}</li>`).join('')}</ul></div>
+            <div class="card"><h3>✏️ You can</h3><ul>${r.can.map(d => `<li>${d}</li>`).join('')}</ul></div>
+            <div class="card"><h3>${role === 'stk' ? '🔒 Hidden from you' : '🚫 Not your job'}</h3><ul>${r.cannot.map(d => `<li>${d}</li>`).join('')}</ul></div>
+        </div>
+        <p class="sim-note">Role views simulate what each person on a Scrum team works with. This is a learning tool, not real access control: everything is stored in your browser.</p>`;
+}
+
+function renderCycle() {
+    const st = cur().status;
+    const stages = [
+        { icon: '📚', name: 'Product backlog', sub: 'Always evolving', panel: 'backlog', on: false, ongoing: true },
+        { icon: '🗓️', name: 'Sprint planning', sub: 'Why · what · how', panel: 'planning', on: st === 'planning' },
+        { icon: '🧩', name: 'Sprint', sub: `${SPRINT_DAYS} days, fixed timebox`, panel: 'board', on: st === 'active' },
+        { icon: '☀️', name: 'Daily scrum', sub: '15 min, every day', panel: 'standup', on: st === 'active' },
+        { icon: '🔍', name: 'Sprint review', sub: 'Inspect the increment', panel: 'review', on: st === 'review' },
+        { icon: '🔁', name: 'Retrospective', sub: 'Improve how we work', panel: 'retro', on: st === 'retro' }
+    ];
+    document.getElementById('cycle').innerHTML = stages.map(s =>
+        `<button class="stage ${s.on ? 'now' : ''} ${s.ongoing ? 'ongoing' : ''}" data-act="panel" data-id="${s.panel}"><span class="s-icon">${s.icon}</span><span class="s-name">${s.name}</span><span class="s-sub">${s.on ? '● Now · ' : ''}${s.sub}</span></button>`).join('');
+}
+
+function renderSprintHead() {
+    const sp = cur();
+    const labels = { planning: 'Planning', active: `Day ${sp.day} of ${SPRINT_DAYS}`, review: 'Sprint review', retro: 'Retrospective' };
+    let action = '';
+    if (can('advance')) {
+        if (sp.status === 'planning') action = `<button class="btn btn-primary" data-act="start">▶ Start Sprint ${sp.n}</button>`;
+        else if (sp.status === 'active') action = sp.day < SPRINT_DAYS
+            ? `<button class="btn btn-primary" data-act="endDay">End day ${sp.day} →</button>`
+            : `<button class="btn btn-primary" data-act="endDay">End day ${SPRINT_DAYS}: timebox over → Sprint review</button>`;
+        else if (sp.status === 'review') action = `<button class="btn btn-primary" data-act="toRetro">Finish review → Retrospective</button>`;
+        else if (sp.status === 'retro') action = `<button class="btn btn-primary" data-act="close">Close Sprint ${sp.n} & plan Sprint ${sp.n + 1}</button>`;
+    } else {
+        action = `<span class="readonly-note">The Scrum Master moves the sprint forward. Switch to 🧭 Scrum Master to continue.</span>`;
+    }
+    const tb = Array.from({ length: SPRINT_DAYS }, (_, i) => {
+        const d = i + 1;
+        const cls = sp.status === 'planning' ? '' : (sp.status !== 'active' || d < sp.day) ? 'past' : d === sp.day ? 'today' : '';
+        return `<span class="${cls}" title="Day ${d}"></span>`;
+    }).join('');
+    document.getElementById('sprintHead').innerHTML = `
+        <div>
+            <h3>Sprint ${sp.n} · ${labels[sp.status]}</h3>
+            <div class="goal"><strong>Sprint goal:</strong> ${sp.goal ? escapeHtml(sp.goal) : '<em style="color: var(--muted);">not set yet</em>'}</div>
+            <div class="timebox" aria-label="Sprint timebox: ${SPRINT_DAYS} working days">${tb}</div>
+        </div>
+        <div class="btn-row">${action}</div>`;
+}
+
+// ─── Product backlog ───
+function panelBacklog() {
+    const open = openItems();
+    const done = state.backlog.filter(s => s.doneIn);
+    const unest = open.filter(s => s.points == null).length;
+    const big = open.filter(s => s.points >= 13).length;
+    const showEst = !hides('estimates');
+    const estOptions = ['', 1, 2, 3, 5, 8, 13, 21];
+
+    const rows = open.map((s, i) => {
+        const inSp = inCurrentSprint(s);
+        let est;
+        if (!showEst) est = '<span class="pts" style="color: var(--muted);">—</span>';
+        else if (can('estimate') && !inSp) est = `<select data-est="${s.id}" aria-label="Estimate for ${escapeHtml(s.title)}">${estOptions.map(o => `<option value="${o}" ${s.points === (o === '' ? null : o) ? 'selected' : ''}>${o === '' ? '?' : o + ' pts'}</option>`).join('')}</select>`;
+        else est = `<span class="pts">${s.points == null ? '?' : s.points + ' pts'}</span>`;
+        const flags = showEst ? (s.points == null ? '<span class="flag">Needs an estimate</span>' : s.points >= 13 ? '<span class="flag">Too big: split it</span>' : '') : '';
+        const actions = can('reorderBacklog') ? `
+            <button class="mini-btn" data-act="up" data-id="${s.id}" ${i === 0 ? 'disabled' : ''} aria-label="Move up">▲</button>
+            <button class="mini-btn" data-act="down" data-id="${s.id}" ${i === open.length - 1 ? 'disabled' : ''} aria-label="Move down">▼</button>
+            ${inSp ? '' : `<button class="mini-btn danger" data-act="delStory" data-id="${s.id}" aria-label="Remove">✕</button>`}` : '';
+        return `<div class="bl-item ${inSp ? 'in-sprint' : ''}">
+            <div class="bl-rank">${i + 1}</div>
+            <div>
+                <span class="pill ${s.type}">${s.type}</span> ${inSp ? `<span class="pill" style="background:#E8F7F6;color:#13807A;">In Sprint ${cur().n}</span>` : ''}
+                <div class="bl-title">${escapeHtml(s.title)}</div>
+                <div class="bl-story">${escapeHtml(s.story)}</div>
+                ${s.ac ? `<div class="bl-ac"><strong>Acceptance:</strong> ${escapeHtml(s.ac)}</div>` : ''}
+            </div>
+            <div class="bl-est">${est}${flags}</div>
+            <div class="bl-actions">${actions}</div>
+        </div>`;
+    }).join('');
+
+    const addForm = can('editBacklog') ? `
+        <form class="card" data-form="addStory" style="margin-bottom: 1rem;">
+            <h3>Add a backlog item</h3>
+            <div class="form-row">
+                <div><label for="nsTitle">Title</label><input id="nsTitle" name="title" required maxlength="60" placeholder="e.g. Monthly attendance %"></div>
+                <div><label for="nsType">Type</label><select id="nsType" name="type"><option value="feature">Feature</option><option value="bug">Bug</option><option value="spike">Spike (research)</option></select></div>
+            </div>
+            <div class="form-row">
+                <div><label for="nsStory">User story</label><input id="nsStory" name="story" maxlength="200" placeholder="As a …, I want … so that …"></div>
+                <div><label for="nsAc">Acceptance criteria</label><input id="nsAc" name="ac" maxlength="160" placeholder="How we'll know it works"></div>
+            </div>
+            <button class="btn btn-primary" type="submit">Add to the bottom of the backlog</button>
+        </form>` : '';
+
+    const note = can('reorderBacklog') ? 'You decide the order. The top items are the most valuable and will be planned first.'
+        : can('estimate') ? 'Estimate items in story points (relative size, not hours). Items in the current sprint are locked.'
+        : role === 'stk' ? 'You can see what\'s planned and in what order. Talk to the Product Owner, or leave feedback in Review & feedback, to change priorities.'
+        : 'The Product Owner orders the backlog; Developers estimate. You help both through refinement.';
+
+    return `
+        <div class="block-head" style="margin-bottom: 1rem;">
+            <h2>Product backlog</h2>
+            <p>One ordered list of everything the product might need. It's never finished: items are added, reordered, split, and removed as the team learns (principle 2). ${note}</p>
+        </div>
+        ${showEst && (unest || big) ? `<div class="feedback partial" style="margin-bottom: 1rem;">Backlog refinement needed: ${unest ? `${unest} item${unest > 1 ? 's' : ''} without an estimate` : ''}${unest && big ? ' · ' : ''}${big ? `${big} item${big > 1 ? 's' : ''} too big for one sprint` : ''}.</div>` : ''}
+        ${addForm}
+        <div class="bl-list">${rows || '<p>The backlog is empty. Add an item to get started.</p>'}</div>
+        <details style="margin-top: 1rem;"><summary style="cursor: pointer; font-weight: 600; color: var(--indigo);">✓ Done (${done.length} items, released)</summary>
+            <div class="bl-list" style="margin-top: 0.6rem;">${done.map(s => `<div class="plan-item"><span><strong>${escapeHtml(s.title)}</strong> · Sprint ${s.doneIn}</span>${showEst ? `<span class="pts">${s.points} pts</span>` : ''}</div>`).join('')}</div>
+        </details>`;
+}
+
+// ─── Sprint planning ───
+function velocityChart() {
+    const closed = state.sprints.filter(s => s.status === 'closed');
+    if (!closed.length) return '<p style="color: var(--muted); font-size: 0.86em;">No finished sprints yet. The first forecast is a guess (15 points).</p>';
+    const max = Math.max(...closed.map(s => s.velocity), 1);
+    return `<div class="velocity">${closed.map(s => `<div class="vb"><div style="height:${Math.max(18, s.velocity / max * 80)}px">${s.velocity}</div>Sprint ${s.n}</div>`).join('')}</div>`;
+}
+
+function panelPlanning() {
+    const sp = cur();
+    if (hides('planning')) {
+        return lockBox('Sprint planning is for the Scrum team',
+            'The Product Owner, Scrum Master, and Developers plan the sprint together. Stakeholders share priorities with the Product Owner beforehand. You can see the result: the sprint goal above and story progress on the Sprint backlog tab.');
+    }
+    const prevRetro = lastClosed()?.retro.actions || [];
+    const retroBox = prevRetro.length ? `<div class="card" style="margin-bottom: 1rem; border-left: 4px solid var(--purple);"><h3>🔁 Improvements agreed at the last retrospective</h3><ul>${prevRetro.map(a => `<li>${escapeHtml(a.text)} <span style="color: var(--muted);">(owner: ${escapeHtml(a.owner)})</span></li>`).join('')}</ul></div>` : '';
+
+    if (sp.status !== 'planning') {
+        return `
+            <div class="block-head" style="margin-bottom: 1rem;"><h2>Sprint ${sp.n} plan</h2>
+            <p>Planning for this sprint is finished. The sprint goal and timebox don't change during the sprint. New ideas go to the product backlog and are planned in the next sprint (principle 2).</p></div>
+            <div class="grid-2">
+                <div class="card"><h3>Committed: ${pts(sp.storyIds)} points</h3>${sp.storyIds.map(id => `<div class="plan-item"><strong>${escapeHtml(story(id).title)}</strong><span class="pts">${story(id).points} pts</span></div>`).join('')}</div>
+                <div class="card"><h3>Velocity (points accepted per sprint)</h3>${velocityChart()}<p style="font-size: 0.85em; color: var(--muted);">Forecast for the next sprint: <strong>${forecast()} points</strong> (average of the last 3 sprints).</p></div>
+            </div>`;
+    }
+
+    const cap = forecast();
+    const planned = pts(sp.storyIds);
+    const candidates = openItems().filter(s => !sp.storyIds.includes(s.id)).slice(0, 8);
+    const canPull = can('pull');
+    return `
+        <div class="block-head" style="margin-bottom: 1rem;"><h2>Sprint ${sp.n} planning</h2>
+        <p>Every sprint starts here, and every sprint is the same length (${SPRINT_DAYS} working days). Planning answers three questions: <strong>Why</strong> is this sprint valuable (the goal)? <strong>What</strong> can we finish (items from the top of the backlog)? <strong>How</strong> will we do it (tasks, on the Sprint backlog tab)?</p></div>
+        ${retroBox}
+        <div class="card" style="margin-bottom: 1rem;">
+            <h3>1 · Why: sprint goal</h3>
+            ${can('setGoal')
+                ? `<form data-form="goal" class="form-row" style="grid-template-columns: 1fr auto; margin-top: 0.5rem;"><input name="goal" class="inp" maxlength="140" value="${escapeHtml(sp.goal)}" placeholder="e.g. Parents can pay fees online" aria-label="Sprint goal"><button class="btn btn-primary" type="submit">Save goal</button></form>`
+                : `<p>${sp.goal ? escapeHtml(sp.goal) : '<em>The Product Owner proposes the goal.</em>'}</p>${readonly('The Product Owner sets the goal with the team.')}`}
+        </div>
+        <div class="plan-cols">
+            <div class="card">
+                <h3>2 · What: top of the product backlog</h3>
+                <p style="font-size: 0.85em; color: var(--muted); margin-bottom: 0.6rem;">${canPull ? 'Pull items from the top. Only estimated items can be planned.' : 'Developers and the Product Owner pull items in.'}</p>
+                ${candidates.map(s => `<div class="plan-item"><span><strong>${escapeHtml(s.title)}</strong> · ${s.points == null ? '<span style="color: var(--warn);">needs estimate</span>' : s.points + ' pts'}</span>
+                    ${canPull ? `<button class="mini-btn" data-act="pull" data-id="${s.id}" ${s.points == null ? 'disabled title="Developers must estimate it first"' : ''}>Add →</button>` : ''}</div>`).join('') || '<p>No more items in the backlog.</p>'}
+            </div>
+            <div class="card">
+                <h3>Sprint backlog: ${planned} of ~${cap} points</h3>
+                <div class="capacity ${planned > cap ? 'over' : ''}"><div style="width:${Math.min(100, planned / cap * 100)}%"></div></div>
+                <p style="font-size: 0.82em; color: ${planned > cap ? 'var(--crit)' : 'var(--muted)'}; margin-bottom: 0.6rem;">${planned > cap ? `Over the forecast by ${planned - cap} points. Overloading a sprint breaks sustainable pace (principle 8).` : `Forecast based on velocity: ${cap} points.`}</p>
+                ${sp.storyIds.map(id => `<div class="plan-item"><span><strong>${escapeHtml(story(id).title)}</strong> · ${story(id).points} pts · ${storyTasks(sp, id).length} tasks</span>${canPull ? `<button class="mini-btn" data-act="unpull" data-id="${id}">← Remove</button>` : ''}</div>`).join('') || '<p style="color: var(--muted);">Nothing planned yet.</p>'}
+                <p style="font-size: 0.85em; margin-top: 0.6rem;"><strong>3 · How:</strong> Developers break each item into tasks on the <a href="#" data-act="panel" data-id="board">Sprint backlog & tasks</a> tab.</p>
+            </div>
+        </div>
+        <div class="card" style="margin-top: 1rem;"><h3>Velocity history</h3>${velocityChart()}</div>`;
+}
+
+// ─── Sprint backlog & tasks ───
+function burndownSvg(sp) {
+    const W = 520, H = 220, L = 40, R = 14, T = 14, B = 30;
+    const data = [...sp.burndown];
+    const live = sp.status === 'active' ? remaining(sp) : null;
+    const max = Math.max(...data, live || 0, 10);
+    const x = d => L + d / SPRINT_DAYS * (W - L - R);
+    const y = v => T + (1 - v / max) * (H - T - B);
+    const grid = [0, 0.25, 0.5, 0.75, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${y(max * f)}" y2="${y(max * f)}" stroke="#E8E6E1"/><text x="${L - 6}" y="${y(max * f) + 4}" font-size="10" text-anchor="end" fill="#6B6B6B">${Math.round(max * f)}</text>`).join('');
+    const days = Array.from({ length: SPRINT_DAYS + 1 }, (_, d) => `<text x="${x(d)}" y="${H - 10}" font-size="10" text-anchor="middle" fill="#6B6B6B">${d}</text>`).join('');
+    const ideal = data.length ? `<line x1="${x(0)}" y1="${y(data[0])}" x2="${x(SPRINT_DAYS)}" y2="${y(0)}" stroke="#9AA4B2" stroke-dasharray="5 4" stroke-width="2"/>` : '';
+    const actual = data.length ? `<polyline fill="none" stroke="#20B2AA" stroke-width="3" points="${data.map((v, d) => `${x(d)},${y(v)}`).join(' ')}"/>${data.map((v, d) => `<circle cx="${x(d)}" cy="${y(v)}" r="3.5" fill="#20B2AA"/>`).join('')}` : '';
+    const now = live != null && data.length ? `<line x1="${x(data.length - 1)}" y1="${y(data[data.length - 1])}" x2="${x(sp.day)}" y2="${y(live)}" stroke="#20B2AA" stroke-width="2" stroke-dasharray="3 3"/><circle cx="${x(sp.day)}" cy="${y(live)}" r="5" fill="#fff" stroke="#FFB700" stroke-width="3"/><text x="${x(sp.day)}" y="${y(live) - 9}" font-size="10" text-anchor="middle" fill="#B7791F" font-weight="700">now ${live}h</text>` : '';
+    return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Sprint burndown chart">${grid}${days}${ideal}${actual}${now}
+        <text x="${W - R}" y="${H - 1}" font-size="10" text-anchor="end" fill="#6B6B6B">working day</text></svg>`;
+}
+
+function panelBoard() {
+    const sp = cur();
+    if (!sp.storyIds.length) {
+        return `<div class="block-head"><h2>Sprint backlog & tasks</h2><p>Nothing is planned for Sprint ${sp.n} yet. Items are pulled in during <a href="#" data-act="panel" data-id="planning">sprint planning</a>.</p></div>`;
+    }
+    const total = pts(sp.storyIds);
+    const editable = can('tasks') && ['planning', 'active'].includes(sp.status);
+
+    if (hides('tasks')) {
+        return `
+            <div class="block-head" style="margin-bottom: 1rem;"><h2>Sprint ${sp.n} progress</h2><p>As a stakeholder you see outcomes: which stories are in the sprint and how far along they are.</p></div>
+            <div class="burndown-wrap"><div class="card burndown"><h3>Burndown (hours of work left)</h3>${burndownSvg(sp)}</div>
+            <div class="card">${sp.storyIds.map(id => { const tk = storyTasks(sp, id); const d = tk.filter(t => t.status === 'done').length; return `<div style="margin-bottom: 0.7rem;"><strong style="color: var(--indigo);">${escapeHtml(story(id).title)}</strong> ${sp.accepted.includes(id) ? '<span class="pill" style="background: var(--ok-bg); color: var(--ok);">accepted</span>' : ''}<div class="progress"><div style="width:${tk.length ? d / tk.length * 100 : 0}%"></div></div></div>`; }).join('')}</div></div>
+            ${lockBox('Task breakdown is hidden', 'Tasks, hours, and who\'s working on what belong to the Developers. They self-organize (principle 11); showing task detail to stakeholders tends to invite micromanagement. Working software, shown at the sprint review, is the measure of progress (principle 7).')}`;
+    }
+
+    const lanes = sp.storyIds.map(id => {
+        const s = story(id);
+        const tk = storyTasks(sp, id);
+        const done = tk.filter(t => t.status === 'done').length;
+        const col = (status, name) => `<div class="lane-col ${status}"><h5>${name} (${tk.filter(t => t.status === status).length})</h5>
+            ${tk.filter(t => t.status === status).map(t => `<div class="task"><div>${escapeHtml(t.title)}</div><div class="task-meta"><span class="who">${escapeHtml(t.owner)} · ${t.hours}h</span>
+                ${editable ? `<button class="mini-btn" data-act="tMove" data-id="${t.id}" data-dir="-1" ${status === 'todo' ? 'disabled' : ''} aria-label="Move left">◀</button><button class="mini-btn" data-act="tMove" data-id="${t.id}" data-dir="1" ${status === 'done' ? 'disabled' : ''} aria-label="Move right">▶</button><button class="mini-btn danger" data-act="tDel" data-id="${t.id}" aria-label="Delete task">✕</button>` : ''}
+            </div></div>`).join('')}</div>`;
+        return `<div class="lane">
+            <div class="lane-head"><span><span class="pill ${s.type}">${s.type}</span> <strong>${escapeHtml(s.title)}</strong> · ${s.points} pts ${sp.accepted.includes(id) ? '<span class="pill" style="background: var(--ok-bg); color: var(--ok);">✓ accepted</span>' : ''}</span>
+                <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8em; color: var(--muted);">${done}/${tk.length} tasks<span class="progress"><div style="width:${tk.length ? done / tk.length * 100 : 0}%"></div></span></span></div>
+            <div class="lane-cols">${col('todo', 'To do')}${col('doing', 'In progress')}${col('done', 'Done')}</div>
+            ${editable ? `<form class="add-task" data-form="addTask" data-story="${id}">
+                <input name="title" required maxlength="60" placeholder="New task for this story" aria-label="Task title">
+                <input name="hours" type="number" min="1" max="40" value="4" required aria-label="Hours">
+                <select name="owner" aria-label="Who">${DEVS.map(d => `<option>${d}</option>`).join('')}</select>
+                <button class="btn btn-ghost" type="submit" style="padding: 5px 10px;">+ Task</button></form>` : ''}
+        </div>`;
+    }).join('');
+
+    const hint = editable ? 'Break each story into tasks of a day or less. Pick up tasks yourself; nobody assigns them to you.'
+        : can('tasks') ? 'Tasks can only change during planning and the sprint.'
+        : `${readonly('Developers manage tasks themselves.')}`;
+    return `
+        <div class="block-head" style="margin-bottom: 1rem;"><h2>Sprint ${sp.n} backlog & task breakdown</h2><p>${total} points · ${sp.tasks.length} tasks · ${remaining(sp)} hours left. ${hint}</p></div>
+        <div class="burndown-wrap">
+            <div class="card burndown"><h3>Burndown: hours of work left</h3>${sp.burndown.length ? burndownSvg(sp) : '<p style="color: var(--muted);">The burndown starts when the sprint starts.</p>'}
+                <div class="legend"><span><span class="swatch" style="background: #20B2AA;"></span>Actual</span><span><span class="swatch" style="border-top: 2px dashed #9AA4B2; height: 0;"></span>Ideal</span></div></div>
+            <div class="card"><h3>How to read it</h3><ul>
+                <li>Above the ideal line: behind. Below: ahead.</li>
+                <li>A flat line means work isn't being finished. Ask about it at the daily scrum.</li>
+                <li>A line going <em>up</em> means work was added: new tasks were discovered.</li>
+                <li>It's for the team to inspect and adapt, not a performance score.</li></ul></div>
+        </div>
+        ${lanes}`;
+}
+
+// ─── Daily scrum ───
+function panelStandup() {
+    const sp = cur();
+    if (hides('standup')) {
+        return lockBox('The daily scrum is for the Developers',
+            'It\'s a 15-minute planning meeting for the people doing the work, not a status report for stakeholders. You\'ll see the results at the sprint review.');
+    }
+    const rules = `<div class="card" style="margin-bottom: 1rem;"><h3>Daily scrum rules</h3><ul>
+        <li><strong>15 minutes</strong>, same time and place every day of the sprint.</li>
+        <li>For the <strong>Developers</strong>. The Scrum Master makes sure it happens; the Product Owner may attend.</li>
+        <li>Focus: progress toward the <strong>sprint goal</strong> and a plan for the next 24 hours.</li>
+        <li>Blockers are raised here and handled <em>after</em> the meeting. The Scrum Master removes impediments.</li></ul>
+        <p style="font-size: 0.82em; color: var(--muted); margin-top: 0.4rem;">The "yesterday / today / blockers" format below is a common habit, not a rule: the 2020 Scrum Guide lets teams choose their own format.</p></div>`;
+
+    let form = '';
+    if (sp.status === 'active' && can('standup')) {
+        const posted = sp.standups.filter(u => u.day === sp.day).map(u => u.member);
+        form = `<form class="card" data-form="standup" style="margin-bottom: 1rem;">
+            <h3>Day ${sp.day} update</h3>
+            <div class="attendance">${DEVS.map(d => `<span class="${posted.includes(d) ? 'in' : ''}">${posted.includes(d) ? '✓' : '○'} ${d}</span>`).join('')}</div>
+            <div class="form-row">
+                <div><label for="suMember">Developer</label><select id="suMember" name="member">${DEVS.map(d => `<option ${posted.includes(d) ? '' : ''}>${d}</option>`).join('')}</select></div>
+                <div><label for="suY">Yesterday I…</label><input id="suY" name="yesterday" required maxlength="120"></div>
+                <div><label for="suT">Today I'll…</label><input id="suT" name="today" required maxlength="120"></div>
+                <div><label for="suB">Blocked by (optional)</label><input id="suB" name="blockers" maxlength="140"></div>
+            </div>
+            <button class="btn btn-primary" type="submit">Post update</button>
+        </form>`;
+    } else if (sp.status !== 'active') {
+        form = `<p class="readonly-note" style="margin-bottom: 1rem;">The daily scrum runs while the sprint is active.</p>`;
+    } else {
+        form = `<p style="margin-bottom: 1rem;">${readonly('Developers post their own updates.')}</p>`;
+    }
+
+    const days = [...new Set(sp.standups.map(u => u.day))].sort((a, b) => b - a);
+    const log = days.map(d => `<div class="sd-day"><h4>Day ${d}</h4><div class="sd-entries">${sp.standups.filter(u => u.day === d).map(u => `
+        <div class="sd-entry"><div class="who">${escapeHtml(u.member)}</div>
+            <dl><dt>Yesterday</dt><dd>${escapeHtml(u.yesterday)}</dd><dt>Today</dt><dd>${escapeHtml(u.today)}</dd></dl>
+            ${u.blockers ? `<div class="blocker">⛔ ${escapeHtml(u.blockers)}</div>${!u.logged && can('logImpediment') ? `<button class="mini-btn" style="margin-top: 0.3rem;" data-act="logImp" data-id="${u.id}">Log as impediment</button>` : u.logged ? '<small style="color: var(--muted);">Logged as impediment</small>' : ''}` : ''}
+        </div>`).join('')}</div></div>`).join('') || '<p style="color: var(--muted);">No updates yet this sprint.</p>';
+
+    const imps = sp.impediments.map(i => `<div class="imp ${i.resolved ? 'resolved' : ''}"><span>${i.resolved ? '✅' : '⛔'} ${escapeHtml(i.text)} <small style="color: var(--muted);">· raised by ${escapeHtml(i.by)}, day ${i.day}</small></span>
+        ${!i.resolved && can('resolveImpediment') ? `<button class="mini-btn" data-act="resolveImp" data-id="${i.id}">Mark resolved</button>` : ''}</div>`).join('') || '<p style="color: var(--muted); font-size: 0.88em;">No impediments.</p>';
+
+    return `<div class="block-head" style="margin-bottom: 1rem;"><h2>Daily scrum log: Sprint ${sp.n}</h2><p>A short daily inspection of progress toward the sprint goal. Face-to-face conversation is the most effective way to share information (principle 6); this log keeps a record.</p></div>
+        ${rules}
+        <div class="grid-2" style="align-items: start;">
+            <div>${form}${log}</div>
+            <div class="card"><h3>🧱 Impediments (Scrum Master's list)</h3>${hides('impediments') ? '' : imps}
+                <p style="font-size: 0.82em; color: var(--muted); margin-top: 0.5rem;">${can('logImpediment') ? 'Log blockers from the daily scrum here, then work to remove them.' : 'The Scrum Master tracks and removes impediments.'}</p></div>
+        </div>`;
+}
+
+// ─── Review & feedback ───
+function panelReview() {
+    const sp = cur();
+    let review;
+    if (sp.status === 'review') {
+        review = `<div class="block-head" style="margin-bottom: 1rem;"><h2>Sprint ${sp.n} review</h2>
+            <p>The team shows what it finished and stakeholders give feedback. A story counts only if every task is done <strong>and</strong> it meets the whole Definition of Done. Anything not accepted goes back to the top of the product backlog.</p></div>
+            ${sp.storyIds.map(id => {
+                const s = story(id), tk = storyTasks(sp, id), checks = sp.dodChecks[id] || [];
+                const tasksDone = tk.length > 0 && tk.every(t => t.status === 'done');
+                const accepted = sp.accepted.includes(id);
+                const ready = storyReady(sp, id);
+                return `<div class="rv-story ${accepted ? 'accepted' : ''}">
+                    <div style="display: flex; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap;"><strong style="color: var(--indigo);">${escapeHtml(s.title)} · ${s.points} pts</strong>
+                        <span>${accepted ? '<span class="pill" style="background: var(--ok-bg); color: var(--ok);">✓ Accepted</span>' : can('accept') ? `<button class="btn btn-primary" style="padding: 6px 12px;" data-act="accept" data-id="${id}" ${ready ? '' : 'disabled'} title="${ready ? '' : 'Needs all tasks done and every DoD item ticked'}">Accept</button>` : ''}</span></div>
+                    <div style="font-size: 0.82em; color: ${tasksDone ? 'var(--ok)' : 'var(--crit)'};">${tasksDone ? '✓ All tasks done' : `✗ ${tk.filter(t => t.status !== 'done').length} task(s) not done`}${s.ac ? ` · Acceptance: ${escapeHtml(s.ac)}` : ''}</div>
+                    <div class="dod-checks">${state.dod.map(d => `<label><input type="checkbox" data-dod="${d.id}" data-story="${id}" ${checks.includes(d.id) ? 'checked' : ''} ${can('tickDod') && !accepted ? '' : 'disabled'}> ${escapeHtml(d.text)}</label>`).join('')}</div>
+                    ${!can('tickDod') && !accepted ? '<small style="color: var(--muted);">Developers tick the DoD; the Product Owner accepts.</small>' : ''}
+                </div>`;
+            }).join('')}`;
+    } else {
+        const last = lastClosed();
+        review = `<div class="block-head" style="margin-bottom: 1rem;"><h2>Sprint review</h2>
+            <p>The review happens at the end of every sprint${sp.status === 'active' ? `, after day ${SPRINT_DAYS}` : ''}. The team demos working software and the Product Owner accepts what meets the Definition of Done.</p></div>
+            ${last ? `<div class="card" style="margin-bottom: 1rem;"><h3>Last review: Sprint ${last.n} · velocity ${last.velocity} points</h3>
+                ${last.storyIds.map(id => `<div class="plan-item"><strong>${escapeHtml(story(id).title)}</strong><span>${last.accepted.includes(id) ? '✅ accepted' : '↩ returned to backlog'}</span></div>`).join('')}</div>` : ''}`;
+    }
+
+    const myFb = state.feedback;
+    const fbForm = can('feedback') ? `<form class="card" data-form="feedback" style="margin-bottom: 1rem;">
+        <h3>💬 ${role === 'stk' ? 'Tell the team what you think' : 'Log feedback from a customer'}</h3>
+        <div class="form-row">
+            <div><label for="fbFrom">From</label><input id="fbFrom" name="from" required maxlength="40" value="${role === 'stk' ? 'Principal Sharma' : ''}"></div>
+            <div style="grid-column: span 2;"><label for="fbText">Feedback</label><input id="fbText" name="text" required maxlength="200" placeholder="What works, what doesn't, what you need next"></div>
+        </div>
+        <button class="btn btn-primary" type="submit">Send to the Product Owner</button></form>` : '';
+    const fbList = myFb.slice().reverse().map(f => {
+        const status = f.status === 'new' ? '<span class="pill spike">New: waiting for the Product Owner</span>'
+            : f.status === 'added' ? `<span class="pill feature">Added to backlog${story(f.storyId) ? ` as "${escapeHtml(story(f.storyId).title)}"` : ''}</span>`
+            : `<span class="pill wont">Not planned</span> <small style="color: var(--muted);">${escapeHtml(f.reason || '')}</small>`;
+        const triage = f.status === 'new' && can('triage') ? `<div class="btn-row" style="margin-top: 0.4rem;"><button class="mini-btn" data-act="fbAdd" data-id="${f.id}">➕ Add to product backlog</button><button class="mini-btn danger" data-act="fbDecline" data-id="${f.id}">Decline with a reason</button></div>` : '';
+        return `<div class="fb-item"><span class="from">${escapeHtml(f.from)}</span> · Sprint ${f.sprint}<div>"${escapeHtml(f.text)}"</div><div style="margin-top: 0.3rem;">${status}</div>${triage}</div>`;
+    }).join('') || '<p style="color: var(--muted);">No feedback yet.</p>';
+
+    return `${review}
+        <div class="block-head" style="margin: 2rem 0 1rem;"><h2>Customer feedback</h2>
+        <p>Feedback is welcome at any time, especially at the review. The Product Owner decides what happens to it: it becomes a backlog item or gets an honest "not now" (principles 2 and 4).</p></div>
+        <div class="grid-2" style="align-items: start;"><div>${fbForm}</div><div>${fbList}</div></div>`;
+}
+
+// ─── Retrospective ───
+function panelRetro() {
+    const sp = cur();
+    if (hides('retro')) {
+        return lockBox('The retrospective is private to the Scrum team',
+            'The team needs a safe space to talk honestly about how it works, including mistakes. Stakeholders don\'t attend; the team shares improvements it chooses to make.');
+    }
+    const active = sp.status === 'retro';
+    const target = active ? sp : lastClosed();
+    if (!target) return '<p>No retrospective yet.</p>';
+    const col = (key, title, color, hint) => `<div class="retro-col" style="--c:${color}">
+        <h4>${title}</h4>
+        ${target.retro[key].map((n, i) => `<div class="note"><span>${escapeHtml(n.text)}${n.owner ? `<small>Owner: ${escapeHtml(n.owner)}</small>` : ''}<small>by ${ROLES[n.by]?.label || n.by}</small></span>${active && can('retro') ? `<button class="mini-btn danger" data-act="retroDel" data-col="${key}" data-i="${i}" aria-label="Remove note">✕</button>` : ''}</div>`).join('') || '<p style="font-size: 0.82em; color: var(--muted);">Nothing yet.</p>'}
+        ${active && can('retro') ? `<form data-form="retro" data-col="${key}"><input class="inp" name="text" required maxlength="120" placeholder="${hint}" aria-label="${title}">${key === 'actions' ? '<input class="inp" name="owner" maxlength="40" placeholder="Owner (e.g. Developers)" aria-label="Owner">' : ''}<button class="btn btn-ghost" type="submit">Add</button></form>` : ''}
+    </div>`;
+    return `<div class="block-head" style="margin-bottom: 1rem;"><h2>Sprint ${target.n} retrospective ${active ? '' : '<span class="pill">past</span>'}</h2>
+        <p>The last event of every sprint. The team looks at people, process, and tools, then picks a few concrete improvements for the next sprint (principle 12). ${active ? '' : `The next retrospective opens after the Sprint ${sp.n} review.`}</p></div>
+        <div class="retro-cols">
+            ${col('well', '😊 What went well', '#1F9D6B', 'Keep doing…')}
+            ${col('improve', '🤔 What to improve', '#FFB700', 'Didn\'t work well…')}
+            ${col('actions', '🎯 Action items for next sprint', '#A78BFA', 'We will try…')}
+        </div>
+        ${active ? '<p style="font-size: 0.85em; color: var(--muted); margin-top: 0.8rem;">Action items appear at the next sprint planning so they don\'t get forgotten.</p>' : ''}`;
+}
+
+// ─── Definition of Done ───
+function panelDod() {
+    const edit = can('editDod');
+    return `<div class="block-head" style="margin-bottom: 1rem;"><h2>Definition of Done</h2>
+        <p>The shared checklist every item must meet before it counts as done. It makes "done" mean the same thing to everyone and protects quality (principle 9). The whole Scrum team owns it.</p></div>
+        <div class="grid-2" style="align-items: start;">
+            <div class="card">
+                <h3>Our Definition of Done</h3>
+                <ol style="margin-top: 0.5rem;">${state.dod.map(d => `<li style="display: flex; justify-content: space-between; gap: 0.5rem;"><span>${escapeHtml(d.text)}</span>${edit ? `<button class="mini-btn danger" data-act="dodDel" data-id="${d.id}" aria-label="Remove">✕</button>` : ''}</li>`).join('')}</ol>
+                ${edit ? `<form data-form="dod" class="form-row" style="grid-template-columns: 1fr auto; margin-top: 0.8rem;"><input class="inp" name="text" required maxlength="80" placeholder="e.g. Accessibility checked" aria-label="New DoD item"><button class="btn btn-ghost" type="submit">Add</button></form>` : readonly('The Scrum team owns the DoD.')}
+            </div>
+            <div class="card"><h3>DoD vs. acceptance criteria</h3>
+                <div class="scroll-x"><table class="data" style="margin-top: 0.5rem; min-width: 420px;"><thead><tr><th></th><th>Definition of Done</th><th>Acceptance criteria</th></tr></thead><tbody>
+                    <tr><td><strong>Applies to</strong></td><td>Every item</td><td>One specific story</td></tr>
+                    <tr><td><strong>Written by</strong></td><td>The Scrum team</td><td>Product Owner, with stakeholders</td></tr>
+                    <tr><td><strong>Checks</strong></td><td>Quality: tested, reviewed, deployed</td><td>Behavior: does it do what the user needs?</td></tr>
+                    <tr><td><strong>Example</strong></td><td>"Unit tests passing"</td><td>"SMS sent within 15 minutes"</td></tr>
+                </tbody></table></div>
+            </div>
+        </div>`;
+}
+
+// ─── Guide ───
+function panelGuide() {
+    const E = '✏️', V = '👁', H = '🔒';
+    const rows = [
+        ['Product backlog', E + ' order, add', V + ' + refine', E + ' estimate', V + ' order only'],
+        ['Estimates (story points)', V, V, E, H],
+        ['Sprint planning', E + ' goal', E + ' facilitate', E + ' commit', H + ' sees goal'],
+        ['Sprint backlog & tasks', V, V, E, H + ' story progress only'],
+        ['Burndown chart', V, V, V, V],
+        ['Daily scrum log', V, V, E, H],
+        ['Impediments', V, E, V + ' raise', H],
+        ['Sprint review: accept work', E, V, E + ' tick DoD', V + ' + feedback'],
+        ['Customer feedback', E + ' triage', V, V, E + ' submit'],
+        ['Retrospective', E, E + ' facilitate', E, H],
+        ['Definition of Done', E, E, E, V]
+    ];
+    return `<div class="block-head" style="margin-bottom: 1rem;"><h2>Who sees what</h2><p>${E} works on it · ${V} can see it · ${H} hidden. Scrum values transparency inside the team; some working tools are kept from outsiders to protect focus and honesty.</p></div>
+        <div class="scroll-x"><table class="data matrix" style="min-width: 680px;"><thead><tr><th>Artifact / event</th><th>🎯 Product Owner</th><th>🧭 Scrum Master</th><th>💻 Developers</th><th>🏫 Stakeholders</th></tr></thead>
+            <tbody>${rows.map(r => `<tr>${r.map((c, i) => `<td>${i === 0 ? `<strong>${c}</strong>` : c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+        <div class="grid-2" style="margin-top: 1.2rem;">
+            <div class="card"><h3>Scrum at a glance</h3><ul>
+                <li><strong>3 accountabilities:</strong> Product Owner, Scrum Master, Developers</li>
+                <li><strong>5 events:</strong> the Sprint, Sprint Planning, Daily Scrum, Sprint Review, Sprint Retrospective</li>
+                <li><strong>3 artifacts + commitments:</strong> Product Backlog → Product Goal · Sprint Backlog → Sprint Goal · Increment → Definition of Done</li>
+                <li><strong>5 values:</strong> commitment, focus, openness, respect, courage</li></ul></div>
+            <div class="exam-tips"><h3>📝 Exam tips</h3><ul>
+                <li>Sprints are a <strong>fixed timebox</strong> (max one month). Length is consistent; scope can be clarified, but the sprint goal doesn't change.</li>
+                <li>Only the <strong>Product Owner</strong> orders the backlog. Only <strong>Developers</strong> estimate.</li>
+                <li>The Scrum Master is a <strong>servant leader</strong>: removes impediments, never assigns tasks.</li>
+                <li>Unfinished items <strong>go back to the product backlog</strong>; they aren't partly counted in velocity.</li>
+                <li>The retrospective is the last event of the sprint.</li></ul></div>
+        </div>
+        <div class="btn-row" style="margin-top: 1.2rem;"><button class="btn btn-ghost" data-act="reset">Reset the example project</button><span style="font-size: 0.82em; color: var(--muted);">Your board is saved in this browser.</span></div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+//  Actions
+// ════════════════════════════════════════════════════════════════════
+// Re-rendering replaces the DOM, so remember which control had focus and restore it afterwards
+function focusSelector(el) {
+    if (!el || el === document.body) return null;
+    if (el.id) return `#${CSS.escape(el.id)}`;
+    const attrs = ['data-act', 'data-id', 'data-dir', 'data-dod', 'data-story', 'data-est', 'data-col', 'data-i'];
+    const parts = attrs.filter(a => el.hasAttribute(a)).map(a => `[${a}="${CSS.escape(el.getAttribute(a))}"]`);
+    if (el.name && el.form?.dataset.form) return `[data-form="${el.form.dataset.form}"]${el.form.dataset.story ? `[data-story="${el.form.dataset.story}"]` : ''} [name="${el.name}"]`;
+    return parts.length ? el.tagName.toLowerCase() + parts.join('') : null;
+}
+function commit(msg, kind, principle) {
+    const sel = focusSelector(document.activeElement);
+    save();
+    render();
+    if (sel) document.querySelector(sel)?.focus();
+    if (msg) agileToast(msg, kind, principle);
+}
+
+function moveInBacklog(id, dir) {
+    const open = openItems();
+    const i = open.findIndex(s => s.id === id);
+    const j = i + dir;
+    if (j < 0 || j >= open.length) return;
+    const a = state.backlog.indexOf(open[i]), b = state.backlog.indexOf(open[j]);
+    [state.backlog[a], state.backlog[b]] = [state.backlog[b], state.backlog[a]];
+    save(); render();
+    document.querySelector(`[data-act="${dir < 0 ? 'up' : 'down'}"][data-id="${id}"]`)?.focus();
+}
+
+// Put items at the top of the open backlog (used for returns and new feedback)
+function toTopOfOpen(items) {
+    state.backlog = state.backlog.filter(s => !items.includes(s));
+    const firstOpen = state.backlog.findIndex(s => !s.doneIn && !inCurrentSprint(s));
+    state.backlog.splice(firstOpen < 0 ? state.backlog.length : firstOpen, 0, ...items);
+}
+
+document.addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b || b.disabled) return;
+    const id = b.dataset.id;
+    const sp = cur();
+    switch (b.dataset.act) {
+        case 'role':
+            role = id;
+            try { localStorage.setItem('pmScrumRole', role); } catch (err) {}
+            render();
+            agileToast(`Now viewing as ${ROLES[role].label}.`);
+            break;
+        case 'panel':
+            e.preventDefault();
+            panel = id;
+            try { localStorage.setItem('pmScrumPanel', panel); } catch (err) {}
+            render();
+            document.getElementById('panelTabs').scrollIntoView({ block: 'nearest' });
+            break;
+        case 'up': moveInBacklog(id, -1); break;
+        case 'down': moveInBacklog(id, 1); break;
+        case 'delStory':
+            if (!confirm(`Remove "${story(id).title}" from the product backlog?`)) return;
+            state.backlog = state.backlog.filter(s => s.id !== id);
+            commit('Removed. Saying no to low-value work is part of the job.', '', 10);
+            break;
+        case 'pull': {
+            const s = story(id);
+            sp.storyIds.push(id);
+            // Carry unfinished tasks over from an earlier sprint so the breakdown isn't lost
+            const prev = state.sprints.slice(0, -1).reverse().find(x => x.storyIds.includes(id));
+            if (prev && !storyTasks(sp, id).length) prev.tasks.filter(t => t.storyId === id && t.status !== 'done').forEach(t => sp.tasks.push({ ...t, id: uid('T'), status: 'todo' }));
+            const over = pts(sp.storyIds) > forecast();
+            commit(over ? `Added "${s.title}". That's more than the team's forecast.` : `Added "${s.title}" to the Sprint ${sp.n} backlog.`, over ? 'warn' : '', over ? 8 : null);
+            break;
+        }
+        case 'unpull':
+            sp.storyIds = sp.storyIds.filter(x => x !== id);
+            sp.tasks = sp.tasks.filter(t => t.storyId !== id);
+            commit('Removed from the sprint backlog.');
+            break;
+        case 'start':
+            if (!sp.goal) return agileToast('Set a sprint goal first (Product Owner, on the Sprint planning tab).', 'warn');
+            if (!sp.storyIds.length) return agileToast('Pull at least one item into the sprint backlog first.', 'warn');
+            if (!sp.tasks.length && !confirm('No tasks yet. Developers usually break items into tasks during planning. Start anyway?')) return;
+            sp.status = 'active'; sp.day = 1; sp.burndown = [remaining(sp)];
+            panel = 'board';
+            commit(`Sprint ${sp.n} started: ${SPRINT_DAYS} working days, timebox fixed.`, 'good', 3);
+            break;
+        case 'endDay':
+            sp.burndown.push(remaining(sp));
+            if (sp.day < SPRINT_DAYS) {
+                sp.day++;
+                commit(`Day ${sp.day} begins. Developers: post your daily scrum update.`, '', 6);
+            } else {
+                sp.status = 'review';
+                panel = 'review';
+                commit('Timebox over. Time for the sprint review: demo the working increment.', 'good', 7);
+            }
+            break;
+        case 'toRetro': {
+            const returned = sp.storyIds.filter(x => !sp.accepted.includes(x)).map(story);
+            toTopOfOpen(returned);
+            sp.velocity = pts(sp.accepted);
+            sp.status = 'retro';
+            panel = role === 'stk' ? 'review' : 'retro';
+            commit(`Velocity this sprint: ${sp.velocity} points.${returned.length ? ` ${returned.length} unfinished item(s) went back to the top of the backlog.` : ''}`, '', 12);
+            break;
+        }
+        case 'close':
+            sp.status = 'closed';
+            state.sprints.push({ n: sp.n + 1, status: 'planning', goal: '', day: 0, storyIds: [], accepted: [], velocity: null, tasks: [], burndown: [], standups: [], dodChecks: {}, impediments: sp.impediments.filter(i => !i.resolved).map(i => ({ ...i })), retro: { well: [], improve: [], actions: [] } });
+            panel = 'planning';
+            commit(`Sprint ${sp.n} closed. Sprint ${sp.n + 1} planning: same ${SPRINT_DAYS}-day length.`, 'good', 3);
+            break;
+        case 'tMove': {
+            const order = ['todo', 'doing', 'done'];
+            const t = sp.tasks.find(x => x.id === id);
+            const next = order[order.indexOf(t.status) + Number(b.dataset.dir)];
+            if (!next) return;
+            const wasDone = storyTasks(sp, t.storyId).every(x => x.status === 'done');
+            t.status = next;
+            const nowDone = storyTasks(sp, t.storyId).every(x => x.status === 'done');
+            commit(nowDone && !wasDone ? `All tasks for "${story(t.storyId).title}" are done. Check it against the Definition of Done.` : null, 'good');
+            (document.querySelector(`[data-act="tMove"][data-id="${id}"][data-dir="${b.dataset.dir}"]:not([disabled])`)
+                || document.querySelector(`[data-act="tMove"][data-id="${id}"]:not([disabled])`))?.focus();
+            break;
+        }
+        case 'tDel':
+            sp.tasks = sp.tasks.filter(t => t.id !== id);
+            commit();
+            break;
+        case 'logImp': {
+            const u = sp.standups.find(x => x.id === id);
+            u.logged = true;
+            sp.impediments.push({ id: uid('I'), text: u.blockers, by: u.member, day: u.day, resolved: false });
+            commit('Logged. Removing impediments is the Scrum Master\'s job.', '', 5);
+            break;
+        }
+        case 'resolveImp':
+            sp.impediments.find(i => i.id === id).resolved = true;
+            commit('Impediment resolved. The team can get back to work.', 'good', 5);
+            break;
+        case 'accept':
+            sp.accepted.push(id);
+            story(id).doneIn = sp.n;
+            commit(`"${story(id).title}" accepted: it's part of the increment.`, 'good', 7);
+            break;
+        case 'fbAdd': {
+            const f = state.feedback.find(x => x.id === id);
+            const s = { id: uid('S'), title: f.text.length > 55 ? f.text.slice(0, 52) + '…' : f.text, story: `From ${f.from}: "${f.text}"`, points: null, type: 'feedback', ac: '' };
+            state.backlog.push(s);
+            toTopOfOpen([s]);
+            f.status = 'added'; f.storyId = s.id;
+            commit('Added near the top of the product backlog. Developers will estimate it at refinement.', 'good', 2);
+            break;
+        }
+        case 'fbDecline': {
+            const reason = prompt('Why won\'t this be planned? The customer will see your answer.');
+            if (!reason) return;
+            const f = state.feedback.find(x => x.id === id);
+            f.status = 'declined'; f.reason = reason.slice(0, 140);
+            commit('Declined, with a reason the customer can see.', '', 4);
+            break;
+        }
+        case 'retroDel':
+            sp.retro[b.dataset.col].splice(Number(b.dataset.i), 1);
+            commit();
+            break;
+        case 'dodDel':
+            state.dod = state.dod.filter(d => d.id !== id);
+            commit('Removed from the Definition of Done.');
+            break;
+        case 'reset':
+            if (!confirm('Reset the board to the example project? Your changes will be lost.')) return;
+            state = seed();
+            panel = 'backlog';
+            commit('Board reset.');
+            break;
+    }
+});
+
+document.addEventListener('change', e => {
+    const est = e.target.closest('[data-est]');
+    if (est) {
+        const s = story(est.dataset.est);
+        s.points = est.value === '' ? null : Number(est.value);
+        commit(s.points >= 13 ? `${s.points} points is too big for one sprint. Ask the Product Owner to split it.` : null, 'warn', s.points >= 13 ? 10 : null);
+        return;
+    }
+    const dod = e.target.closest('[data-dod]');
+    if (dod) {
+        const sp = cur();
+        const list = sp.dodChecks[dod.dataset.story] = sp.dodChecks[dod.dataset.story] || [];
+        if (dod.checked) list.push(dod.dataset.dod); else list.splice(list.indexOf(dod.dataset.dod), 1);
+        commit();
+    }
+});
+
+document.addEventListener('submit', e => {
+    const f = e.target.closest('[data-form]');
+    if (!f) return;
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(f));
+    const sp = cur();
+    switch (f.dataset.form) {
+        case 'addStory':
+            state.backlog.push({ id: uid('S'), title: v.title.trim(), story: v.story.trim(), ac: v.ac.trim(), type: v.type, points: null });
+            commit('Added to the bottom of the backlog. Reorder it, then ask the Developers to estimate.', 'good', 2);
+            break;
+        case 'goal':
+            sp.goal = v.goal.trim();
+            commit('Sprint goal saved.');
+            break;
+        case 'addTask':
+            sp.tasks.push({ id: uid('T'), storyId: f.dataset.story, title: v.title.trim(), hours: Number(v.hours), owner: v.owner, status: 'todo' });
+            commit();
+            document.querySelector(`[data-form="addTask"][data-story="${f.dataset.story}"] input[name="title"]`)?.focus();
+            break;
+        case 'standup': {
+            const existing = sp.standups.find(u => u.day === sp.day && u.member === v.member);
+            if (existing && !confirm(`${v.member} already posted for day ${sp.day}. Replace it?`)) return;
+            sp.standups = sp.standups.filter(u => u !== existing);
+            sp.standups.push({ id: uid('U'), day: sp.day, member: v.member, yesterday: v.yesterday.trim(), today: v.today.trim(), blockers: v.blockers.trim() });
+            commit(v.blockers.trim() ? 'Posted. The blocker is now visible to the Scrum Master.' : 'Posted.', v.blockers.trim() ? 'warn' : 'good', 6);
+            break;
+        }
+        case 'feedback':
+            state.feedback.push({ id: uid('F'), from: v.from.trim(), text: v.text.trim(), status: 'new', sprint: sp.n });
+            commit('Thanks. The Product Owner will review it.', 'good', 4);
+            break;
+        case 'retro': {
+            const note = { text: v.text.trim(), by: role };
+            if (f.dataset.col === 'actions') note.owner = (v.owner || 'Scrum team').trim();
+            sp.retro[f.dataset.col].push(note);
+            commit();
+            break;
+        }
+        case 'dod':
+            state.dod.push({ id: uid('d'), text: v.text.trim() });
+            commit('Added to the Definition of Done.', 'good', 9);
+            break;
+    }
+});
+
+renderManifesto(document.getElementById('manifesto'));
+render();
+</script>
+</body>
+</html>

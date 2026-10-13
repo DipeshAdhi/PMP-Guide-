@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Board - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        :root { --accent: var(--teal); --tab-color: var(--teal); }
+
+        /* Summary + milestones */
+        .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.2rem; }
+        .stat { background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.8rem 1rem; }
+        .stat .n { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6em; color: var(--indigo); line-height: 1.1; }
+        .stat .l { font-size: 0.8em; color: var(--muted); }
+        .milestone-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; margin-bottom: 1.4rem; }
+        .ms {
+            text-align: left; background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.7rem 0.8rem;
+            display: flex; flex-direction: column; gap: 0.35rem; transition: border-color 0.2s ease;
+        }
+        .ms:hover { border-color: var(--indigo); }
+        .ms.selected { border-color: var(--indigo); box-shadow: 0 0 0 2px var(--indigo) inset; }
+        .ms-top { display: flex; align-items: center; gap: 0.45rem; font-size: 0.8em; font-family: 'IBM Plex Mono', monospace; color: var(--muted); }
+        .ms-diamond { width: 11px; height: 11px; transform: rotate(45deg); border: 2px solid var(--muted); flex-shrink: 0; }
+        .ms.reached .ms-diamond { background: var(--ok); border-color: var(--ok); }
+        .ms.active .ms-diamond { border-color: var(--gold); background: var(--warn-bg); }
+        .ms-name { font-weight: 700; color: var(--indigo); font-size: 0.88em; line-height: 1.25; }
+        .ms-bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+        .ms-bar div { height: 100%; background: var(--teal); transition: width 0.4s ease; }
+        .ms.reached .ms-bar div { background: var(--ok); }
+        .ms-meta { font-size: 0.74em; color: var(--muted); }
+
+        /* Toolbar */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .view-switch { display: inline-flex; border: 1.5px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--paper); }
+        .view-switch button { border: none; background: none; padding: 8px 14px; font-weight: 600; font-size: 0.88em; color: var(--indigo); }
+        .view-switch button[aria-pressed="true"] { background: var(--indigo); color: #fff; }
+        .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+        .filters select { padding: 7px 9px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--paper); font-size: 0.86em; }
+
+        /* Board */
+        .board-scroll { overflow-x: auto; padding-bottom: 0.6rem; -webkit-overflow-scrolling: touch; }
+        .board { display: grid; grid-template-columns: repeat(5, minmax(220px, 1fr)); gap: 0.8rem; min-width: 1150px; align-items: start; }
+        .column { background: #EFEDE8; border-radius: 12px; padding: 0.7rem; min-height: 320px; transition: background 0.15s ease; }
+        .column.drag-over { background: #DDF3F1; }
+        .column.blocked { background: var(--bad-bg); }
+        .col-head { display: flex; justify-content: space-between; align-items: center; padding: 0.2rem 0.3rem 0.6rem; }
+        .col-head h3 { font-size: 0.95em; }
+        .col-count { font-family: 'IBM Plex Mono', monospace; font-size: 0.78em; color: var(--muted); background: var(--paper); padding: 1px 8px; border-radius: 10px; }
+        .col-count.over { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+        .col-hint { font-size: 0.72em; color: var(--muted); padding: 0 0.3rem 0.5rem; }
+        .cards { display: flex; flex-direction: column; gap: 0.5rem; min-height: 40px; }
+        .add-card { width: 100%; margin-top: 0.5rem; background: none; border: none; text-align: left; padding: 0.5rem; border-radius: 8px; color: var(--muted); font-weight: 600; font-size: 0.86em; }
+        .add-card:hover { background: rgba(255,255,255,0.7); color: var(--indigo); }
+
+        .card-item {
+            background: var(--paper); border-radius: 9px; box-shadow: 0 1px 2px rgba(44,62,80,0.15);
+            border-left: 4px solid var(--branch); padding: 0.6rem 0.7rem; cursor: grab; position: relative;
+            transition: box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        .card-item:hover { box-shadow: 0 4px 12px rgba(44,62,80,0.15); }
+        .card-item.dragging { opacity: 0.4; }
+        .card-item.drop-before { box-shadow: 0 -3px 0 var(--teal), 0 1px 2px rgba(44,62,80,0.15); }
+        .card-top { display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; }
+        .wbs-code { font-family: 'IBM Plex Mono', monospace; font-size: 0.72em; font-weight: 600; color: var(--branch); }
+        .branch-name { font-size: 0.68em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-title { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0.25rem 0 0.45rem; font-weight: 600; color: var(--indigo); font-size: 0.9em; line-height: 1.3; }
+        .card-title:hover { text-decoration: underline; }
+        .card-foot { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+        .chip { font-size: 0.7em; padding: 1px 7px; border-radius: 10px; background: var(--white); color: var(--charcoal); font-family: 'IBM Plex Mono', monospace; }
+        .chip.ms-chip { background: #E8F7F6; color: #13807A; }
+        .avatar { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.62em; font-weight: 700; color: #fff; margin-left: auto; }
+        .move { display: flex; gap: 2px; }
+        .move button { background: var(--white); border: 1px solid var(--line); border-radius: 4px; width: 22px; height: 22px; font-size: 0.65em; color: var(--indigo); }
+        .move button:hover { border-color: var(--indigo); }
+        .move button:disabled { opacity: 0.25; cursor: default; }
+
+        /* WBS tree */
+        .wbs-root {
+            margin: 0 auto 1.2rem; width: max-content; max-width: 100%; text-align: center;
+            background: var(--indigo); color: #fff; border-radius: 10px; padding: 0.8rem 1.4rem;
+        }
+        .wbs-root .code { font-family: 'IBM Plex Mono', monospace; font-size: 0.8em; color: var(--gold); }
+        .wbs-root strong { display: block; font-family: 'Syne', sans-serif; font-size: 1.1em; }
+        .wbs-root span { font-size: 0.8em; opacity: 0.8; }
+        .wbs-branches { display: grid; grid-template-columns: repeat(6, minmax(170px, 1fr)); gap: 0.7rem; min-width: 1060px; position: relative; padding-top: 1rem; }
+        .wbs-branches::before { content: ''; position: absolute; top: 0; left: 8%; right: 8%; height: 2px; background: var(--line); }
+        .wbs-branch { position: relative; }
+        .wbs-branch::before { content: ''; position: absolute; top: -1rem; left: 50%; width: 2px; height: 1rem; background: var(--line); }
+        .branch-head { background: var(--paper); border: 1.5px solid var(--line); border-top: 4px solid var(--branch); border-radius: 10px; padding: 0.6rem 0.7rem; margin-bottom: 0.5rem; }
+        .branch-head .code { font-family: 'IBM Plex Mono', monospace; font-size: 0.75em; font-weight: 600; color: var(--branch); }
+        .branch-head h4 { font-size: 0.95em; margin: 0.1rem 0 0.3rem; }
+        .branch-head .meta { font-size: 0.74em; color: var(--muted); }
+        .wp-list { display: flex; flex-direction: column; gap: 0.35rem; padding-left: 0.6rem; border-left: 2px solid var(--line); margin-left: 0.6rem; }
+        .wp {
+            display: flex; gap: 0.45rem; align-items: flex-start; text-align: left; width: 100%;
+            background: var(--paper); border: 1px solid var(--line); border-radius: 7px; padding: 0.4rem 0.5rem; font-size: 0.8em;
+        }
+        .wp:hover { border-color: var(--indigo); }
+        .wp .code { font-family: 'IBM Plex Mono', monospace; color: var(--muted); font-size: 0.9em; }
+        .wp .t { flex: 1; color: var(--indigo); font-weight: 600; line-height: 1.25; }
+        .dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+        .wbs-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.8em; color: var(--muted); margin-top: 1rem; }
+        .wbs-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+        /* Dialog */
+        dialog { border: none; border-radius: 14px; padding: 0; width: min(520px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(26,41,66,0.35); }
+        dialog::backdrop { background: rgba(26,41,66,0.55); }
+        .dlg { padding: 1.5rem; }
+        .dlg h3 { font-size: 1.3em; margin-bottom: 1rem; }
+        .field { margin-bottom: 0.8rem; }
+        .field label { display: block; font-size: 0.8em; font-weight: 600; color: var(--indigo); margin-bottom: 0.25rem; }
+        .field input, .field select, .field textarea { width: 100%; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 0.92em; background: var(--paper); font-family: inherit; }
+        .field textarea { min-height: 70px; resize: vertical; }
+        .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+        .dlg-foot { display: flex; justify-content: space-between; gap: 0.5rem; margin-top: 1.2rem; }
+        .btn-danger { background: var(--bad-bg); color: var(--bad); }
+        .btn-danger:hover { background: var(--bad); color: #fff; }
+
+        .toast {
+            position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, calc(100% + 40px)); z-index: 1000; visibility: hidden;
+            background: var(--indigo); color: #fff; padding: 0.8rem 1.2rem; border-radius: 10px; font-size: 0.92em;
+            box-shadow: 0 10px 30px rgba(26,41,66,0.3); transition: transform 0.3s ease; max-width: calc(100vw - 32px);
+        }
+        .toast.show { transform: translate(-50%, 0); visibility: visible; }
+        .toast.good { background: var(--ok); }
+        .toast.warn { background: var(--warn); }
+
+        @media (max-width: 860px) {
+            .summary { grid-template-columns: repeat(2, 1fr); }
+            .milestone-strip { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .board { grid-template-columns: repeat(5, 250px); min-width: 0; width: max-content; }
+            .wbs-branches { grid-template-columns: 1fr; min-width: 0; padding-top: 0; }
+            .wbs-branches::before, .wbs-branch::before { display: none; }
+            .field-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html" aria-current="page">PM Tools</a></li>
+            <li><a href="agile-board.html">Agile</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="pm-tools.html">Overview</a>
+        <a href="raci.html">👥 RACI matrix</a>
+        <a href="milestones.html">🏁 Milestones</a>
+        <a href="gantt.html">📊 Gantt chart</a>
+        <a href="cpm.html">🛤️ Critical path (CPM)</a>
+        <a href="board.html" aria-current="page">🗂️ Task board</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Tool 5 · Put it to work · WBS + milestones on one board</span>
+            <h1>Task board</h1>
+            <p class="lead">A Trello-style board for running the project. Each card is a <strong>work package</strong> from the WBS, tagged with the <strong>milestone</strong> it counts toward. Drag cards across the board as work moves; the milestones above fill in as their work packages reach Done.</p>
+            <div class="definition"><strong>Why both?</strong> The WBS says <em>what</em> must be delivered. The board shows the <em>state</em> of each piece right now. Milestones show <em>whether we're on track</em>. This board connects all three.</div>
+        </div>
+    </header>
+
+    <main>
+        <section class="block" id="board-section">
+            <div class="container">
+                <div class="summary" id="summary"></div>
+
+                <div class="milestone-strip" id="milestoneStrip" aria-label="Milestones: select one to filter the board"></div>
+
+                <div class="toolbar">
+                    <div class="view-switch" role="group" aria-label="View">
+                        <button id="viewBoard" aria-pressed="true">🗂️ Board</button>
+                        <button id="viewWbs" aria-pressed="false">🌳 WBS tree</button>
+                    </div>
+                    <div class="filters">
+                        <select id="fBranch" aria-label="Filter by WBS branch"></select>
+                        <select id="fMilestone" aria-label="Filter by milestone"></select>
+                        <select id="fOwner" aria-label="Filter by owner"></select>
+                        <button class="btn btn-ghost" id="clearFilters">Clear filters</button>
+                        <button class="btn btn-ghost" id="resetBoard" title="Restore the Scholar Academy example">Reset example</button>
+                    </div>
+                </div>
+
+                <div id="boardView" class="board-scroll"><div class="board" id="board"></div></div>
+                <div id="wbsView" class="board-scroll" hidden></div>
+                <p style="font-size: 0.82em; color: var(--muted); margin-top: 0.6rem;">Tip: drag cards between columns, or use ◀ ▶ on a card. Click a card's title to edit it. Changes are saved in this browser.</p>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container grid-2">
+                <div class="card">
+                    <h3>How to run a project on this board</h3>
+                    <ol style="margin-top: 0.5rem;">
+                        <li><strong>Build the WBS first.</strong> Switch to the WBS tree and add every work package under its branch.</li>
+                        <li><strong>Tag each card with a milestone.</strong> A milestone is reached only when all its cards are Done.</li>
+                        <li><strong>Pull work from left to right.</strong> Backlog → To do → In progress → Review → Done.</li>
+                        <li><strong>Respect the WIP limit.</strong> Only 3 cards in progress at once. Finish before you start.</li>
+                        <li><strong>Use Review for acceptance.</strong> A card moves to Done only when the deliverable is checked.</li>
+                        <li><strong>Report milestones, not cards.</strong> Sponsors want the strip at the top, not 18 cards.</li>
+                    </ol>
+                </div>
+                <div class="card">
+                    <h3>WBS rules the board follows</h3>
+                    <ul>
+                        <li><strong>100% rule</strong>: the work packages add up to all the project's work, and nothing outside it. If it's not on the board, it's not in scope.</li>
+                        <li><strong>Work package</strong> = lowest WBS level, the size you can estimate, assign, and track. That's why each card has an owner and an estimate.</li>
+                        <li><strong>8/80 rule</strong> (rule of thumb): a work package should take between 8 and 80 hours of effort.</li>
+                        <li><strong>WBS codes</strong> (2.1, 4.3…) are unique IDs that link each card to the WBS dictionary, schedule, and cost estimates.</li>
+                        <li><strong>Deliverables, not actions</strong>: name cards by the result ("Grades module"), not the verb.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="exam-tips">
+                    <h3>📝 PMP exam tips</h3>
+                    <ul>
+                        <li>A task board or Kanban board is an <strong>information radiator</strong>: a visible display that shows progress without status meetings.</li>
+                        <li><strong>WIP limits</strong> expose bottlenecks and improve flow. If a column is always full, that's where the work is stuck.</li>
+                        <li>The WBS is part of the <strong>scope baseline</strong> (scope statement + WBS + WBS dictionary). It is <em>not</em> a schedule; it has no dates or sequence.</li>
+                        <li>Work packages are decomposed into <strong>activities</strong> later, in <em>Define Activities</em>, which is also where the milestone list is created.</li>
+                        <li>In agile, the board is driven by the <strong>product backlog</strong>; "Done" must meet the team's <strong>Definition of Done</strong>.</li>
+                    </ul>
+                </div>
+                <div class="next-tool">
+                    <a href="cpm.html">← Critical path</a>
+                    <a href="pm-tools.html">All PM tools →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <dialog id="cardDialog" aria-labelledby="dlgTitle">
+        <form class="dlg" id="cardForm" method="dialog">
+            <h3 id="dlgTitle">Edit work package</h3>
+            <div class="field"><label for="fTitle">Work package (name the deliverable)</label><input id="fTitle" required maxlength="80"></div>
+            <div class="field-row">
+                <div class="field"><label for="fBranchSel">WBS branch</label><select id="fBranchSel"></select></div>
+                <div class="field"><label for="fStatus">Column</label><select id="fStatus"></select></div>
+            </div>
+            <div class="field-row">
+                <div class="field"><label for="fOwnerSel">Owner (Responsible)</label><select id="fOwnerSel"></select></div>
+                <div class="field"><label for="fDays">Estimate (days)</label><input id="fDays" type="number" min="0.5" max="40" step="0.5" required></div>
+            </div>
+            <div class="field"><label for="fMsSel">Counts toward milestone</label><select id="fMsSel"></select></div>
+            <div class="field"><label for="fNotes">Acceptance criteria / notes</label><textarea id="fNotes" maxlength="400"></textarea></div>
+            <div class="dlg-foot">
+                <button type="button" class="btn btn-danger" id="deleteCard">Delete</button>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-ghost" id="cancelCard">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveCard">Save</button>
+                </div>
+            </div>
+        </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <footer>
+        <p>PMP Guide · PM Tools</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="board.html">Task board</a></p>
+    </footer>
+
+<script src="pm-schedule.js"></script>
+<script>
+// ─── Reference data ──────────────────────────────────────────────────
+const COLUMNS = [
+    { id: 'backlog', name: 'Backlog', hint: 'In scope, not planned yet' },
+    { id: 'todo', name: 'To do', hint: 'Ready to start' },
+    { id: 'doing', name: 'In progress', hint: 'WIP limit: 3', wip: 3 },
+    { id: 'review', name: 'Review', hint: 'Waiting for acceptance' },
+    { id: 'done', name: 'Done', hint: 'Accepted deliverables' }
+];
+const BRANCHES = [
+    { id: '1', name: 'Project management', color: '#2C3E50' },
+    { id: '2', name: 'Requirements', color: '#FF6B5B' },
+    { id: '3', name: 'Design', color: '#A78BFA' },
+    { id: '4', name: 'Build', color: '#20B2AA' },
+    { id: '5', name: 'Testing', color: '#D9930D' },
+    { id: '6', name: 'Deployment', color: '#3B82F6' }
+];
+const OWNERS = [
+    { id: 'PM', name: 'Project Manager', color: '#2C3E50' },
+    { id: 'BA', name: 'Business Analyst', color: '#FF6B5B' },
+    { id: 'DV', name: 'Developer', color: '#20B2AA' },
+    { id: 'QA', name: 'QA Tester', color: '#D9930D' },
+    { id: 'SP', name: 'Sponsor (Principal)', color: '#A78BFA' },
+    { id: 'TC', name: 'Teachers', color: '#3B82F6' }
+];
+// Milestones come from the shared Scholar Academy schedule (skip M0, kickoff, which has no work)
+const MILESTONES = SCHOLAR_MILESTONES.filter(m => m.id !== 'M0');
+
+const EXAMPLE = [
+    ['1.1', 'Project charter', 'PM', 1, 'M1', 'done'],
+    ['1.2', 'Project management plan', 'PM', 2, 'M1', 'done'],
+    ['1.3', 'Weekly status reports', 'PM', 3, 'M5', 'doing'],
+    ['2.1', 'Stakeholder interview notes', 'BA', 2, 'M1', 'done'],
+    ['2.2', 'Requirements document', 'BA', 3, 'M1', 'done'],
+    ['3.1', 'UI wireframes', 'DV', 2, 'M2', 'done'],
+    ['3.2', 'Database schema', 'DV', 2, 'M2', 'review'],
+    ['3.3', 'Design review sign-off pack', 'BA', 1, 'M2', 'doing'],
+    ['4.1', 'Attendance module', 'DV', 3, 'M3', 'doing'],
+    ['4.2', 'Grades module', 'DV', 3, 'M3', 'todo'],
+    ['4.3', 'Fee payment module', 'DV', 2, 'M3', 'todo'],
+    ['4.4', 'Parent portal', 'DV', 3, 'M3', 'backlog'],
+    ['5.1', 'Test cases', 'QA', 2, 'M4', 'todo'],
+    ['5.2', 'Integration test report', 'QA', 2, 'M4', 'backlog'],
+    ['5.3', 'UAT results from teachers', 'TC', 2, 'M4', 'backlog'],
+    ['6.1', 'Training materials', 'BA', 3, 'M5', 'backlog'],
+    ['6.2', 'Teacher training sessions', 'BA', 2, 'M5', 'backlog'],
+    ['6.3', 'Go-live cut-over', 'PM', 1, 'M5', 'backlog']
+].map(([code, title, owner, days, ms, status], i) => ({ id: 'c' + (i + 1), code, title, owner, days, ms, status, notes: '' }));
+
+// ─── State (saved per browser) ───────────────────────────────────────
+const KEY = 'pmTaskBoard_v1';
+let cards = load();
+let view = 'board';
+const filters = { branch: '', ms: '', owner: '' };
+let editingId = null;
+
+function load() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(KEY));
+        if (Array.isArray(saved) && saved.length) return saved;
+    } catch (e) { /* storage unavailable */ }
+    return EXAMPLE.map(c => ({ ...c }));
+}
+function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(cards)); } catch (e) { /* ignore */ }
+}
+
+const branchOf = c => BRANCHES.find(b => b.id === c.code.split('.')[0]) || BRANCHES[0];
+const ownerOf = c => OWNERS.find(o => o.id === c.owner) || OWNERS[0];
+const msOf = c => MILESTONES.find(m => m.id === c.ms);
+const colIndex = id => COLUMNS.findIndex(c => c.id === id);
+const visible = c =>
+    (!filters.branch || branchOf(c).id === filters.branch) &&
+    (!filters.ms || c.ms === filters.ms) &&
+    (!filters.owner || c.owner === filters.owner);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+const byCode = (a, b) => a.code.localeCompare(b.code, undefined, { numeric: true });
+
+function milestoneState(m) {
+    const list = cards.filter(c => c.ms === m.id);
+    const done = list.filter(c => c.status === 'done').length;
+    const started = list.some(c => c.status !== 'backlog' && c.status !== 'todo') || done > 0;
+    return { total: list.length, done, reached: list.length > 0 && done === list.length, started };
+}
+
+// ─── Rendering ───────────────────────────────────────────────────────
+function renderAll() {
+    renderSummary();
+    renderMilestones();
+    if (view === 'board') renderBoard(); else renderWbs();
+}
+
+function renderSummary() {
+    const done = cards.filter(c => c.status === 'done');
+    const remaining = cards.filter(c => c.status !== 'done').reduce((s, c) => s + Number(c.days), 0);
+    const next = MILESTONES.find(m => !milestoneState(m).reached);
+    const pct = cards.length ? Math.round(done.length / cards.length * 100) : 0;
+    document.getElementById('summary').innerHTML = `
+        <div class="stat"><div class="n">${cards.length}</div><div class="l">work packages in the WBS</div></div>
+        <div class="stat"><div class="n">${pct}%</div><div class="l">${done.length} of ${cards.length} done</div></div>
+        <div class="stat"><div class="n">${remaining}d</div><div class="l">estimated effort remaining</div></div>
+        <div class="stat"><div class="n" style="font-size: 1.05em; padding-top: 0.3rem;">${next ? '◆ ' + next.name : '🎉 All reached'}</div><div class="l">next milestone</div></div>`;
+}
+
+function renderMilestones() {
+    const strip = document.getElementById('milestoneStrip');
+    strip.innerHTML = MILESTONES.map(m => {
+        const s = milestoneState(m);
+        const cls = s.reached ? 'reached' : s.started ? 'active' : '';
+        const label = s.reached ? 'Reached' : s.started ? 'In progress' : s.total ? 'Not started' : 'No work packages';
+        return `<button class="ms ${cls} ${filters.ms === m.id ? 'selected' : ''}" data-ms="${m.id}" aria-pressed="${filters.ms === m.id}">
+            <span class="ms-top"><span class="ms-diamond"></span>${m.id} · ${label}</span>
+            <span class="ms-name">${m.name}</span>
+            <span class="ms-bar"><div style="width:${s.total ? s.done / s.total * 100 : 0}%"></div></span>
+            <span class="ms-meta">${s.done}/${s.total} work packages done</span>
+        </button>`;
+    }).join('');
+    strip.querySelectorAll('.ms').forEach(b => b.addEventListener('click', () => {
+        filters.ms = filters.ms === b.dataset.ms ? '' : b.dataset.ms;
+        document.getElementById('fMilestone').value = filters.ms;
+        renderAll();
+    }));
+}
+
+function cardHtml(c) {
+    const b = branchOf(c), o = ownerOf(c), m = msOf(c), ci = colIndex(c.status);
+    return `<div class="card-item" draggable="true" data-id="${c.id}" style="--branch:${b.color}">
+        <div class="card-top"><span class="wbs-code">WBS ${esc(c.code)}</span><span class="branch-name">${b.name}</span></div>
+        <button class="card-title" data-edit="${c.id}">${esc(c.title)}</button>
+        <div class="card-foot">
+            ${m ? `<span class="chip ms-chip" title="${m.name}">◆ ${m.id}</span>` : ''}
+            <span class="chip">${c.days}d</span>
+            <span class="move">
+                <button data-move="${c.id}" data-dir="-1" ${ci === 0 ? 'disabled' : ''} aria-label="Move ${esc(c.title)} left">◀</button>
+                <button data-move="${c.id}" data-dir="1" ${ci === COLUMNS.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(c.title)} right">▶</button>
+            </span>
+            <span class="avatar" style="background:${o.color}" title="${o.name}">${o.id}</span>
+        </div>
+    </div>`;
+}
+
+function renderBoard() {
+    const board = document.getElementById('board');
+    board.innerHTML = COLUMNS.map(col => {
+        const all = cards.filter(c => c.status === col.id);
+        const shown = all.filter(visible);
+        const over = col.wip && all.length >= col.wip;
+        return `<div class="column" data-col="${col.id}">
+            <div class="col-head"><h3>${col.name}</h3><span class="col-count ${over ? 'over' : ''}">${shown.length === all.length ? all.length : `${shown.length}/${all.length}`}${col.wip ? ` · max ${col.wip}` : ''}</span></div>
+            <div class="col-hint">${col.hint}</div>
+            <div class="cards">${shown.map(cardHtml).join('')}</div>
+            <button class="add-card" data-add="${col.id}">+ Add work package</button>
+        </div>`;
+    }).join('');
+    wireCards(board);
+
+    board.querySelectorAll('.column').forEach(colEl => {
+        colEl.addEventListener('dragover', e => { e.preventDefault(); colEl.classList.add('drag-over'); });
+        colEl.addEventListener('dragleave', e => { if (!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over'); });
+        colEl.addEventListener('drop', e => {
+            e.preventDefault();
+            colEl.classList.remove('drag-over');
+            const id = e.dataTransfer.getData('text/plain');
+            const before = e.target.closest('.card-item');
+            moveCard(id, colEl.dataset.col, before && before.dataset.id !== id ? before.dataset.id : null);
+        });
+    });
+    board.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => openDialog(null, b.dataset.add)));
+}
+
+function wireCards(root) {
+    root.querySelectorAll('.card-item').forEach(el => {
+        el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', el.dataset.id); e.dataTransfer.effectAllowed = 'move'; el.classList.add('dragging'); });
+        el.addEventListener('dragend', () => el.classList.remove('dragging'));
+        el.addEventListener('dragover', () => el.classList.add('drop-before'));
+        el.addEventListener('dragleave', () => el.classList.remove('drop-before'));
+        el.addEventListener('drop', () => el.classList.remove('drop-before'));
+    });
+    root.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openDialog(b.dataset.edit)));
+    root.querySelectorAll('[data-move]').forEach(b => b.addEventListener('click', () => {
+        const c = cards.find(x => x.id === b.dataset.move);
+        const target = COLUMNS[colIndex(c.status) + Number(b.dataset.dir)];
+        if (!target) return;
+        moveCard(c.id, target.id, null);
+        const again = document.querySelector(`[data-move="${c.id}"][data-dir="${b.dataset.dir}"]`);
+        if (again && !again.disabled) again.focus();
+        else document.querySelector(`[data-edit="${c.id}"]`)?.focus();
+    }));
+}
+
+function renderWbs() {
+    const wrap = document.getElementById('wbsView');
+    const total = cards.reduce((s, c) => s + Number(c.days), 0);
+    const statusColor = { backlog: '#C9C6BE', todo: '#9AA4B2', doing: '#FFB700', review: '#A78BFA', done: '#1F9D6B' };
+    wrap.innerHTML = `
+        <div class="wbs-root"><span class="code">WBS 0</span><strong>Scholar Academy School System</strong><span>${cards.length} work packages · ${total} days of effort</span></div>
+        <div class="wbs-branches">${BRANCHES.map(b => {
+            const list = cards.filter(c => branchOf(c).id === b.id).sort(byCode);
+            const shown = list.filter(visible);
+            const done = list.filter(c => c.status === 'done').length;
+            const days = list.reduce((s, c) => s + Number(c.days), 0);
+            return `<div class="wbs-branch" style="--branch:${b.color}">
+                <div class="branch-head"><span class="code">${b.id}</span><h4>${b.name}</h4><div class="meta">${done}/${list.length} done · ${days}d</div></div>
+                <div class="wp-list">
+                    ${shown.map(c => `<button class="wp" data-edit="${c.id}" title="${COLUMNS[colIndex(c.status)].name}">
+                        <span class="dot" style="background:${statusColor[c.status]}"></span>
+                        <span class="code">${esc(c.code)}</span><span class="t">${esc(c.title)}</span>
+                        ${msOf(c) ? `<span class="chip ms-chip">◆${c.ms.slice(1)}</span>` : ''}
+                    </button>`).join('')}
+                    <button class="add-card" data-add-branch="${b.id}" style="margin-top: 0;">+ Add under ${b.id}</button>
+                </div>
+            </div>`;
+        }).join('')}</div>
+        <div class="wbs-legend">${COLUMNS.map(c => `<span><span class="dot" style="background:${statusColor[c.id]}; margin: 0;"></span>${c.name}</span>`).join('')}</div>`;
+    wrap.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openDialog(b.dataset.edit)));
+    wrap.querySelectorAll('[data-add-branch]').forEach(b => b.addEventListener('click', () => openDialog(null, 'backlog', b.dataset.addBranch)));
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────
+function moveCard(id, toCol, beforeId) {
+    const idx = cards.findIndex(c => c.id === id);
+    if (idx < 0) return;
+    const card = cards[idx];
+    const col = COLUMNS.find(c => c.id === toCol);
+
+    if (col.wip && card.status !== toCol && cards.filter(c => c.status === toCol).length >= col.wip) {
+        toast(`WIP limit reached: ${col.name} already has ${col.wip} cards. Finish one before starting another.`, 'warn');
+        const el = document.querySelector(`.column[data-col="${toCol}"]`);
+        if (el) { el.classList.add('blocked'); setTimeout(() => el.classList.remove('blocked'), 700); }
+        return;
+    }
+
+    const msBefore = msOf(card) ? milestoneState(msOf(card)).reached : false;
+    cards.splice(idx, 1);
+    card.status = toCol;
+    const beforeIdx = beforeId ? cards.findIndex(c => c.id === beforeId) : -1;
+    if (beforeIdx >= 0) cards.splice(beforeIdx, 0, card); else cards.push(card);
+    save();
+
+    const m = msOf(card);
+    if (m) {
+        const reached = milestoneState(m).reached;
+        if (reached && !msBefore) toast(`◆ Milestone reached: ${m.name}. ${m.note}`, 'good');
+        else if (!reached && msBefore) toast(`◆ "${m.name}" is no longer reached: one of its work packages left Done.`, 'warn');
+    }
+    renderAll();
+}
+
+function nextCode(branchId, exceptId) {
+    const nums = cards.filter(c => c.id !== exceptId && c.code.split('.')[0] === branchId).map(c => parseInt(c.code.split('.')[1], 10) || 0);
+    return `${branchId}.${(nums.length ? Math.max(...nums) : 0) + 1}`;
+}
+
+// ─── Dialog ──────────────────────────────────────────────────────────
+const dlg = document.getElementById('cardDialog');
+const fill = (sel, items, val, txt) => { document.getElementById(sel).innerHTML = items.map(i => `<option value="${val(i)}">${txt(i)}</option>`).join(''); };
+fill('fBranchSel', BRANCHES, b => b.id, b => `${b.id} · ${b.name}`);
+fill('fStatus', COLUMNS, c => c.id, c => c.name);
+fill('fOwnerSel', OWNERS, o => o.id, o => o.name);
+document.getElementById('fMsSel').innerHTML = '<option value="">None</option>' + MILESTONES.map(m => `<option value="${m.id}">${m.id} · ${m.name}</option>`).join('');
+
+function openDialog(id, status = 'backlog', branchId = null) {
+    editingId = id;
+    const c = id ? cards.find(x => x.id === id) : null;
+    document.getElementById('dlgTitle').textContent = c ? `Edit WBS ${c.code}` : 'New work package';
+    document.getElementById('fTitle').value = c ? c.title : '';
+    document.getElementById('fBranchSel').value = c ? branchOf(c).id : (branchId || filters.branch || '4');
+    document.getElementById('fStatus').value = c ? c.status : status;
+    document.getElementById('fOwnerSel').value = c ? c.owner : 'DV';
+    document.getElementById('fDays').value = c ? c.days : 2;
+    document.getElementById('fMsSel').value = c ? c.ms : (filters.ms || '');
+    document.getElementById('fNotes').value = c ? c.notes || '' : '';
+    document.getElementById('deleteCard').hidden = !c;
+    dlg.showModal();
+    document.getElementById('fTitle').focus();
+}
+
+document.getElementById('cardForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const data = {
+        title: document.getElementById('fTitle').value.trim(),
+        owner: document.getElementById('fOwnerSel').value,
+        days: Number(document.getElementById('fDays').value) || 1,
+        ms: document.getElementById('fMsSel').value,
+        notes: document.getElementById('fNotes').value.trim()
+    };
+    if (!data.title) return;
+    const branchId = document.getElementById('fBranchSel').value;
+    const status = document.getElementById('fStatus').value;
+
+    if (editingId) {
+        const c = cards.find(x => x.id === editingId);
+        if (branchOf(c).id !== branchId) c.code = nextCode(branchId, c.id);
+        Object.assign(c, data);
+        save();
+        dlg.close();
+        renderAll();
+        if (c.status !== status) moveCard(c.id, status, null);
+    } else {
+        const card = { id: 'c' + Date.now(), code: nextCode(branchId), status: 'backlog', ...data };
+        cards.push(card);
+        save();
+        dlg.close();
+        renderAll();
+        if (status !== 'backlog') moveCard(card.id, status, null);
+        toast(`Added WBS ${card.code}: ${card.title}`);
+    }
+});
+document.getElementById('cancelCard').addEventListener('click', () => dlg.close());
+document.getElementById('deleteCard').addEventListener('click', () => {
+    const c = cards.find(x => x.id === editingId);
+    if (!c || !confirm(`Delete WBS ${c.code} "${c.title}"? This removes it from the WBS and its milestone.`)) return;
+    cards = cards.filter(x => x.id !== editingId);
+    save();
+    dlg.close();
+    renderAll();
+    toast(`Deleted WBS ${c.code}`);
+});
+
+// ─── Toolbar ─────────────────────────────────────────────────────────
+document.getElementById('fBranch').innerHTML = '<option value="">All WBS branches</option>' + BRANCHES.map(b => `<option value="${b.id}">${b.id} · ${b.name}</option>`).join('');
+document.getElementById('fMilestone').innerHTML = '<option value="">All milestones</option>' + MILESTONES.map(m => `<option value="${m.id}">◆ ${m.id} · ${m.name}</option>`).join('');
+document.getElementById('fOwner').innerHTML = '<option value="">All owners</option>' + OWNERS.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+[['fBranch', 'branch'], ['fMilestone', 'ms'], ['fOwner', 'owner']].forEach(([el, key]) =>
+    document.getElementById(el).addEventListener('change', e => { filters[key] = e.target.value; renderAll(); }));
+document.getElementById('clearFilters').addEventListener('click', () => {
+    Object.keys(filters).forEach(k => filters[k] = '');
+    ['fBranch', 'fMilestone', 'fOwner'].forEach(id => document.getElementById(id).value = '');
+    renderAll();
+});
+document.getElementById('resetBoard').addEventListener('click', () => {
+    if (!confirm('Restore the Scholar Academy example? Your changes to this board will be lost.')) return;
+    cards = EXAMPLE.map(c => ({ ...c }));
+    save();
+    renderAll();
+    toast('Board reset to the example project');
+});
+
+function setView(v) {
+    view = v;
+    document.getElementById('viewBoard').setAttribute('aria-pressed', v === 'board');
+    document.getElementById('viewWbs').setAttribute('aria-pressed', v === 'wbs');
+    document.getElementById('boardView').hidden = v !== 'board';
+    document.getElementById('wbsView').hidden = v !== 'wbs';
+    renderAll();
+}
+document.getElementById('viewBoard').addEventListener('click', () => setView('board'));
+document.getElementById('viewWbs').addEventListener('click', () => setView('wbs'));
+
+let toastTimer;
+function toast(msg, kind = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${kind}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+renderAll();
+</script>
+</body>
+</html>

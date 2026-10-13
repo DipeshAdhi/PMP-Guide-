@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSDM - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="agile.css">
+    <style>
+        :root { --accent: #E8A317; --tab-color: #E8A317; --dsdm: #E8A317; --dsdm-blue: #1F6FB2; }
+
+        /* Triangles */
+        .tri-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+        .tri-wrap svg { width: 100%; max-width: 320px; height: auto; display: block; margin: 0.6rem auto; }
+
+        /* Lifecycle */
+        .life { display: grid; grid-template-columns: 1.25fr 1fr; gap: 1.2rem; align-items: start; }
+        .life svg { width: 100%; height: auto; display: block; }
+        .phase-node { cursor: pointer; }
+        .phase-node:focus { outline: none; }
+        .phase-node:focus-visible .hit, .phase-node:hover .hit { stroke: var(--indigo); stroke-width: 3; }
+        .phase-node.active .hit { stroke: var(--coral); stroke-width: 4; }
+        .phase-detail { position: sticky; top: 16px; border-top: 5px solid var(--dsdm); }
+        .phase-detail h3 { font-size: 1.35em; margin: 0.2rem 0 0.5rem; }
+        .phase-detail h4 { font-size: 0.9em; margin: 0.9rem 0 0.3rem; }
+        .phase-detail ul { margin-left: 1.1rem; font-size: 0.9em; }
+        .phase-step { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+        .phase-step button { border: 1.5px solid var(--line); background: var(--paper); border-radius: 20px; padding: 4px 11px; font-size: 0.8em; font-weight: 600; color: var(--indigo); }
+        .phase-step button[aria-pressed="true"] { background: var(--dsdm); border-color: var(--dsdm); color: #fff; }
+
+        /* Gates */
+        .gates { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .gate { border-top: 5px solid var(--dsdm); }
+        .gate.passed { border-top-color: var(--ok); }
+        .gate.locked { opacity: 0.55; }
+        .gate label { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.4rem 0; font-size: 0.9em; border-bottom: 1px dashed var(--line); }
+        .gate label:last-of-type { border-bottom: none; }
+        .gate input { accent-color: var(--dsdm-blue); margin-top: 3px; }
+        .gate .status { font-family: 'IBM Plex Mono', monospace; font-size: 0.78em; font-weight: 600; }
+
+        /* MoSCoW */
+        .mos-row { display: grid; grid-template-columns: 1fr 60px auto; gap: 0.6rem; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--line); font-size: 0.9em; }
+        .mos-row .r-name strong { color: var(--indigo); }
+        .mos-row .r-name small { display: block; color: var(--muted); }
+        .mos-row .eff { font-family: 'IBM Plex Mono', monospace; text-align: right; }
+        .mos-btns { display: flex; gap: 3px; }
+        .mos-btns button { width: 30px; height: 28px; border-radius: 6px; border: 1.5px solid var(--line); background: var(--paper); font-weight: 800; font-family: 'Syne', sans-serif; color: var(--muted); }
+        .mos-btns button[aria-pressed="true"][data-p="M"] { background: var(--bad); border-color: var(--bad); color: #fff; }
+        .mos-btns button[aria-pressed="true"][data-p="S"] { background: var(--warn); border-color: var(--warn); color: #fff; }
+        .mos-btns button[aria-pressed="true"][data-p="C"] { background: var(--teal); border-color: var(--teal); color: #fff; }
+        .mos-btns button[aria-pressed="true"][data-p="W"] { background: #888; border-color: #888; color: #fff; }
+        .stack { display: flex; height: 30px; border-radius: 8px; overflow: hidden; background: var(--line); position: relative; margin: 0.6rem 0 0.3rem; }
+        .stack div { height: 100%; transition: width 0.3s ease; color: #fff; font-size: 0.72em; font-weight: 700; display: flex; align-items: center; justify-content: center; overflow: hidden; white-space: nowrap; }
+        .stack .mark { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--indigo); }
+        .stack-scale { position: relative; height: 16px; font-size: 0.7em; color: var(--muted); font-family: 'IBM Plex Mono', monospace; }
+        .stack-scale span { position: absolute; transform: translateX(-50%); }
+
+        /* Timebox */
+        .timebox-strip { display: grid; grid-template-columns: 0.5fr 1fr 2fr 1fr 0.5fr; gap: 4px; margin: 0.8rem 0; }
+        .timebox-strip button { border: none; border-radius: 6px; padding: 0.6rem 0.3rem; color: #fff; font-weight: 700; font-size: 0.8em; }
+        .timebox-strip button[aria-pressed="true"] { outline: 3px solid var(--indigo); outline-offset: 2px; }
+
+        /* Roles */
+        .roles-legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.82em; margin-bottom: 0.8rem; }
+        .roles-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+        .role-group h3 { font-size: 1em; margin: 1rem 0 0.5rem; }
+        .role-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.6rem; }
+        .role-card { background: var(--paper); border: 1.5px solid var(--line); border-left: 5px solid var(--c); border-radius: 10px; padding: 0.7rem 0.9rem; }
+        .role-card strong { color: var(--indigo); display: block; font-size: 0.95em; }
+        .role-card p { font-size: 0.83em; color: var(--muted); margin-top: 0.2rem; }
+
+        .principle-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.7rem; }
+        .principle-card { background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.9rem 1rem; }
+        .principle-card .n { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--dsdm); font-size: 1.3em; }
+        .principle-card strong { display: block; color: var(--indigo); margin: 0.1rem 0 0.25rem; }
+        .principle-card p { font-size: 0.85em; color: var(--muted); }
+
+        @media (max-width: 860px) {
+            .life, .gates, .tri-wrap { grid-template-columns: 1fr; }
+            .phase-detail { position: static; }
+            .timebox-strip { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .mos-row { grid-template-columns: 1fr auto; }
+            .mos-row .mos-btns { grid-column: 1 / -1; }
+            .mos-btns button { width: 38px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html">PM Tools</a></li>
+            <li><a href="agile-board.html" aria-current="page">Agile</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="agile-board.html">🔄 Scrum board</a>
+        <a href="dsdm.html" aria-current="page">🧭 DSDM</a>
+        <a href="xp.html">⚡ Extreme Programming (XP)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Agile · DSDM</span>
+            <h1>DSDM: agile with firm foundations</h1>
+            <p class="lead">The Dynamic Systems Development Method is an agile <em>project</em> framework. It adds what Scrum leaves out: a feasibility check, just enough up-front foundations, and fixed delivery dates. Time and cost are fixed; the features flex, using MoSCoW priorities.</p>
+            <div id="manifesto" class="manifesto"></div>
+        </div>
+    </header>
+
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Turn the triangle upside down</h2><p>DSDM's core idea. Instead of fixing the features and letting the date and budget slip, fix the date, budget, and quality, then deliver the most important features within them.</p></div>
+                <div class="tri-wrap">
+                    <div class="card"><h3>Traditional</h3>
+                        <svg viewBox="0 0 300 220" role="img" aria-label="Traditional triangle: features fixed at top, time and cost vary at the bottom">
+                            <polygon points="150,20 280,200 20,200" fill="#FDECEC" stroke="#D64545" stroke-width="2"/>
+                            <text x="150" y="60" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#2C3E50">FIXED</text>
+                            <text x="150" y="80" text-anchor="middle" font-size="13" fill="#2C3E50">Features</text>
+                            <text x="150" y="150" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#D64545">VARIABLE</text>
+                            <text x="150" y="172" text-anchor="middle" font-size="13" fill="#2C3E50">Time · Cost</text>
+                        </svg>
+                        <p>Scope is agreed up front. When it grows, the deadline and budget absorb it, often with quality cut at the end.</p></div>
+                    <div class="card"><h3>DSDM</h3>
+                        <svg viewBox="0 0 300 220" role="img" aria-label="DSDM inverted triangle: time, cost, and quality fixed at top, features vary at the bottom point">
+                            <polygon points="20,20 280,20 150,200" fill="#FFF6E0" stroke="#E8A317" stroke-width="2"/>
+                            <text x="150" y="52" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#2C3E50">FIXED</text>
+                            <text x="150" y="72" text-anchor="middle" font-size="13" fill="#2C3E50">Time · Cost · Quality</text>
+                            <text x="150" y="130" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#1F9D6B">VARIABLE</text>
+                            <text x="150" y="150" text-anchor="middle" font-size="13" fill="#2C3E50">Features</text>
+                        </svg>
+                        <p>The date never moves. If time runs short, lower-priority features (Coulds) are dropped, never quality.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>The DSDM lifecycle</h2><p>Click any phase. Feasibility and Foundations are done once (and revisited if needed); Evolutionary Development and Deployment repeat for each increment.</p></div>
+                <div class="life">
+                    <div class="card" style="padding: 1rem;">
+                        <svg viewBox="0 0 600 470" id="lifeSvg" role="group" aria-label="DSDM lifecycle diagram">
+                            <defs>
+                                <marker id="arY" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E8A317"/></marker>
+                                <marker id="arB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1F6FB2"/></marker>
+                            </defs>
+                            <path d="M590 10 Q 300 30 260 250 Q 240 420 590 450 Z" fill="#F1EFEA"/>
+                            <!-- arrows -->
+                            <line x1="150" y1="45" x2="300" y2="80" stroke="#E8A317" stroke-width="6" marker-end="url(#arY)"/>
+                            <path d="M300 205 Q 200 230 150 255" stroke="#1F6FB2" stroke-width="6" fill="none" marker-end="url(#arB)"/>
+                            <line x1="200" y1="315" x2="330" y2="315" stroke="#1F6FB2" stroke-width="6" marker-end="url(#arB)"/>
+                            <line x1="330" y1="345" x2="205" y2="345" stroke="#1F6FB2" stroke-width="6" marker-end="url(#arB)"/>
+                            <line x1="430" y1="290" x2="400" y2="215" stroke="#E8A317" stroke-width="4" stroke-dasharray="6 5" marker-end="url(#arY)" opacity="0.7"/>
+                            <line x1="480" y1="390" x2="510" y2="425" stroke="#E8A317" stroke-width="6" marker-end="url(#arY)"/>
+
+                            <g class="phase-node" data-phase="pre" tabindex="0" role="button" aria-label="Pre-project">
+                                <rect class="hit" x="20" y="15" width="130" height="40" rx="8" fill="#fff" stroke="#E8A317" stroke-width="2"/>
+                                <text x="85" y="40" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#2C3E50">Pre-Project</text>
+                            </g>
+                            <g class="phase-node" data-phase="feas" tabindex="0" role="button" aria-label="Feasibility">
+                                <path class="hit" d="M360 70 L 440 150 Q 360 175 280 150 Z" fill="#F5B921" stroke="#E8A317" stroke-width="2"/>
+                                <text x="460" y="122" font-family="Syne" font-weight="700" font-size="15" fill="#2C3E50">Feasibility</text>
+                            </g>
+                            <g class="phase-node" data-phase="found" tabindex="0" role="button" aria-label="Foundations">
+                                <path class="hit" d="M280 156 Q 360 181 440 156 L 470 190 Q 360 222 250 190 Z" fill="#F5B921" stroke="#E8A317" stroke-width="2"/>
+                                <text x="480" y="190" font-family="Syne" font-weight="700" font-size="15" fill="#2C3E50">Foundations</text>
+                            </g>
+                            <g class="phase-node" data-phase="evo" tabindex="0" role="button" aria-label="Evolutionary development">
+                                <circle class="hit" cx="120" cy="330" r="78" fill="#fff" stroke="#1F6FB2" stroke-width="8"/>
+                                <text x="120" y="325" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#2C3E50">Evolutionary</text>
+                                <text x="120" y="343" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#2C3E50">Development</text>
+                                <text x="120" y="365" text-anchor="middle" font-size="11" fill="#6B6B6B">Explore · Engineer</text>
+                            </g>
+                            <g class="phase-node" data-phase="dep" tabindex="0" role="button" aria-label="Deployment: assemble, review, deploy">
+                                <rect class="hit" x="335" y="290" width="200" height="90" rx="6" fill="#fff" stroke="#E8A317" stroke-width="4"/>
+                                <text x="350" y="314" font-size="13" fill="#2C3E50" font-weight="600">Assemble</text>
+                                <text x="395" y="339" font-size="13" fill="#2C3E50" font-weight="600">Review</text>
+                                <text x="445" y="364" font-size="13" fill="#2C3E50" font-weight="600">Deploy</text>
+                                <text x="545" y="400" text-anchor="end" font-family="Syne" font-weight="700" font-size="15" fill="#2C3E50">Deployment</text>
+                            </g>
+                            <g class="phase-node" data-phase="post" tabindex="0" role="button" aria-label="Post-project">
+                                <rect class="hit" x="440" y="425" width="140" height="38" rx="8" fill="#fff" stroke="#E8A317" stroke-width="2"/>
+                                <text x="510" y="449" text-anchor="middle" font-family="Syne" font-weight="700" font-size="14" fill="#2C3E50">Post-Project</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="card phase-detail" id="phaseDetail" aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Set up the project: pass the gates</h2>
+                    <p>Scholar Academy wants a school system before the next school year. Tick what a DSDM team needs before leaving each phase. Watch for traps: DSDM wants <em>enough</em> design up front, not <em>big</em> design up front.</p></div>
+                <div class="gates" id="gates"></div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>MoSCoW: what fits in the increment?</h2>
+                    <p>The first increment has <strong>40 days of team effort</strong> and a fixed delivery date. Requirements add up to more than that. Give every requirement a priority. DSDM's rule of thumb: <strong>Musts no more than 60% of the effort</strong>, with around 20% Coulds as contingency.</p></div>
+                <div class="grid-2" style="align-items: start;">
+                    <div class="card" id="mosList"></div>
+                    <div class="card" id="mosSummary"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Inside Evolutionary Development: exploration, engineering, timeboxes</h2>
+                    <p>The solution evolves in short, fixed timeboxes (typically 2–4 weeks). Each timebox can focus on <strong>exploration</strong> (what the business needs) or <strong>engineering</strong> (making it robust), or both.</p></div>
+                <div class="grid-2" style="margin-bottom: 1rem;">
+                    <div class="card" style="border-top: 4px solid var(--dsdm-blue);"><h3>🔭 Exploration</h3><p>Work with the Business Ambassador to explore and demonstrate functional needs: workshops, prototypes, models. Answers "is this what you need?"</p></div>
+                    <div class="card" style="border-top: 4px solid var(--teal);"><h3>🛠️ Engineering</h3><p>Turn what was explored into a solution that's ready for real use: performance, security, maintainability, testing. Answers "will it work in production?"</p></div>
+                </div>
+                <div class="card">
+                    <h3>Structure of a DSDM timebox (click a stage)</h3>
+                    <div class="timebox-strip" id="tbStrip"></div>
+                    <p id="tbText"></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>The 8 DSDM principles</h2><p>They sit alongside the Agile Manifesto and are what make DSDM a <em>project</em> framework.</p></div>
+                <div class="principle-grid" id="principles"></div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Roles</h2><p>DSDM roles are colored by the interest they represent. Business roles have real authority: the business is part of the team, not just a customer.</p></div>
+                <div class="roles-legend">
+                    <span><span class="swatch" style="background: #F28C28;"></span>Business</span>
+                    <span><span class="swatch" style="background: #1F9D6B;"></span>Solution / technical</span>
+                    <span><span class="swatch" style="background: #1F6FB2;"></span>Management</span>
+                    <span><span class="swatch" style="background: #9AA4B2;"></span>Process</span>
+                    <span><span class="swatch" style="background: linear-gradient(90deg, #F28C28 50%, #1F9D6B 50%);"></span>Business + solution</span>
+                </div>
+                <div id="roles"></div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="exam-tips">
+                    <h3>📝 Exam tips (PMP & PMI-ACP)</h3>
+                    <ul>
+                        <li>DSDM <strong>fixes time, cost, and quality</strong>; features are the variable.</li>
+                        <li><strong>MoSCoW</strong> comes from DSDM: Must, Should, Could, Won't (this time). Musts ≤ 60% of effort.</li>
+                        <li><strong>Feasibility → Foundations → Evolutionary Development → Deployment</strong>, framed by Pre-Project and Post-Project.</li>
+                        <li>Foundations is "enough design up front", not a full specification.</li>
+                        <li>The <strong>Business Ambassador</strong> is the business voice inside the team, roughly like a Product Owner.</li>
+                        <li><strong>Timeboxing</strong> is non-negotiable: the date is kept by dropping Coulds, then Shoulds, never quality.</li>
+                    </ul>
+                </div>
+                <div class="next-tool"><a href="agile-board.html">← Scrum board</a><a href="xp.html">Next: Extreme Programming →</a></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · Agile</p>
+        <p><a href="agile-board.html">Scrum board</a> · <a href="dsdm.html">DSDM</a> · <a href="xp.html">Extreme Programming</a> · <a href="pm-tools.html">PM Tools</a></p>
+    </footer>
+
+<script src="agile-common.js"></script>
+<script>
+renderManifesto(document.getElementById('manifesto'));
+
+// ─── Lifecycle ───
+const PHASES = {
+    pre: { name: 'Pre-Project', purpose: 'Make sure only the right projects start, and that they start well, aligned with business strategy.',
+        questions: ['Does this fit our strategy?', 'Who will sponsor it?'], products: ['Terms of Reference'], roles: 'Business Sponsor, Business Visionary',
+        tip: 'Short: a few days. Its job is to say "go and check feasibility", not to plan the project.' },
+    feas: { name: 'Feasibility', purpose: 'Decide quickly whether the project is likely to be worth doing, technically and from a business view.',
+        questions: ['Is there a viable business case?', 'Is there at least one technical option that works?', 'Roughly how long and how much?'],
+        products: ['Feasibility Assessment: outline business case, outline solution, outline plan', 'Initial risk list'], roles: 'Business Sponsor, Business Visionary, Technical Coordinator, Project Manager',
+        tip: 'Weeks, not months. If the answer is "no", stopping here is a success: little money has been spent.' },
+    found: { name: 'Foundations', purpose: 'Build a firm, shared understanding of why, what, and how, with enough detail to start building but no more.',
+        questions: ['What are the requirements, and how are they prioritized?', 'What does the solution architecture look like?', 'How many increments and timeboxes?', 'Who plays which role?'],
+        products: ['Foundations Summary', 'Business case', 'Prioritised Requirements List (PRL), using MoSCoW', 'Solution Architecture Definition', 'Development Approach Definition', 'Delivery Plan (increments + timeboxes)', 'Management Approach Definition'],
+        roles: 'Whole project-level team plus Business Ambassador and Team Leader',
+        tip: '"Enough design up front" (EDUF): requirements are high-level, detail emerges during development. This is the most common exam distinction from waterfall.' },
+    evo: { name: 'Evolutionary Development', purpose: 'Build the solution iteratively and incrementally inside fixed timeboxes, with the business involved every day.',
+        questions: ['Does this meet the business need (exploration)?', 'Is it robust enough to deploy (engineering)?', 'Are we on track for the timebox\'s Musts?'],
+        products: ['Evolving solution', 'Timebox plans and reviews', 'Models and prototypes'], roles: 'Solution Development Team: Team Leader, Business Ambassador, Business Analyst, Solution Developer, Solution Tester',
+        tip: 'Timeboxes are fixed. If work runs late, drop Coulds first. Daily stand-ups happen inside each timebox.' },
+    dep: { name: 'Deployment', purpose: 'Bring an increment into live use, then decide what happens next.',
+        questions: ['Assemble: is everything brought together?', 'Review: does it meet the acceptance criteria? Are we still on plan?', 'Deploy: is the business ready to use it?'],
+        products: ['Deployed solution', 'Increment Review Document'], roles: 'Technical Coordinator, Team Leader, Business Visionary, Business Ambassador',
+        tip: 'After each deployment the team either returns to Evolutionary Development for the next increment, revisits Foundations if things changed a lot, or closes the project.' },
+    post: { name: 'Post-Project', purpose: 'Check whether the expected business benefits actually happened.',
+        questions: ['Did we get the benefits in the business case?', 'What should we learn for next time?'],
+        products: ['Benefits Assessment'], roles: 'Business Visionary, Business Sponsor',
+        tip: 'Happens weeks or months after the final deployment, when benefits can be measured.' }
+};
+let activePhase = 'found';
+function showPhase(key) {
+    activePhase = key;
+    const p = PHASES[key];
+    document.querySelectorAll('.phase-node').forEach(n => { n.classList.toggle('active', n.dataset.phase === key); n.setAttribute('aria-pressed', n.dataset.phase === key); });
+    document.getElementById('phaseDetail').innerHTML = `
+        <div class="phase-step">${Object.entries(PHASES).map(([k, x]) => `<button data-phase-btn="${k}" aria-pressed="${k === key}">${x.name}</button>`).join('')}</div>
+        <span class="eyebrow" style="color: var(--dsdm);">Phase</span>
+        <h3>${p.name}</h3>
+        <p>${p.purpose}</p>
+        <h4>Key questions</h4><ul>${p.questions.map(q => `<li>${q}</li>`).join('')}</ul>
+        <h4>Main products</h4><ul>${p.products.map(q => `<li>${q}</li>`).join('')}</ul>
+        <h4>Who's involved</h4><p style="font-size: 0.9em;">${p.roles}</p>
+        <div class="exam-tips" style="margin-top: 0.9rem; padding: 0.8rem 1rem;"><p style="font-size: 0.88em;"><strong>Tip:</strong> ${p.tip}</p></div>`;
+    document.querySelectorAll('[data-phase-btn]').forEach(b => b.addEventListener('click', () => showPhase(b.dataset.phaseBtn)));
+}
+document.querySelectorAll('.phase-node').forEach(n => {
+    n.addEventListener('click', () => showPhase(n.dataset.phase));
+    n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showPhase(n.dataset.phase); } });
+});
+showPhase('found');
+
+// ─── Gates ───
+const GATES = [
+    { id: 'feas', title: 'Feasibility gate', items: [
+        ['Business need stated and agreed by the Business Sponsor', true],
+        ['Outline business case: benefits likely outweigh costs', true],
+        ['At least one workable technical option identified', true],
+        ['Rough timescale and cost range', true],
+        ['Major risks listed', false],
+        ['A detailed specification for every screen', 'trap', 'Too much, too early. Feasibility only needs an outline; detail comes in Foundations and Evolutionary Development.']
+    ] },
+    { id: 'found', title: 'Foundations gate', items: [
+        ['Prioritised Requirements List with MoSCoW priorities', true],
+        ['Solution architecture outline agreed', true],
+        ['Delivery plan: increments and timeboxes with fixed dates', true],
+        ['Roles assigned, including a Business Ambassador with time to give', true],
+        ['Development and testing approach agreed', true],
+        ['Every requirement fully specified and signed off before any build', 'trap', 'That\'s big design up front. DSDM wants enough foundations to start; detail emerges iteratively (principle 6).']
+    ] }
+];
+const gateState = { feas: { checks: [], passed: false }, found: { checks: [], passed: false } };
+function renderGates() {
+    document.getElementById('gates').innerHTML = GATES.map((g, gi) => {
+        const st = gateState[g.id];
+        const locked = gi > 0 && !gateState[GATES[gi - 1].id].passed;
+        return `<div class="card gate ${st.passed ? 'passed' : ''} ${locked ? 'locked' : ''}">
+            <div style="display: flex; justify-content: space-between; gap: 0.5rem;"><h3>${gi + 1} · ${g.title}</h3><span class="status" style="color: ${st.passed ? 'var(--ok)' : 'var(--muted)'};">${st.passed ? '✓ PASSED' : locked ? '🔒 pass gate 1 first' : 'OPEN'}</span></div>
+            ${g.items.map((it, i) => `<label><input type="checkbox" data-gate="${g.id}" data-i="${i}" ${st.checks.includes(i) ? 'checked' : ''} ${locked || st.passed ? 'disabled' : ''}> <span>${it[0]}${it[1] === false ? ' <small style="color: var(--muted);">(recommended)</small>' : ''}</span></label>`).join('')}
+            ${st.passed ? '' : `<button class="btn btn-primary" style="margin-top: 0.8rem;" data-pass="${g.id}" ${locked ? 'disabled' : ''}>Pass the ${g.title.toLowerCase()}</button>`}
+            <div id="gfb-${g.id}">${st.passed ? `<div class="feedback success">${gi === 0 ? 'Feasible. On to Foundations.' : 'Foundations are firm. Evolutionary Development can start: timeboxes, MoSCoW, daily stand-ups.'}</div>` : ''}</div>
+        </div>`;
+    }).join('');
+    document.querySelectorAll('[data-gate]').forEach(c => c.addEventListener('change', () => {
+        const st = gateState[c.dataset.gate], i = Number(c.dataset.i);
+        if (c.checked) st.checks.push(i); else st.checks.splice(st.checks.indexOf(i), 1);
+    }));
+    document.querySelectorAll('[data-pass]').forEach(b => b.addEventListener('click', () => {
+        const g = GATES.find(x => x.id === b.dataset.pass), st = gateState[g.id];
+        const missing = g.items.filter((it, i) => it[1] === true && !st.checks.includes(i)).map(it => it[0]);
+        const traps = g.items.filter((it, i) => it[1] === 'trap' && st.checks.includes(i));
+        const fb = document.getElementById(`gfb-${g.id}`);
+        if (traps.length) { fb.innerHTML = `<div class="feedback error">⚠ ${traps.map(t => t[2]).join(' ')} Untick it to continue.</div>`; return; }
+        if (missing.length) { fb.innerHTML = `<div class="feedback partial">Not yet. Still needed: <ul>${missing.map(m => `<li>${m}</li>`).join('')}</ul></div>`; return; }
+        st.passed = true;
+        renderGates();
+        if (g.id === 'found') { showPhase('evo'); agileToast('Foundations set: build incrementally from firm foundations (DSDM principle 5).', 'good'); }
+        else { showPhase('found'); }
+    }));
+}
+renderGates();
+
+// ─── MoSCoW ───
+const REQS = [
+    ['Teacher login', 5, ''], ['Mark attendance', 6, ''], ['Student data privacy compliance', 4, 'Required by law'],
+    ['Enter grades', 6, ''], ['SMS absence alerts', 4, ''], ['Report card PDF', 5, ''],
+    ['Pay fees online', 8, ''], ['Timetable view', 3, ''], ['Dark mode', 2, 'Nice to have'], ['Library module', 10, 'Large']
+];
+const CAP = 40;
+const prio = REQS.map(() => '');
+const COLORS = { M: '#D64545', S: '#B7791F', C: '#20B2AA' };
+function renderMoscow() {
+    document.getElementById('mosList').innerHTML = `<h3>Prioritised Requirements List</h3>` + REQS.map(([name, eff, note], i) => `
+        <div class="mos-row"><span class="r-name"><strong>${name}</strong>${note ? `<small>${note}</small>` : ''}</span><span class="eff">${eff}d</span>
+        <span class="mos-btns" role="group" aria-label="Priority for ${name}">${['M', 'S', 'C', 'W'].map(p => `<button data-req="${i}" data-p="${p}" aria-pressed="${prio[i] === p}" title="${{ M: 'Must', S: 'Should', C: 'Could', W: 'Won\'t this time' }[p]}">${p}</button>`).join('')}</span></div>`).join('');
+    document.querySelectorAll('[data-req]').forEach(b => b.addEventListener('click', () => {
+        const i = Number(b.dataset.req);
+        prio[i] = prio[i] === b.dataset.p ? '' : b.dataset.p;
+        renderMoscow();
+        document.querySelector(`[data-req="${i}"][data-p="${b.dataset.p}"]`).focus();
+    }));
+
+    const sum = p => REQS.reduce((s, r, i) => s + (prio[i] === p ? r[1] : 0), 0);
+    const M = sum('M'), S = sum('S'), C = sum('C'), W = sum('W');
+    const planned = M + S + C;
+    const pc = v => (v / CAP) * 100;
+    const unassigned = prio.filter(p => !p).length;
+    const msgs = [];
+    let ok = true;
+    if (unassigned) { msgs.push(`${unassigned} requirement(s) still need a priority.`); ok = false; }
+    if (prio[2] && prio[2] !== 'M') { msgs.push('Student data privacy is required by law. Legal requirements are always Musts: without them, the solution can\'t go live.'); ok = false; }
+    if (M > CAP * 0.6) { msgs.push(`Musts are ${M} days: ${Math.round(pc(M))}% of the effort. Above 60%, there's no room to absorb problems and the date is at risk.`); ok = false; }
+    if (planned > CAP) { msgs.push(`Must + Should + Could = ${planned} days, more than the ${CAP} available. Move something to Won't (this time).`); ok = false; }
+    if (!unassigned && C < CAP * 0.1 && planned <= CAP) msgs.push(`Only ${C} days of Coulds. DSDM suggests about 20% Coulds as contingency so the date can be protected.`);
+    if (!unassigned && M === 0) { msgs.push('Nothing is a Must. Something has to be delivered for the increment to be useful.'); ok = false; }
+
+    document.getElementById('mosSummary').innerHTML = `
+        <h3>Increment effort: ${planned} of ${CAP} days</h3>
+        <div class="stack" aria-label="Effort by priority">
+            <div style="width:${Math.min(100, pc(M))}%; background:${COLORS.M}">${M ? `M ${M}d` : ''}</div>
+            <div style="width:${Math.min(100 - Math.min(100, pc(M)), pc(S))}%; background:${COLORS.S}">${S ? `S ${S}d` : ''}</div>
+            <div style="width:${Math.max(0, Math.min(100 - pc(M) - pc(S), pc(C)))}%; background:${COLORS.C}">${C ? `C ${C}d` : ''}</div>
+            <span class="mark" style="left:60%" title="60% Must limit"></span>
+        </div>
+        <div class="stack-scale"><span style="left:0%; transform: none;">0</span><span style="left:60%">60% Must limit</span><span style="left:100%; transform: translateX(-100%);">${CAP}d</span></div>
+        <p style="font-size: 0.85em; color: var(--muted); margin-top: 0.6rem;">Won't this time: ${W} days. These aren't rejected, just not in this increment.</p>
+        <div class="feedback ${ok && !msgs.length ? 'success' : ok ? 'partial' : unassigned ? 'partial' : 'error'}">${ok && !msgs.length ? '✅ A safe plan: Musts within 60%, it all fits, and there are Coulds to drop if the timebox gets tight.' : `<ul style="margin-top: 0;">${msgs.map(m => `<li>${m}</li>`).join('')}</ul>`}</div>
+        <h4 style="margin-top: 1rem; font-size: 0.95em;">What the letters mean</h4>
+        <ul style="font-size: 0.86em; margin-left: 1.1rem;">
+            <li><strong style="color: ${COLORS.M};">Must</strong>: without it the solution is useless, unsafe, or illegal.</li>
+            <li><strong style="color: ${COLORS.S};">Should</strong>: important, but there's a painful workaround.</li>
+            <li><strong style="color: ${COLORS.C};">Could</strong>: nice to have; first to drop if time runs short.</li>
+            <li><strong>Won't (this time)</strong>: agreed to be out of this increment.</li>
+        </ul>`;
+}
+renderMoscow();
+
+// ─── Timebox ───
+const TB = [
+    ['Kick-off', '#1F6FB2', 'A short session to understand the timebox objectives and agree what success looks like, and its MoSCoW priorities.'],
+    ['Investigation', '#2E86C1', 'Investigate the detail of the requirements for this timebox and agree acceptance criteria. Ends with a review with the business.'],
+    ['Refinement', '#E8A317', 'The bulk of the work: build and test iteratively, with the Business Ambassador reviewing as the solution evolves.'],
+    ['Consolidation', '#20B2AA', 'Tie up loose ends, make sure everything meets acceptance criteria and quality standards.'],
+    ['Close-out', '#2C3E50', 'Formal acceptance of what was delivered. Anything not done is re-prioritised. A short retrospective.']
+];
+function renderTb(sel = 2) {
+    document.getElementById('tbStrip').innerHTML = TB.map(([n, c], i) => `<button style="background:${c}" data-tb="${i}" aria-pressed="${i === sel}">${n}</button>`).join('');
+    document.getElementById('tbText').innerHTML = `<strong>${TB[sel][0]}:</strong> ${TB[sel][2]}`;
+    document.querySelectorAll('[data-tb]').forEach(b => b.addEventListener('click', () => { renderTb(Number(b.dataset.tb)); document.querySelector(`[data-tb="${b.dataset.tb}"]`).focus(); }));
+}
+renderTb();
+
+// ─── Principles ───
+const DSDM_PRINCIPLES = [
+    ['Focus on the business need', 'Every decision is judged by how it serves the business goal. Deliver what\'s needed, when it\'s needed.'],
+    ['Deliver on time', 'Timeboxes and deadlines are fixed. Late delivery is often the single biggest failure.'],
+    ['Collaborate', 'Business and solution people work together with authority to make decisions.'],
+    ['Never compromise quality', 'Agree the quality level in Foundations, then test continuously. Quality is not the variable.'],
+    ['Build incrementally from firm foundations', 'Enough up-front work to avoid surprises, then deliver in increments.'],
+    ['Develop iteratively', 'Use feedback from each iteration to converge on the right solution.'],
+    ['Communicate continuously and clearly', 'Daily stand-ups, workshops, models, and prototypes over long documents.'],
+    ['Demonstrate control', 'Make plans and progress visible: timeboxes, MoSCoW, and delivered increments.']
+];
+document.getElementById('principles').innerHTML = DSDM_PRINCIPLES.map(([t, d], i) => `<div class="principle-card"><span class="n">${i + 1}</span><strong>${t}</strong><p>${d}</p></div>`).join('');
+
+// ─── Roles ───
+const C = { b: '#F28C28', t: '#1F9D6B', m: '#1F6FB2', p: '#9AA4B2', bt: 'linear-gradient(#F28C28 50%, #1F9D6B 50%)' };
+const ROLE_GROUPS = [
+    ['Project level', [
+        ['Business Sponsor', 'b', 'Senior owner of the business case and budget. Final say on funding.'],
+        ['Business Visionary', 'b', 'Holds the vision; interprets business needs and makes sure benefits land.'],
+        ['Technical Coordinator', 't', 'Technical authority: architecture, standards, and technical quality.'],
+        ['Project Manager', 'm', 'Coordinates at a high level and manages the team by empowering it, not by assigning every task.']
+    ]],
+    ['Solution Development Team', [
+        ['Team Leader', 'm', 'Facilitates the team day to day; closest to a Scrum Master.'],
+        ['Business Ambassador', 'b', 'The business voice in the team every day; makes detailed decisions. Similar to a Product Owner.'],
+        ['Business Analyst', 'bt', 'Bridges business and solution: helps express requirements and their impact.'],
+        ['Solution Developer', 't', 'Builds the solution iteratively with the Business Ambassador.'],
+        ['Solution Tester', 't', 'Tests continuously throughout each timebox.']
+    ]],
+    ['Supporting roles', [
+        ['Business Advisor', 'b', 'Subject-matter expert brought in when needed (e.g. finance, legal).'],
+        ['Technical Advisor', 't', 'Specialist technical input (e.g. security, operations).'],
+        ['Workshop Facilitator', 'p', 'Runs facilitated workshops; neutral about the content.'],
+        ['DSDM Coach', 'p', 'Helps the team apply DSDM well.']
+    ]]
+];
+document.getElementById('roles').innerHTML = ROLE_GROUPS.map(([g, list]) => `<div class="role-group"><h3>${g}</h3><div class="role-grid">${list.map(([n, c, d]) => `<div class="role-card" style="--c:${c === 'bt' ? '#F28C28' : C[c]}; ${c === 'bt' ? 'box-shadow: inset 4px 0 0 #1F9D6B;' : ''}"><strong>${n}</strong><p>${d}</p></div>`).join('')}</div></div>`).join('');
+</script>
+</body>
+</html>

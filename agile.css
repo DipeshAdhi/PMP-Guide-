@@ -1,0 +1,67 @@
+/* Shared styles for the Agile pages (Scrum board, DSDM, XP). Loaded after pm-tools.css. */
+:root { --accent: var(--teal); --tab-color: var(--teal); }
+
+/* Manifesto banner: the most important thing on every agile page */
+.manifesto { background: var(--indigo); color: #fff; border-radius: 14px; padding: 1.4rem 1.6rem; margin-top: 1.6rem; }
+.manifesto-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.manifesto-head h2 { color: #fff; font-size: 1.15em; }
+.manifesto-head h2 span { color: var(--gold); }
+.manifesto-head button { background: none; border: 1px solid rgba(255,255,255,0.35); color: #fff; border-radius: 20px; padding: 5px 12px; font-size: 0.82em; font-weight: 600; }
+.manifesto-head button:hover { border-color: var(--gold); color: var(--gold); }
+.values { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
+.value { background: rgba(255,255,255,0.07); border-radius: 10px; padding: 0.8rem 0.9rem; }
+.value .over { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--gold); font-size: 1.02em; line-height: 1.25; }
+.value .under { font-size: 0.82em; color: rgba(255,255,255,0.7); margin-top: 0.3rem; }
+.manifesto-note { font-size: 0.8em; color: rgba(255,255,255,0.65); margin-top: 0.8rem; }
+.principles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.6rem; margin-top: 1rem; }
+.principle { background: rgba(255,255,255,0.07); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.85em; color: rgba(255,255,255,0.9); display: flex; gap: 0.6rem; }
+.principle b { font-family: 'IBM Plex Mono', monospace; color: var(--gold); }
+.principle.flash { outline: 2px solid var(--gold); }
+
+/* Generic agile UI */
+.pill { display: inline-block; font-size: 0.72em; font-weight: 700; padding: 2px 9px; border-radius: 10px; background: var(--white); color: var(--charcoal); }
+.pill.feature { background: #E8F7F6; color: #13807A; }
+.pill.bug { background: var(--bad-bg); color: var(--bad); }
+.pill.feedback { background: #EFEAFE; color: #6D4FD8; }
+.pill.spike { background: var(--warn-bg); color: var(--warn); }
+.pill.must { background: var(--bad-bg); color: var(--bad); }
+.pill.should { background: var(--warn-bg); color: var(--warn); }
+.pill.could { background: #E8F7F6; color: #13807A; }
+.pill.wont { background: #EEE; color: #777; }
+.lock {
+    display: flex; gap: 0.9rem; align-items: flex-start; background: repeating-linear-gradient(135deg, #F3F1EC 0 12px, #EEEBE5 12px 24px);
+    border: 1.5px dashed #CFCBC2; border-radius: 12px; padding: 1.2rem 1.3rem; color: var(--charcoal);
+}
+.lock .icon { font-size: 1.6em; line-height: 1; }
+.lock strong { color: var(--indigo); display: block; margin-bottom: 0.2rem; }
+.lock p { font-size: 0.9em; }
+.readonly-note { font-size: 0.8em; color: var(--muted); background: var(--white); border-radius: 6px; padding: 0.35rem 0.6rem; display: inline-block; }
+
+.toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, calc(100% + 40px)); visibility: hidden; z-index: 1000;
+    background: var(--indigo); color: #fff; padding: 0.85rem 1.2rem; border-radius: 10px; font-size: 0.9em; max-width: min(560px, calc(100vw - 32px));
+    box-shadow: 0 10px 30px rgba(26,41,66,0.3); transition: transform 0.3s ease;
+}
+.toast.show { transform: translate(-50%, 0); visibility: visible; }
+.toast.good { background: var(--ok); }
+.toast.warn { background: var(--warn); }
+.toast .principle-ref { display: block; margin-top: 0.3rem; font-size: 0.85em; opacity: 0.9; font-style: italic; }
+
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.6rem; margin-bottom: 0.6rem; }
+.form-row label, .field-label { display: block; font-size: 0.78em; font-weight: 600; color: var(--indigo); margin-bottom: 0.2rem; }
+.form-row input, .form-row select, .form-row textarea, .inp {
+    width: 100%; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 0.9em; background: var(--paper); font-family: inherit;
+}
+textarea.inp, .form-row textarea { min-height: 60px; resize: vertical; }
+.mini-btn { background: var(--white); border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; font-size: 0.78em; color: var(--indigo); font-weight: 600; }
+.mini-btn:hover { border-color: var(--indigo); }
+.mini-btn:disabled { opacity: 0.3; cursor: default; }
+.mini-btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+
+@media (max-width: 860px) {
+    .values { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .values { grid-template-columns: 1fr; }
+    .manifesto { padding: 1.1rem; }
+}

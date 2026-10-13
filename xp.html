@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extreme Programming - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="agile.css">
+    <style>
+        :root { --accent: #3A6FD8; --tab-color: #3A6FD8; --xp: #3A6FD8; }
+
+        .xp-values { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6rem; }
+        .xp-value { background: var(--paper); border: 1.5px solid var(--line); border-top: 4px solid var(--xp); border-radius: 10px; padding: 0.8rem; }
+        .xp-value strong { display: block; color: var(--indigo); font-family: 'Syne', sans-serif; }
+        .xp-value p { font-size: 0.82em; color: var(--muted); margin-top: 0.2rem; }
+
+        .flow { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.2rem; align-items: start; }
+        .flow svg { width: 100%; height: auto; display: block; }
+        .xnode { cursor: pointer; }
+        .xnode:focus { outline: none; }
+        .xnode:hover .hit, .xnode:focus-visible .hit { stroke: var(--indigo); stroke-width: 3; }
+        .xnode.active .hit { stroke: var(--coral); stroke-width: 4; }
+        .flow-detail { border-top: 5px solid var(--xp); position: sticky; top: 16px; }
+        .flow-detail h3 { font-size: 1.3em; margin-bottom: 0.4rem; }
+
+        /* Planning game */
+        .pg-table td, .pg-table th { vertical-align: middle; }
+        .pg-table .val { font-family: 'IBM Plex Mono', monospace; font-weight: 600; }
+        .pg-table tr.picked td { background: #EEF3FD; }
+        .pg-meter { height: 14px; background: var(--line); border-radius: 7px; overflow: hidden; margin: 0.4rem 0; display: flex; }
+        .pg-meter div { height: 100%; transition: width 0.3s ease; }
+
+        /* TDD */
+        .tdd { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+        .tdd > div { min-width: 0; }
+        .tdd-cycle svg { width: 100%; height: auto; }
+        .tdd-cycle .seg { transition: opacity 0.3s ease; }
+        .code {
+            background: #1E2433; color: #E6E6E6; border-radius: 10px; padding: 1rem 1.1rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.82em;
+            line-height: 1.6; overflow-x: auto; white-space: pre; margin: 0.5rem 0;
+        }
+        .code .k { color: #C792EA; } .code .s { color: #C3E88D; } .code .c { color: #7F8AA3; } .code .n { color: #F78C6C; } .code .add { background: rgba(195,232,141,0.12); display: inline-block; width: 100%; }
+        .run { border-radius: 8px; padding: 0.6rem 0.9rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.82em; font-weight: 600; }
+        .run.red { background: var(--bad-bg); color: var(--bad); }
+        .run.green { background: var(--ok-bg); color: var(--ok); }
+        .run.blue { background: #EEF3FD; color: var(--xp); }
+
+        .practice-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .practice-group h3 { font-size: 1em; margin-bottom: 0.5rem; }
+        .practice { background: var(--white); border-radius: 8px; padding: 0.5rem 0.7rem; margin-bottom: 0.4rem; font-size: 0.86em; }
+        .practice strong { color: var(--indigo); }
+
+        @media (max-width: 860px) {
+            .xp-values { grid-template-columns: repeat(2, 1fr); }
+            .flow, .tdd { grid-template-columns: minmax(0, 1fr); }
+            .flow-detail { position: static; }
+            .tdd-cycle { max-width: 220px; margin: 0 auto; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html">PM Tools</a></li>
+            <li><a href="agile-board.html" aria-current="page">Agile</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="agile-board.html">🔄 Scrum board</a>
+        <a href="dsdm.html">🧭 DSDM</a>
+        <a href="xp.html" aria-current="page">⚡ Extreme Programming (XP)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Agile · XP</span>
+            <h1>Extreme Programming (XP)</h1>
+            <p class="lead">XP takes good engineering practices and turns them up to the maximum: if code review is good, review all the time (pair programming); if testing is good, test first (TDD); if integration is good, integrate many times a day. It's the most technical of the agile methods.</p>
+            <div id="manifesto" class="manifesto"></div>
+        </div>
+    </header>
+
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>The 5 XP values</h2></div>
+                <div class="xp-values">
+                    <div class="xp-value"><strong>Communication</strong><p>Everyone sits together and talks daily, including the customer.</p></div>
+                    <div class="xp-value"><strong>Simplicity</strong><p>Do the simplest thing that could possibly work. No speculative features.</p></div>
+                    <div class="xp-value"><strong>Feedback</strong><p>From tests in minutes, from the customer every iteration.</p></div>
+                    <div class="xp-value"><strong>Courage</strong><p>Tell the truth about progress; refactor or throw away code when needed.</p></div>
+                    <div class="xp-value"><strong>Respect</strong><p>For each other's work, time, and the customer's decisions.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>The XP flow</h2><p>Click any part of the flow. Stories feed release planning, uncertain estimates go to a spike, the team builds in short iterations, and the customer approves small, frequent releases.</p></div>
+                <div class="flow">
+                    <div class="card" style="padding: 1rem;">
+                        <svg viewBox="0 0 640 330" role="group" aria-label="Extreme Programming flow">
+                            <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2C3E50"/></marker></defs>
+                            <path d="M55 120 C 120 20, 380 20, 450 128" stroke="#2C3E50" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+                            <text x="250" y="48" text-anchor="middle" font-size="13" font-weight="600" fill="#2C3E50">Test scenarios</text>
+                            <path d="M78 160 C 110 135, 150 135, 172 152" stroke="#2C3E50" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+                            <text x="112" y="132" text-anchor="middle" font-size="12" fill="#2C3E50">Requirements</text>
+                            <path d="M180 196 C 150 230, 110 240, 90 248" stroke="#2C3E50" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+                            <text x="128" y="238" font-size="11" fill="#6B6B6B">Uncertain estimates</text>
+                            <path d="M150 268 C 210 262, 232 240, 236 200" stroke="#2C3E50" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+                            <text x="196" y="282" font-size="11" fill="#6B6B6B">Confident estimates</text>
+                            <path d="M285 160 C 320 110, 400 110, 432 158" stroke="#2C3E50" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+                            <path d="M432 200 C 400 245, 320 245, 290 200" stroke="#2C3E50" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+                            <text x="360" y="232" text-anchor="middle" font-size="11" fill="#6B6B6B">Bugs · next iteration</text>
+                            <line x1="530" y1="180" x2="575" y2="180" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#ar)"/>
+
+                            <g class="xnode" data-node="stories" tabindex="0" role="button" aria-label="User stories">
+                                <rect class="hit" x="18" y="140" width="60" height="60" rx="6" fill="#fff" stroke="#F5A35C" stroke-width="2"/>
+                                <rect x="24" y="146" width="22" height="22" fill="#F5A35C"/><rect x="50" y="146" width="22" height="22" fill="#F5A35C"/><rect x="24" y="172" width="22" height="22" fill="#F5A35C"/><rect x="50" y="172" width="22" height="22" fill="#F5A35C"/>
+                                <text x="48" y="218" text-anchor="middle" font-size="12" font-weight="700" fill="#2C3E50">User stories</text>
+                            </g>
+                            <g class="xnode" data-node="spike" tabindex="0" role="button" aria-label="Spike">
+                                <rect class="hit" x="30" y="248" width="120" height="34" rx="5" fill="#3A6FD8" stroke="#3A6FD8" stroke-width="2"/>
+                                <text x="90" y="270" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Spike</text>
+                            </g>
+                            <g class="xnode" data-node="release" tabindex="0" role="button" aria-label="Release planning">
+                                <rect class="hit" x="170" y="155" width="120" height="44" rx="5" fill="#3A6FD8" stroke="#3A6FD8" stroke-width="2"/>
+                                <text x="230" y="174" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Release</text>
+                                <text x="230" y="190" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">planning</text>
+                            </g>
+                            <g class="xnode" data-node="iteration" tabindex="0" role="button" aria-label="Iteration">
+                                <rect class="hit" x="318" y="160" width="84" height="34" rx="17" fill="#fff" stroke="#2C3E50" stroke-width="1.5"/>
+                                <text x="360" y="182" text-anchor="middle" font-size="13" font-weight="700" fill="#2C3E50">Iteration</text>
+                            </g>
+                            <g class="xnode" data-node="acceptance" tabindex="0" role="button" aria-label="Acceptance tests">
+                                <rect class="hit" x="430" y="158" width="100" height="44" rx="5" fill="#3A6FD8" stroke="#3A6FD8" stroke-width="2"/>
+                                <text x="480" y="177" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Acceptance</text>
+                                <text x="480" y="193" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">tests</text>
+                            </g>
+                            <g class="xnode" data-node="release2" tabindex="0" role="button" aria-label="Customer approval and small release">
+                                <rect class="hit" x="560" y="150" width="70" height="62" rx="6" fill="#5A6170" stroke="#5A6170" stroke-width="2"/>
+                                <path d="M572 168 L595 158 L618 168 L595 178 Z" fill="#8A909C"/><path d="M572 168 L595 178 L595 204 L572 194 Z" fill="#6E7482"/><path d="M618 168 L595 178 L595 204 L618 194 Z" fill="#4A505C"/>
+                                <text x="595" y="232" text-anchor="middle" font-size="12" font-weight="700" fill="#2C3E50">Small release</text>
+                                <text x="552" y="170" text-anchor="end" font-size="11" fill="#6B6B6B">Customer</text>
+                                <text x="552" y="196" text-anchor="end" font-size="11" fill="#6B6B6B">approval</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="card flow-detail" id="flowDetail" aria-live="polite"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>The planning game</h2>
+                    <p>In XP the <strong>customer</strong> decides business value and priority; the <strong>developers</strong> estimate. Some stories are too uncertain to estimate, so you can run a <strong>spike</strong> (a short, timeboxed experiment), but each spike uses 1 point of the iteration. The team's velocity is <strong>10 points</strong>. Pick the stories that deliver the most value.</p></div>
+                <div class="card">
+                    <div class="scroll-x"><table class="data pg-table" id="pgTable" style="min-width: 640px;"></table></div>
+                    <div id="pgSummary" style="margin-top: 1rem;"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Test-driven development: red → green → refactor</h2>
+                    <p>Write a failing test first, write just enough code to pass it, then clean up. Step through it with a real Scholar Academy function: the attendance percentage.</p></div>
+                <div class="card tdd">
+                    <div class="tdd-cycle" id="tddCycle"></div>
+                    <div>
+                        <div id="tddStep"></div>
+                        <div class="btn-row" style="margin-top: 0.8rem;">
+                            <button class="btn btn-ghost" id="tddPrev">← Previous</button>
+                            <button class="btn btn-primary" id="tddNext">Next step →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>The 12 XP practices</h2><p>Grouped the way Kent Beck's original practices usually are.</p></div>
+                <div class="practice-groups">
+                    <div class="card practice-group"><h3>🔁 Fine-scale feedback</h3>
+                        <div class="practice"><strong>Pair programming</strong>: two people, one keyboard. The <em>driver</em> types, the <em>navigator</em> reviews and thinks ahead. Swap often.</div>
+                        <div class="practice"><strong>Planning game</strong>: customer sets priorities, developers estimate (above).</div>
+                        <div class="practice"><strong>Test-driven development</strong>: tests before code (above).</div>
+                        <div class="practice"><strong>Whole team / on-site customer</strong>: a real customer sits with the team to answer questions.</div></div>
+                    <div class="card practice-group"><h3>🌊 Continuous process</h3>
+                        <div class="practice"><strong>Continuous integration</strong>: merge and run all tests many times a day.</div>
+                        <div class="practice"><strong>Refactoring</strong>: improve the design without changing behavior, protected by tests.</div>
+                        <div class="practice"><strong>Small releases</strong>: release to real users as often as possible.</div></div>
+                    <div class="card practice-group"><h3>🤝 Shared understanding</h3>
+                        <div class="practice"><strong>Coding standards</strong>: everyone writes code the same way.</div>
+                        <div class="practice"><strong>Collective code ownership</strong>: anyone can improve any code.</div>
+                        <div class="practice"><strong>Simple design</strong>: no code for features you don't need yet (YAGNI).</div>
+                        <div class="practice"><strong>System metaphor</strong>: a shared story of how the system works.</div></div>
+                    <div class="card practice-group"><h3>💚 Programmer welfare</h3>
+                        <div class="practice"><strong>Sustainable pace</strong>: about 40 hours a week. Overtime two weeks in a row is a warning sign (agile principle 8).</div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Scrum vs. DSDM vs. XP</h2></div>
+                <div class="scroll-x"><table class="data" style="min-width: 720px;">
+                    <thead><tr><th></th><th>🔄 Scrum</th><th>🧭 DSDM</th><th>⚡ XP</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>Focus</strong></td><td>Team framework for delivering product increments</td><td>Whole-project framework, business-driven</td><td>Engineering practices for high-quality code</td></tr>
+                        <tr><td><strong>Cycle</strong></td><td>Sprint, 1–4 weeks</td><td>Timebox, typically 2–4 weeks, inside increments</td><td>Iteration, 1–2 weeks; releases every few iterations</td></tr>
+                        <tr><td><strong>Up-front work</strong></td><td>Product backlog only</td><td>Feasibility + Foundations</td><td>Release planning with stories</td></tr>
+                        <tr><td><strong>What's fixed</strong></td><td>Sprint length and sprint goal</td><td>Time, cost, quality</td><td>Iteration length; quality via tests</td></tr>
+                        <tr><td><strong>Customer voice</strong></td><td>Product Owner</td><td>Business Ambassador + Visionary</td><td>On-site customer</td></tr>
+                        <tr><td><strong>Signature practice</strong></td><td>Sprint events, Definition of Done</td><td>MoSCoW, timeboxing</td><td>Pair programming, TDD, CI</td></tr>
+                        <tr><td><strong>Often combined</strong></td><td colspan="3" style="text-align: center;">Many teams run Scrum for the process and XP practices for the engineering.</td></tr>
+                    </tbody></table></div>
+                <div class="exam-tips" style="margin-top: 1.2rem;">
+                    <h3>📝 Exam tips</h3>
+                    <ul>
+                        <li>A <strong>spike</strong> is a short, timeboxed research task to reduce uncertainty: technical spikes or functional spikes.</li>
+                        <li>In pair programming: <strong>driver</strong> writes code, <strong>navigator</strong> reviews.</li>
+                        <li>TDD order is always <strong>red → green → refactor</strong>.</li>
+                        <li>XP's customer sets <strong>business value</strong>; developers give <strong>estimates</strong>. Neither does the other's job.</li>
+                        <li>"Sustainable pace" and "40-hour week" questions point to XP and agile principle 8.</li>
+                    </ul>
+                </div>
+                <div class="next-tool"><a href="dsdm.html">← DSDM</a><a href="agile-board.html">Back to the Scrum board →</a></div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · Agile</p>
+        <p><a href="agile-board.html">Scrum board</a> · <a href="dsdm.html">DSDM</a> · <a href="xp.html">Extreme Programming</a> · <a href="pm-tools.html">PM Tools</a></p>
+    </footer>
+
+<script src="agile-common.js"></script>
+<script>
+renderManifesto(document.getElementById('manifesto'));
+
+// ─── Flow ───
+const NODES = {
+    stories: ['User stories', 'Short descriptions of what a user needs, written on cards with the customer. Each story also produces <strong>test scenarios</strong> that become acceptance tests.', ['Written by or with the customer', 'Small enough to finish in one iteration', 'Format: "As a teacher, I want… so that…"']],
+    spike: ['Spike', 'When developers can\'t estimate a story with confidence, they run a spike: a short, timeboxed experiment (hours to a couple of days) to learn enough to estimate.', ['Example: "Can the SMS gateway handle 2,000 messages at 8 am?"', 'Output is knowledge and an estimate, not production code', 'Code from a spike is usually thrown away']],
+    release: ['Release planning', 'The planning game at release level. The customer orders stories by value, developers estimate, and together they decide what goes into the next release given the team\'s velocity.', ['Customer: value and priority', 'Developers: estimates and risk', 'Re-planned every iteration as the team learns']],
+    iteration: ['Iteration', 'A 1–2 week cycle. At the start, the team picks stories for this iteration, breaks them into tasks, and builds them with pair programming, TDD, and continuous integration. Bugs and new learning feed the next iteration.', ['Pair programming on all production code', 'Tests first; integrate many times a day', 'Iteration plan comes from the latest velocity']],
+    acceptance: ['Acceptance tests', 'Tests written from the customer\'s scenarios that prove a story works. A story is done only when its acceptance tests pass. Failures go back into the next iteration.', ['Ideally automated', 'Defined by the customer, run by the team', 'Turn requirements into checkable examples']],
+    release2: ['Customer approval → small release', 'When the customer approves, the working software is released to real users. XP prefers small releases as often as possible, so feedback is real and risk is low.', ['Every release is fully tested and usable', 'Weeks, not months', 'Feedback from real users drives the next stories']]
+};
+function showNode(k) {
+    const [t, d, list] = NODES[k];
+    document.querySelectorAll('.xnode').forEach(n => { n.classList.toggle('active', n.dataset.node === k); n.setAttribute('aria-pressed', n.dataset.node === k); });
+    document.getElementById('flowDetail').innerHTML = `<span class="eyebrow" style="color: var(--xp);">XP flow</span><h3>${t}</h3><p>${d}</p><ul style="margin: 0.6rem 0 0 1.1rem; font-size: 0.9em;">${list.map(x => `<li>${x}</li>`).join('')}</ul>`;
+}
+document.querySelectorAll('.xnode').forEach(n => {
+    n.addEventListener('click', () => showNode(n.dataset.node));
+    n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showNode(n.dataset.node); } });
+});
+showNode('release');
+
+// ─── Planning game ───
+const VELOCITY = 10;
+const STORIES = [
+    { name: 'Quick-mark attendance', value: 8, est: 3, known: true },
+    { name: 'Enter grades', value: 9, est: 4, known: true },
+    { name: 'SMS absence alerts', value: 7, est: 2, known: false, why: 'Unknown SMS gateway API' },
+    { name: 'Report card PDF', value: 5, est: 2, known: true },
+    { name: 'Timetable view', value: 3, est: 2, known: true },
+    { name: 'Offline mode for teachers', value: 6, est: 8, known: false, why: 'Never built offline sync before' },
+    { name: 'Pay fees online', value: 8, est: 6, known: true }
+];
+const pg = STORIES.map(() => ({ spiked: false, picked: false }));
+
+function best(capacity) {
+    // 0/1 knapsack over stories whose estimate is known (or spiked), maximizing value
+    const items = STORIES.map((s, i) => ({ ...s, i })).filter((s, i) => s.known || pg[i].spiked);
+    const dp = new Array(capacity + 1).fill(0);
+    items.forEach(it => { for (let c = capacity; c >= it.est; c--) dp[c] = Math.max(dp[c], dp[c - it.est] + it.value); });
+    return dp[capacity];
+}
+function renderPg() {
+    const spikes = pg.filter(p => p.spiked).length;
+    const cap = VELOCITY - spikes;
+    const used = STORIES.reduce((s, st, i) => s + (pg[i].picked ? st.est : 0), 0);
+    const value = STORIES.reduce((s, st, i) => s + (pg[i].picked ? st.value : 0), 0);
+    document.getElementById('pgTable').innerHTML = `
+        <thead><tr><th>Story</th><th>Customer value</th><th>Developer estimate</th><th>Action</th></tr></thead>
+        <tbody>${STORIES.map((s, i) => {
+            const known = s.known || pg[i].spiked;
+            const est = known ? `<span class="val">${s.est} pts</span>${pg[i].spiked ? ' <span class="pill spike">after spike</span>' : ''}` : `<span class="val">?</span> <small style="color: var(--muted);">${s.why}</small>`;
+            const act = !known ? `<button class="mini-btn" data-spike="${i}">🔬 Run a spike (1 pt)</button>`
+                : `<label style="display: inline-flex; gap: 0.4rem; align-items: center;"><input type="checkbox" data-pick="${i}" ${pg[i].picked ? 'checked' : ''}> In this iteration</label>`;
+            return `<tr class="${pg[i].picked ? 'picked' : ''}"><td><strong>${s.name}</strong></td><td class="val">${'★'.repeat(Math.round(s.value / 2))} ${s.value}</td><td>${est}</td><td>${act}</td></tr>`;
+        }).join('')}</tbody>`;
+    const max = best(cap);
+    const over = used > cap;
+    let msg;
+    if (over) msg = `<div class="feedback error">Over capacity by ${used - cap} points. XP keeps a sustainable pace: the customer must drop or swap a story (principle 8).</div>`;
+    else if (used === 0) msg = `<div class="feedback partial" style="color: var(--charcoal);">Tick stories to plan the iteration. Tip: a spike costs capacity now but might reveal a cheap, valuable story.</div>`;
+    else if (value === max) msg = `<div class="feedback success">✅ ${value} value points: the best possible plan with what you know. This is what the planning game is for: value from the customer, cost from the developers.</div>`;
+    else msg = `<div class="feedback partial">${value} value points. With the same capacity, a plan worth <strong>${max}</strong> is possible. Look at value per point.</div>`;
+    document.getElementById('pgSummary').innerHTML = `
+        <div style="display: flex; justify-content: space-between; font-size: 0.88em; flex-wrap: wrap; gap: 0.5rem;"><span>Capacity used: <strong>${used} / ${cap} pts</strong>${spikes ? ` (velocity ${VELOCITY} − ${spikes} for spike${spikes > 1 ? 's' : ''})` : ''}</span><span>Value delivered: <strong>${value}</strong></span></div>
+        <div class="pg-meter"><div style="width:${Math.min(100, used / VELOCITY * 100)}%; background:${over ? 'var(--crit)' : 'var(--xp)'}"></div><div style="width:${spikes / VELOCITY * 100}%; background: var(--gold)"></div></div>
+        ${msg}
+        <button class="btn btn-ghost" id="pgReset" style="margin-top: 0.6rem;">Start over</button>`;
+    document.querySelectorAll('[data-spike]').forEach(b => b.addEventListener('click', () => {
+        const i = Number(b.dataset.spike);
+        pg[i].spiked = true;
+        renderPg();
+        agileToast(`Spike done: "${STORIES[i].name}" is ${STORIES[i].est} points.${STORIES[i].est <= 2 ? ' Cheap for its value!' : ' Expensive. Good to know before committing.'}`, 'good');
+    }));
+    document.querySelectorAll('[data-pick]').forEach(c => c.addEventListener('change', () => { pg[Number(c.dataset.pick)].picked = c.checked; renderPg(); }));
+    document.getElementById('pgReset').addEventListener('click', () => { pg.forEach(p => { p.spiked = false; p.picked = false; }); renderPg(); });
+}
+renderPg();
+
+// ─── TDD ───
+const TDD = [
+    { phase: 'red', title: '1 · Red: write a failing test', text: 'Start with what the code should do. There\'s no function yet, so the test fails. That proves the test can fail.',
+      code: `<span class="c">// attendance.test.js</span>
+<span class="k">test</span>(<span class="s">'18 of 20 days present is 90%'</span>, () => {
+  <span class="k">expect</span>(attendancePercent(<span class="n">18</span>, <span class="n">20</span>)).toBe(<span class="n">90</span>);
+});`, run: ['red', '✗ ReferenceError: attendancePercent is not defined'] },
+    { phase: 'green', title: '2 · Green: just enough code to pass', text: 'Write the simplest code that makes the test pass. Not the perfect code, just enough.',
+      code: `<span class="c">// attendance.js</span>
+<span class="k">function</span> attendancePercent(present, total) {
+  <span class="k">return</span> present / total * <span class="n">100</span>;
+}`, run: ['green', '✓ 1 test passed'] },
+    { phase: 'red', title: '3 · Red again: a new case', text: 'A new student has no school days yet. What should happen? The customer says 0%. Write that as a test.',
+      code: `<span class="add"><span class="k">test</span>(<span class="s">'no school days yet is 0%'</span>, () => {</span>
+<span class="add">  <span class="k">expect</span>(attendancePercent(<span class="n">0</span>, <span class="n">0</span>)).toBe(<span class="n">0</span>);</span>
+<span class="add">});</span>`, run: ['red', '✗ Expected 0, received NaN'] },
+    { phase: 'green', title: '4 · Green: handle it', text: 'Add the smallest change that passes both tests.',
+      code: `<span class="k">function</span> attendancePercent(present, total) {
+<span class="add">  <span class="k">if</span> (total === <span class="n">0</span>) <span class="k">return</span> <span class="n">0</span>;</span>
+  <span class="k">return</span> present / total * <span class="n">100</span>;
+}`, run: ['green', '✓ 2 tests passed'] },
+    { phase: 'refactor', title: '5 · Refactor: clean up, safely', text: 'Now improve the code: clearer names, rounding for reports. The tests prove nothing broke. This is what makes refactoring safe in XP.',
+      code: `<span class="k">function</span> attendancePercent(daysPresent, schoolDays) {
+  <span class="k">if</span> (schoolDays === <span class="n">0</span>) <span class="k">return</span> <span class="n">0</span>;
+<span class="add">  <span class="k">return</span> Math.round(daysPresent / schoolDays * <span class="n">100</span>);</span>
+}`, run: ['blue', '✓ 2 tests passed · code is cleaner, behavior unchanged'] }
+];
+let tddStep = 0;
+function renderTdd() {
+    const s = TDD[tddStep];
+    const seg = (ph, path, color, label, lx, ly) => `<g class="seg" style="opacity:${s.phase === ph ? 1 : 0.25}"><path d="${path}" fill="${color}"/><text x="${lx}" y="${ly}" text-anchor="middle" font-family="Syne" font-weight="800" font-size="15" fill="#fff">${label}</text></g>`;
+    document.getElementById('tddCycle').innerHTML = `<svg viewBox="0 0 200 200" role="img" aria-label="TDD cycle, current step: ${s.phase}">
+        ${seg('red', 'M100 100 L100 10 A90 90 0 0 1 177.9 145 Z', '#D64545', 'RED', 140, 80)}
+        ${seg('green', 'M100 100 L177.9 145 A90 90 0 0 1 22.1 145 Z', '#1F9D6B', 'GREEN', 100, 165)}
+        ${seg('refactor', 'M100 100 L22.1 145 A90 90 0 0 1 100 10 Z', '#3A6FD8', 'REFACTOR', 58, 80)}
+        <circle cx="100" cy="100" r="30" fill="#fff"/><text x="100" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#2C3E50">${tddStep + 1}/${TDD.length}</text></svg>`;
+    document.getElementById('tddStep').innerHTML = `<h3>${s.title}</h3><p>${s.text}</p><div class="code">${s.code}</div><div class="run ${s.run[0]}">${s.run[1]}</div>`;
+    document.getElementById('tddPrev').disabled = tddStep === 0;
+    document.getElementById('tddNext').disabled = tddStep === TDD.length - 1;
+}
+document.getElementById('tddPrev').addEventListener('click', () => { tddStep = Math.max(0, tddStep - 1); renderTdd(); });
+document.getElementById('tddNext').addEventListener('click', () => { tddStep = Math.min(TDD.length - 1, tddStep + 1); renderTdd(); });
+renderTdd();
+</script>
+</body>
+</html>

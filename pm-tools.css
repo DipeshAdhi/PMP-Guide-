@@ -52,7 +52,7 @@ button { cursor: pointer; }
 .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
 .page-hero { padding: 3.5rem 0 2.5rem; border-bottom: 1px solid var(--line); }
 .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 0.78em; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent, var(--coral)); }
-.page-hero h1 { font-size: clamp(2em, 6vw, 3em); font-weight: 800; margin: 0.4rem 0 0.9rem; }
+.page-hero h1 { font-size: clamp(1.7em, 6vw, 3em); font-weight: 800; margin: 0.4rem 0 0.9rem; overflow-wrap: break-word; hyphens: auto; }
 .page-hero .lead { font-size: 1.12em; color: var(--muted); max-width: 760px; }
 .definition {
     margin-top: 1.6rem; background: var(--paper); border-left: 5px solid var(--accent, var(--coral));
