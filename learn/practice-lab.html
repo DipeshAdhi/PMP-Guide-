@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PM Lab - Hands-on Project Management Practice</title>
+    <title>Practice Lab - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -140,7 +140,7 @@
         .modal-section { margin-top: 1.2rem; }
         .modal-section h4 { font-size: 1em; margin-bottom: 0.4rem; }
         .modal-section ul { margin-left: 1.2rem; }
-        .exam-tip { margin-top: 1.2rem; background: var(--warn-bg); border-left: 4px solid var(--gold); padding: 0.9rem 1rem; border-radius: 6px; font-size: 0.93em; }
+        .key-tip { margin-top: 1.2rem; background: var(--warn-bg); border-left: 4px solid var(--gold); padding: 0.9rem 1rem; border-radius: 6px; font-size: 0.93em; }
 
         /* ─── 2. Ordering challenge ─── */
         .challenge-layout { display: grid; grid-template-columns: 1fr 260px; gap: 2rem; align-items: start; }
@@ -306,7 +306,7 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="game-interactive"></script>
+    <script src="../assets/js/site-nav.js" data-page="practice-lab"></script>
 
     <div class="progress-strip" aria-live="polite">
         <span>Lab progress: <strong id="progressCount">0/5</strong></span>
@@ -334,7 +334,7 @@
                 <div class="section-header">
                     <span class="eyebrow" style="color: var(--coral);">Step 1 · Explore</span>
                     <h2>The 5 process groups</h2>
-                    <p>Every project moves through these five groups. Open each one to see what happens, what it produces, and what the exam expects you to know.</p>
+                    <p>Every project moves through these five groups. Open each one to see what happens, what it produces, and the key point to remember.</p>
                 </div>
                 <div class="stages-grid" id="stagesGrid"></div>
             </div>
@@ -374,7 +374,7 @@
                 <div class="section-header">
                     <span class="eyebrow" style="color: var(--gold);">Step 3 · Compare</span>
                     <h2>Delivery approaches</h2>
-                    <p>The PMP exam tests predictive, agile, and hybrid approaches. Learn when each one fits, then compare predictive and agile side by side.</p>
+                    <p>Real projects use predictive, agile, and hybrid approaches. Learn when each one fits, then compare predictive and agile side by side.</p>
                 </div>
                 <div class="tabs" id="modelTabs"></div>
                 <div id="modelContent"></div>
@@ -418,7 +418,7 @@
                 <div class="section-header">
                     <span class="eyebrow" style="color: var(--coral);">Step 5 · Decide</span>
                     <h2>What would you do?</h2>
-                    <p>Five situations written the way PMP questions are. Pick an answer. Every option explains its reasoning, so a wrong choice still teaches you something.</p>
+                    <p>Five real project situations. Pick what you would do. Every option explains its reasoning, so a wrong choice still teaches you something.</p>
                 </div>
                 <div class="tabs" id="caseTabs"></div>
                 <div class="case-card" id="caseCard"></div>
@@ -430,7 +430,7 @@
             <div class="container">
                 <div class="section-header">
                     <span class="eyebrow" style="color: var(--teal);">Step 6 · Test</span>
-                    <h2>Exam-style check</h2>
+                    <h2>Readiness check</h2>
                     <p>Twelve questions covering everything above, plus the earned value and communication formulas. You'll see an explanation for every question at the end.</p>
                 </div>
                 <div class="quiz-box" id="quizContainer">
@@ -468,13 +468,13 @@
     </div>
 
     <footer>
-        <p>PM Lab · part of the PMP Guide</p>
-        <p><a href="index.html">Learning guide</a> · <a href="project-simulator.html">Project simulator</a> · <a href="triple-constraint-advanced.html">Triple constraint tool</a> · <a href="dashboard.html">Four pillars</a></p>
+        <p>Practice lab · part of PM Ready</p>
+        <p><a href="../index.html">Learning guide</a> · <a href="simulator.html">Project simulator</a> · <a href="triple-constraint.html">Triple constraint tool</a> · <a href="four-pillars.html">Four pillars</a></p>
     </footer>
 
 <script>
 /* ===================================================================
-   PM Lab — adapted from the SDLC Interactive Learning Platform
+   Practice lab — adapted from the SDLC Interactive Learning Platform
    =================================================================== */
 
 // ─── Data ────────────────────────────────────────────────────────────
@@ -490,7 +490,7 @@ const PROCESS_GROUPS = [
     {
         id: 2, title: "Planning", icon: "📋", color: "var(--teal)",
         shortDesc: "Define scope, schedule, cost, and how work will be managed",
-        description: "Planning establishes the total scope, refines objectives, and defines the course of action. It has the most processes of any group (24 of 49 in PMBOK 6).",
+        description: "Planning establishes the total scope, refines objectives, and defines the course of action. It has the most processes of any group.",
         activities: ["Collect requirements and define scope", "Create the WBS", "Develop the schedule and budget", "Plan quality, resources, communications, risk, procurement"],
         outputs: ["Project management plan", "Scope baseline (scope statement + WBS + WBS dictionary)", "Schedule baseline", "Cost baseline", "Risk register"],
         tip: "Order to remember: scope → schedule → cost. You can't estimate time or money for work you haven't defined."
@@ -501,7 +501,7 @@ const PROCESS_GROUPS = [
         description: "Executing completes the work in the project management plan. It uses most of the budget and time, and is where the team is acquired, developed, and managed.",
         activities: ["Direct and manage project work", "Acquire, develop, and manage the team", "Manage quality (quality assurance)", "Manage stakeholder engagement and communications", "Conduct procurements"],
         outputs: ["Deliverables", "Work performance data", "Issue log", "Change requests"],
-        tip: "Executing spends the most money. Expect questions on team development (Tuckman: forming, storming, norming, performing, adjourning)."
+        tip: "Executing spends the most money. Know the stages of team development (Tuckman: forming, storming, norming, performing, adjourning)."
     },
     {
         id: 4, title: "Monitoring & Controlling", icon: "📈", color: "var(--purple)",
@@ -663,7 +663,7 @@ const CASES = [
         options: [
             { text: "Let the developer build it. The sponsor is senior and it keeps them happy.", correct: false, why: "Wrong. This is scope creep: uncontrolled change with no impact analysis. It will hit schedule, cost, and quality without anyone approving it." },
             { text: "Tell the sponsor no; scope is frozen.", correct: false, why: "Wrong. Changes are allowed. They just have to go through the process. Refusing outright damages the stakeholder relationship." },
-            { text: "Analyze the impact on scope, schedule, cost, and risk, then submit a formal change request for the change control board to decide.", correct: true, why: "Correct. This is the PMP answer: evaluate impact first, then follow integrated change control. Only an approved change updates the baselines." }
+            { text: "Analyze the impact on scope, schedule, cost, and risk, then submit a formal change request for the change control board to decide.", correct: true, why: "Correct. This is the professional answer: evaluate impact first, then follow integrated change control. Only an approved change updates the baselines." }
         ]
     },
     {
@@ -671,7 +671,7 @@ const CASES = [
         description: "Two senior engineers disagree strongly on the system architecture. The argument has started to split the team and design work has stalled for a week. Both have valid technical points.",
         question: "What conflict resolution technique should you use?",
         options: [
-            { text: "Collaborate / problem-solve: bring them together, look at the data and the requirements, and work toward a solution both can commit to.", correct: true, why: "Correct. Collaboration gives a lasting, win-win result and is the PMI-preferred technique when there's time and the relationship matters." },
+            { text: "Collaborate / problem-solve: bring them together, look at the data and the requirements, and work toward a solution both can commit to.", correct: true, why: "Correct. Collaboration gives a lasting, win-win result and is the generally preferred technique when there's time and the relationship matters." },
             { text: "Force: pick the more senior engineer's design and move on.", correct: false, why: "Not best. Forcing is fast but creates a win-lose outcome. The other engineer may disengage. Use it only in emergencies." },
             { text: "Withdraw: give it another week and hope they work it out.", correct: false, why: "Wrong. Avoiding the conflict leaves the team blocked and lets it grow. It's the least effective technique here." }
         ]
@@ -775,7 +775,7 @@ function openStage(g, trigger) {
     document.getElementById('modalDetails').innerHTML = `
         <div class="modal-section"><h4>⚡ Key activities</h4><ul>${g.activities.map(a => `<li>${a}</li>`).join('')}</ul></div>
         <div class="modal-section"><h4>📦 Key outputs</h4><ul>${g.outputs.map(o => `<li>${o}</li>`).join('')}</ul></div>
-        <div class="exam-tip"><strong>Exam tip:</strong> ${g.tip}</div>`;
+        <div class="key-tip"><strong>Key point:</strong> ${g.tip}</div>`;
     document.getElementById('stageModal').classList.add('open');
     document.getElementById('modalClose').focus();
 
@@ -885,7 +885,7 @@ function checkOrder() {
 
     const fb = document.getElementById('orderFeedback');
     if (correct === ORDER_STEPS.length) {
-        fb.innerHTML = `<div class="feedback-message success">🎉 Perfect. That's the PMBOK flow: authorize → stakeholders → requirements → WBS → schedule → budget → execute → close.</div>`;
+        fb.innerHTML = `<div class="feedback-message success">🎉 Perfect. That's the standard planning flow: authorize → stakeholders → requirements → WBS → schedule → budget → execute → close.</div>`;
         progress.order = true;
         saveProgress();
         confetti();
@@ -1194,7 +1194,7 @@ function showResults() {
 
     let emoji, title, text;
     if (pct === 1) { emoji = '🏆'; title = 'Perfect score'; text = 'You know this material cold.'; }
-    else if (pct >= 0.7) { emoji = '🎉'; title = 'Exam-ready on these topics'; text = 'Review the questions you missed below.'; }
+    else if (pct >= 0.7) { emoji = '🎉'; title = 'Ready on these topics'; text = 'Review the questions you missed below.'; }
     else if (pct >= 0.4) { emoji = '💪'; title = 'Getting there'; text = 'Read the explanations, revisit the process groups and case studies, then retake.'; }
     else { emoji = '📚'; title = 'Keep studying'; text = 'Work through Steps 1–5 again, then come back to the quiz.'; }
 

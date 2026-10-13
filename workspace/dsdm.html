@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSDM - PMP Guide</title>
+    <title>DSDM - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="pm-tools.css">
-    <link rel="stylesheet" href="agile.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/agile.css">
     <style>
         :root { --accent: #E8A317; --tab-color: #E8A317; --dsdm: #E8A317; --dsdm-blue: #1F6FB2; }
 
@@ -89,7 +89,7 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="dsdm"></script>
+    <script src="../assets/js/site-nav.js" data-page="dsdm"></script>
 
     <header class="page-hero">
         <div class="container">
@@ -240,8 +240,8 @@
 
         <section class="block">
             <div class="container">
-                <div class="exam-tips">
-                    <h3>📝 Exam tips (PMP & PMI-ACP)</h3>
+                <div class="key-points">
+                    <h3>📝 Key points to remember</h3>
                     <ul>
                         <li>DSDM <strong>fixes time, cost, and quality</strong>; features are the variable.</li>
                         <li><strong>MoSCoW</strong> comes from DSDM: Must, Should, Could, Won't (this time). Musts ≤ 60% of effort.</li>
@@ -251,17 +251,17 @@
                         <li><strong>Timeboxing</strong> is non-negotiable: the date is kept by dropping Coulds, then Shoulds, never quality.</li>
                     </ul>
                 </div>
-                <div class="next-tool"><a href="agile-board.html">← Scrum board</a><a href="xp.html">Next: Extreme Programming →</a></div>
+                <div class="next-tool"><a href="scrum.html">← Scrum board</a><a href="xp.html">Next: Extreme Programming →</a></div>
             </div>
         </section>
     </main>
 
     <footer>
-        <p>PMP Guide · Workspace</p>
-        <p><a href="agile-board.html">Scrum board</a> · <a href="dsdm.html">DSDM</a> · <a href="xp.html">Extreme Programming</a> · <a href="pm-tools.html">Workspace</a></p>
+        <p>PM Ready · Workspace</p>
+        <p><a href="scrum.html">Scrum board</a> · <a href="dsdm.html">DSDM</a> · <a href="xp.html">Extreme Programming</a> · <a href="index.html">Workspace</a></p>
     </footer>
 
-<script src="agile-common.js"></script>
+<script src="../assets/js/agile.js"></script>
 <script>
 renderManifesto(document.getElementById('manifesto'));
 
@@ -278,7 +278,7 @@ const PHASES = {
         questions: ['What are the requirements, and how are they prioritized?', 'What does the solution architecture look like?', 'How many increments and timeboxes?', 'Who plays which role?'],
         products: ['Foundations Summary', 'Business case', 'Prioritised Requirements List (PRL), using MoSCoW', 'Solution Architecture Definition', 'Development Approach Definition', 'Delivery Plan (increments + timeboxes)', 'Management Approach Definition'],
         roles: 'Whole project-level team plus Business Ambassador and Team Leader',
-        tip: '"Enough design up front" (EDUF): requirements are high-level, detail emerges during development. This is the most common exam distinction from waterfall.' },
+        tip: '"Enough design up front" (EDUF): requirements are high-level, detail emerges during development. This is the key difference from waterfall.' },
     evo: { name: 'Evolutionary Development', purpose: 'Build the solution iteratively and incrementally inside fixed timeboxes, with the business involved every day.',
         questions: ['Does this meet the business need (exploration)?', 'Is it robust enough to deploy (engineering)?', 'Are we on track for the timebox\'s Musts?'],
         products: ['Evolving solution', 'Timebox plans and reviews', 'Models and prototypes'], roles: 'Solution Development Team: Team Leader, Business Ambassador, Business Analyst, Solution Developer, Solution Tester',
@@ -305,7 +305,7 @@ function showPhase(key) {
         <h4>Key questions</h4><ul>${p.questions.map(q => `<li>${q}</li>`).join('')}</ul>
         <h4>Main products</h4><ul>${p.products.map(q => `<li>${q}</li>`).join('')}</ul>
         <h4>Who's involved</h4><p style="font-size: 0.9em;">${p.roles}</p>
-        <div class="exam-tips" style="margin-top: 0.9rem; padding: 0.8rem 1rem;"><p style="font-size: 0.88em;"><strong>Tip:</strong> ${p.tip}</p></div>`;
+        <div class="key-points" style="margin-top: 0.9rem; padding: 0.8rem 1rem;"><p style="font-size: 0.88em;"><strong>Tip:</strong> ${p.tip}</p></div>`;
     document.querySelectorAll('[data-phase-btn]').forEach(b => b.addEventListener('click', () => showPhase(b.dataset.phaseBtn)));
 }
 document.querySelectorAll('.phase-node').forEach(n => {

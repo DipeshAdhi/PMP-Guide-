@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workspace - PMP Guide</title>
+    <title>Workspace - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
     <style>
         :root { --accent: var(--coral); }
         .tool-card {
@@ -26,7 +26,7 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="pm-tools"></script>
+    <script src="../assets/js/site-nav.js" data-page="workspace"></script>
 
     <header class="page-hero">
         <div class="container">
@@ -42,7 +42,7 @@
             <div class="container">
                 <div class="block-head"><h2>Plan the scope and the team</h2><p>What will we deliver, and who does what?</p></div>
                 <div class="ws-grid">
-                    <a class="tool-card" href="board.html" style="--c: var(--teal);">
+                    <a class="tool-card" href="task-board.html" style="--c: var(--teal);">
                         <span class="icon">🗂️</span>
                         <span class="question">WHAT is the work?</span>
                         <h3>Task board: WBS + milestones</h3>
@@ -93,7 +93,7 @@
             <div class="container">
                 <div class="block-head"><h2>Deliver with agile</h2><p>Iterative ways of working, each with its own board and rules.</p></div>
                 <div class="ws-grid">
-                    <a class="tool-card" href="agile-board.html" style="--c: var(--teal);">
+                    <a class="tool-card" href="scrum.html" style="--c: var(--teal);">
                         <span class="icon">🔄</span>
                         <span class="question">SCRUM</span>
                         <h3>Scrum board</h3>
@@ -132,10 +132,10 @@
     </main>
 
     <footer>
-        <p>PMP Guide · <a href="learn.html">Learn</a> · <a href="pm-tools.html">Workspace</a> · <a href="exam.html">Exam prep</a></p>
+        <p>PM Ready · <a href="../learn/index.html">Learn</a> · <a href="../learn/practice.html">Practice</a> · <a href="index.html">Workspace</a></p>
     </footer>
 
-<script src="pm-schedule.js"></script>
+<script src="../assets/js/schedule.js"></script>
 <script>
 const cpm = computeCPM(SCHOLAR_TASKS);
 document.getElementById('projectTable').innerHTML = `

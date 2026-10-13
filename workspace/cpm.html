@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Critical Path Method - PMP Guide</title>
+    <title>Critical Path Method - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
     <style>
         :root { --accent: var(--purple); --tab-color: var(--purple); }
 
@@ -69,14 +69,14 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="cpm"></script>
+    <script src="../assets/js/site-nav.js" data-page="cpm"></script>
 
     <header class="page-hero">
         <div class="container">
             <span class="eyebrow">Tool 4 · Project · Which tasks control the end date</span>
             <h1>Critical Path Method (CPM)</h1>
             <p class="lead">The critical path is the longest chain of dependent activities from start to finish. Its length is the shortest time the project can take. Any delay on it delays the whole project; activities off it have "float" and can slip a little without harm.</p>
-            <div class="definition"><strong>PMBOK term:</strong> CPM is a schedule network analysis technique used in <em>Develop Schedule</em>. It calculates the early and late start and finish dates of every activity, and the <strong>total float</strong> of each one.</div>
+            <div class="definition"><strong>In short:</strong> CPM is a schedule network analysis technique used in <em>Develop Schedule</em>. It calculates the early and late start and finish dates of every activity, and the <strong>total float</strong> of each one.</div>
         </div>
     </header>
 
@@ -190,31 +190,31 @@
 
         <section class="block">
             <div class="container">
-                <div class="exam-tips">
-                    <h3>📝 PMP exam tips</h3>
+                <div class="key-points">
+                    <h3>📝 Key points to remember</h3>
                     <ul>
                         <li>The critical path is the <strong>longest</strong> path, with <strong>zero total float</strong> (normally). It is <em>not</em> the path with the most activities or the most expensive ones.</li>
                         <li>There can be <strong>more than one</strong> critical path. More critical paths means more schedule risk.</li>
                         <li><strong>Negative float</strong> means the project is already behind its required finish date.</li>
                         <li>Forward pass → ES, EF (take the <strong>max</strong> at merges). Backward pass → LS, LF (take the <strong>min</strong> at bursts).</li>
-                        <li>Exam questions often list paths with durations. Just add each path up; the biggest total is the critical path.</li>
+                        <li>Quick check: list every path with its total duration. The biggest total is the critical path.</li>
                         <li>PERT: <strong>(O + 4M + P) ÷ 6</strong>; standard deviation <strong>(P − O) ÷ 6</strong>; ±1σ ≈ 68%, ±2σ ≈ 95%, ±3σ ≈ 99.7%.</li>
                     </ul>
                 </div>
                 <div class="next-tool">
                     <a href="gantt.html">← Gantt chart</a>
-                    <a href="pm-tools.html">Back to the workspace →</a>
+                    <a href="index.html">Back to the workspace →</a>
                 </div>
             </div>
         </section>
     </main>
 
     <footer>
-        <p>PMP Guide · Workspace</p>
-        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="board.html">Task board</a></p>
+        <p>PM Ready · Workspace</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="task-board.html">Task board</a></p>
     </footer>
 
-<script src="pm-schedule.js"></script>
+<script src="../assets/js/schedule.js"></script>
 <script>
 // ─── Network diagram ───
 const POS = { A: [0, 1.5], B: [1, 0.75], C: [1, 2.5], G: [2, 0], D: [2, 1.25], E: [2, 2.5], F: [3, 1.85], H: [4, 1] };

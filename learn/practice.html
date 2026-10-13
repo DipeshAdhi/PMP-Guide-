@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exam Prep - PMP Guide</title>
+    <title>Practice - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
     <style>
         :root { --accent: var(--coral); }
         .ready { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.5rem; align-items: center; }
@@ -37,25 +37,20 @@
         .f-row code { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--indigo); overflow-wrap: anywhere; }
         .f-row span { color: var(--muted); text-align: right; }
 
-        .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
-        .fact { background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 1rem; }
-        .fact .n { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.7em; color: var(--indigo); }
-        .fact .l { font-size: 0.85em; color: var(--muted); }
 
         @media (max-width: 760px) {
             .ready { grid-template-columns: 1fr; }
-            .facts { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="exam"></script>
+    <script src="../assets/js/site-nav.js" data-page="practice"></script>
 
     <header class="page-hero">
         <div class="container">
-            <span class="eyebrow">Exam prep</span>
-            <h1>Get ready for the PMP exam</h1>
-            <p class="lead">Your readiness is based on the course checks. Practise with exam-style questions and scenarios, then keep the formula sheet handy.</p>
+            <span class="eyebrow">Practice & readiness</span>
+            <h1>Are you project-management ready?</h1>
+            <p class="lead">Your readiness is based on the course checks. Test yourself with the quiz, real-world scenarios, and the simulator, and keep the formula sheet handy.</p>
         </div>
     </header>
 
@@ -80,10 +75,10 @@
             <div class="container">
                 <div class="block-head"><h2>Practise</h2><p>Each activity explains every answer, so a wrong answer still teaches you something.</p></div>
                 <div class="practice-grid">
-                    <a class="p-card" href="game-interactive.html#quiz" style="--c: var(--coral);"><span class="icon">📝</span><h3>Mock quiz</h3><p>12 exam-style questions, including the formulas. Explanations for every question at the end.</p><span class="go">Start the quiz →</span></a>
-                    <a class="p-card" href="game-interactive.html#cases" style="--c: var(--purple);"><span class="icon">🤔</span><h3>Scenario questions</h3><p>"What should the project manager do first?" Five situations written like real PMP questions.</p><span class="go">Open the scenarios →</span></a>
-                    <a class="p-card" href="project-simulator.html" style="--c: var(--gold);"><span class="icon">🎮</span><h3>Project simulator</h3><p>Run a project and live with the consequences of your decisions on time, cost, scope, and quality.</p><span class="go">Play a scenario →</span></a>
-                    <a class="p-card" href="game-interactive.html#order" style="--c: var(--teal);"><span class="icon">🔢</span><h3>Process order challenge</h3><p>Put the planning steps in the order PMI expects, from charter to closing.</p><span class="go">Try the challenge →</span></a>
+                    <a class="p-card" href="practice-lab.html#quiz" style="--c: var(--coral);"><span class="icon">📝</span><h3>Readiness quiz</h3><p>12 questions across the whole course, including the formulas. Explanations for every question at the end.</p><span class="go">Start the quiz →</span></a>
+                    <a class="p-card" href="practice-lab.html#cases" style="--c: var(--purple);"><span class="icon">🤔</span><h3>Scenario questions</h3><p>"What should the project manager do first?" Five real project situations to decide on.</p><span class="go">Open the scenarios →</span></a>
+                    <a class="p-card" href="simulator.html" style="--c: var(--gold);"><span class="icon">🎮</span><h3>Project simulator</h3><p>Run a project and live with the consequences of your decisions on time, cost, scope, and quality.</p><span class="go">Play a scenario →</span></a>
+                    <a class="p-card" href="practice-lab.html#order" style="--c: var(--teal);"><span class="icon">🔢</span><h3>Process order challenge</h3><p>Put the planning steps in the right order, from charter to closing.</p><span class="go">Try the challenge →</span></a>
                 </div>
             </div>
         </section>
@@ -121,33 +116,14 @@
             </div>
         </section>
 
-        <section class="block">
-            <div class="container">
-                <div class="block-head"><h2>About the exam</h2></div>
-                <div class="facts">
-                    <div class="fact"><div class="n">~180</div><div class="l">questions, about 170 of them scored</div></div>
-                    <div class="fact"><div class="n">240</div><div class="l">minutes, with two scheduled breaks</div></div>
-                    <div class="fact"><div class="n">3</div><div class="l">approaches tested: predictive, agile, hybrid</div></div>
-                    <div class="fact"><div class="n">35</div><div class="l">hours of PM education required to apply</div></div>
-                </div>
-                <div class="scroll-x" style="margin-top: 1rem;"><table class="data" style="min-width: 520px;">
-                    <thead><tr><th>Domain</th><th>Weight</th><th>Where it's covered</th></tr></thead>
-                    <tbody>
-                        <tr><td><strong>People</strong></td><td>33%</td><td>Modules 1 and 6, Scrum roles in module 7</td></tr>
-                        <tr><td><strong>Process</strong></td><td>41%</td><td>Modules 2–5, 7, and 8</td></tr>
-                        <tr><td><strong>Business environment</strong></td><td>26%</td><td>Module 1 (value), module 3 (tailoring), module 8 (benefits, compliance)</td></tr>
-                    </tbody></table></div>
-                <p style="font-size: 0.82em; color: var(--muted); margin-top: 0.6rem;">Based on the PMP Examination Content Outline that took effect on 9 July 2026 (aligned with PMBOK 8). It adds topics such as value delivery, sustainability, and AI, and new question types like case studies and hotspots. Check pmi.org for the official details before you book.</p>
-            </div>
-        </section>
     </main>
 
     <footer>
-        <p>PMP Guide · <a href="learn.html">Learn</a> · <a href="pm-tools.html">Workspace</a> · <a href="exam.html">Exam prep</a></p>
+        <p>PM Ready · <a href="index.html">Learn</a> · <a href="practice.html">Practice</a> · <a href="../workspace/index.html">Workspace</a></p>
     </footer>
 
 <script>
-const C = window.PMPCourse;
+const C = window.PMCourse;
 const p = C.load();
 const total = C.COURSE.length;
 const scores = C.COURSE.map(m => p.check[m.id] || 0);
@@ -165,14 +141,14 @@ const weak = C.COURSE.filter((m, i) => p.check[m.id] != null && scores[i] < 2);
 const untested = C.COURSE.filter(m => p.check[m.id] == null);
 let title, text;
 if (!Object.keys(p.check).length) { title = 'Start with the course'; text = 'Readiness builds as you complete the check at the end of each module.'; }
-else if (pct >= 80 && !untested.length) { title = 'Looking ready'; text = 'Strong scores across all modules. Use the mock quiz and scenarios to practise under exam-style wording.'; }
+else if (pct >= 80 && !untested.length) { title = 'Looking ready'; text = 'Strong scores across all modules. Use the quiz, scenarios, and simulator to apply what you know.'; }
 else { title = `${done} of ${total} modules complete`; text = [weak.length ? `Review ${weak.map(m => `module ${m.id}`).join(', ')}.` : '', untested.length ? `${untested.length} module check${untested.length > 1 ? 's' : ''} still to take.` : ''].filter(Boolean).join(' '); }
 document.getElementById('readyTitle').textContent = title;
 document.getElementById('readyText').textContent = text;
 document.getElementById('modScores').innerHTML = C.COURSE.map((m, i) => {
     const s = p.check[m.id];
     const cls = s == null ? 'none' : s >= 2 ? 'ok' : 'weak';
-    return `<a class="ms" href="learn.html#m${m.id}"><span>${m.id} · ${m.title}</span><span class="s ${cls}">${s == null ? 'not taken' : `${s}/3`}</span></a>`;
+    return `<a class="ms" href="index.html#m${m.id}"><span>${m.id} · ${m.title}</span><span class="s ${cls}">${s == null ? 'not taken' : `${s}/3`}</span></a>`;
 }).join('');
 </script>
 </body>

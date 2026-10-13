@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course - PMP Guide</title>
+    <title>Course - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
     <style>
         .course { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 2rem; align-items: start; padding: 2rem 0 3rem; }
 
@@ -79,11 +79,11 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="learn"></script>
+    <script src="../assets/js/site-nav.js" data-page="learn"></script>
 
     <main class="container course">
         <aside class="outline" aria-label="Course modules">
-            <h2>PMP course</h2>
+            <h2>The course</h2>
             <div class="overall" id="overallText"></div>
             <div class="overall-bar"><div id="overallBar"></div></div>
             <ol id="outline"></ol>
@@ -92,7 +92,7 @@
     </main>
 
     <footer>
-        <p>PMP Guide · <a href="learn.html">Learn</a> · <a href="pm-tools.html">Workspace</a> · <a href="exam.html">Exam prep</a></p>
+        <p>PM Ready · <a href="index.html">Learn</a> · <a href="practice.html">Practice</a> · <a href="../workspace/index.html">Workspace</a></p>
     </footer>
 
 <script>
@@ -105,7 +105,7 @@ const MODULES = [
     goal: 'Know what makes something a project, and the four things every project must balance.',
     read: `
         <p>A <span class="term">project</span> is a <strong>temporary</strong> effort to create a <strong>unique</strong> product, service, or result. Temporary means it has a start and an end; unique means it hasn't been done in exactly this way before. Building the Scholar Academy school system is a project. Running the school's monthly payroll is <em>operations</em>: ongoing and repetitive.</p>
-        <p>Projects are planned in more detail as you learn more. PMI calls this <span class="term">progressive elaboration</span>.</p>
+        <p>Projects are planned in more detail as you learn more. This is called <span class="term">progressive elaboration</span>.</p>
         <h3>Who's involved</h3>
         <ul>
             <li><strong>Sponsor</strong>: funds the project and formally authorizes it by signing the <strong>project charter</strong>.</li>
@@ -122,7 +122,7 @@ const MODULES = [
             <tr><td><strong>📦 Product</strong></td><td>Will people use it, and does it deliver the expected value?</td></tr>
         </tbody></table>
         <p class="callout">A project can finish on time and on budget and still fail, if nobody uses what it built. That's a Product failure.</p>`,
-    tryIt: { icon: '🏛️', href: 'dashboard.html', label: 'Open the four pillars', steps: ['Select each pillar and read its six-step workflow.', 'Select 🎯 Successful Project to see what all four pillars do in each phase.'] },
+    tryIt: { icon: '🏛️', href: 'four-pillars.html', label: 'Open the four pillars', steps: ['Select each pillar and read its six-step workflow.', 'Select 🎯 Successful Project to see what all four pillars do in each phase.'] },
     check: [
         { q: 'Which of these is a project?', o: ['Running the monthly payroll', 'Building a new school management system', 'Answering support calls every day', 'Printing the weekly timetable'], a: 1, why: 'It\'s temporary and creates something unique. The others are ongoing operations.' },
         { q: 'A system was delivered on time and on budget, but teachers refuse to use it. Which pillar was neglected?', o: ['People', 'Process', 'Project', 'Product'], a: 3, why: 'The product didn\'t deliver value to its users, even though time and budget were met.' },
@@ -150,8 +150,8 @@ const MODULES = [
         <p>A project manager's job isn't to avoid trade-offs. It's to make them <strong>visible</strong> so the sponsor can choose.</p>
         <h3>Predictive vs. agile view</h3>
         <p>In predictive projects, scope is usually fixed and time and cost are estimated. In agile and DSDM projects, <strong>time and cost are fixed</strong> (sprints, timeboxes) and <strong>scope flexes</strong>: the least valuable features are dropped to protect the date.</p>
-        <p class="callout">Exam clue: "the deadline can't move and the budget is fixed" almost always means the answer involves adjusting scope.</p>`,
-    tryIt: { icon: '🔺', href: 'triple-constraint-advanced.html', label: 'Open the triangle tool', steps: ['Drag the time slider to its minimum. Watch cost and scope react.', 'Try the "Rush" and "Iterative" scenarios and compare the quality score.'] },
+        <p class="callout">Rule of thumb: when the deadline can't move and the budget is fixed, the answer almost always involves adjusting scope.</p>`,
+    tryIt: { icon: '🔺', href: 'triple-constraint.html', label: 'Open the triangle tool', steps: ['Drag the time slider to its minimum. Watch cost and scope react.', 'Try the "Rush" and "Iterative" scenarios and compare the quality score.'] },
     check: [
         { q: 'The deadline moves two months earlier and the budget is fixed. What is most likely to change?', o: ['Nothing, if the team works hard', 'Scope is reduced', 'The charter is rewritten', 'Cost increases'], a: 1, why: 'With time and cost fixed, scope is the only remaining lever (or quality suffers).' },
         { q: 'What usually suffers if all three constraints are squeezed at once?', o: ['Quality', 'The stakeholder register', 'The sponsor', 'The WBS'], a: 0, why: 'Quality sits in the middle of the triangle and absorbs pressure nobody plans for.' },
@@ -162,7 +162,7 @@ const MODULES = [
     id: 3, title: 'Life cycles and process groups', minutes: 6,
     goal: 'Know the five process groups and when to use a predictive, agile, or hybrid life cycle.',
     read: `
-        <p>PMI organizes project management work into five <span class="term">process groups</span>:</p>
+        <p>Project management work is commonly organized into five <span class="term">process groups</span>:</p>
         <ol>
             <li><strong>Initiating</strong>: authorize the project; identify stakeholders. Output: <em>project charter</em>.</li>
             <li><strong>Planning</strong>: define scope, schedule, cost, quality, risk, and more. Most processes live here.</li>
@@ -177,8 +177,8 @@ const MODULES = [
             <tr><td><strong>Adaptive</strong> (agile)</td><td>Deliver in short iterations, re-plan as you learn</td><td>Requirements are uncertain or changing</td></tr>
             <tr><td><strong>Hybrid</strong></td><td>Mix: e.g. predictive planning with agile delivery</td><td>Fixed budget or milestones, but uncertain features</td></tr>
         </tbody></table>
-        <p>Adjusting the approach to fit the project is called <span class="term">tailoring</span>, and it's a core idea in PMBOK 7.</p>`,
-    tryIt: { icon: '🧪', href: 'game-interactive.html#process', label: 'Open the Practice lab', steps: ['Open all five process groups and read each exam tip.', 'Scroll to the order challenge and put the 8 planning steps in order.'] },
+        <p>Adjusting the approach to fit the project is called <span class="term">tailoring</span>, and it's a core idea in modern project management.</p>`,
+    tryIt: { icon: '🧪', href: 'practice-lab.html#process', label: 'Open the Practice lab', steps: ['Open all five process groups and read each key point.', 'Scroll to the order challenge and put the 8 planning steps in order.'] },
     check: [
         { q: 'Which process group contains the most processes?', o: ['Initiating', 'Planning', 'Executing', 'Closing'], a: 1, why: 'Planning has the most processes: scope, schedule, cost, quality, resources, communications, risk, procurement, stakeholders.' },
         { q: 'When does Monitoring & Controlling happen?', o: ['Only at the end', 'Only after Executing', 'Throughout the project', 'Only during Planning'], a: 2, why: 'It runs alongside all the other groups, from start to finish.' },
@@ -212,8 +212,8 @@ const MODULES = [
             <li><strong>Won't</strong> (this time): agreed to be out.</li>
         </ul>
         <p class="callout">DSDM rule of thumb: Musts should be no more than <strong>60%</strong> of the effort, so there's room to protect the deadline.</p>`,
-    tryIt: { icon: '🗂️', href: 'board.html', label: 'Open the task board', steps: ['Switch to the 🌳 WBS tree and add a work package under 4 · Build.', 'Back on the board, move cards to Done until a milestone is reached.'],
-        also: [['dsdm.html', 'Prioritize requirements with MoSCoW (DSDM page)']] },
+    tryIt: { icon: '🗂️', href: '../workspace/task-board.html', label: 'Open the task board', steps: ['Switch to the 🌳 WBS tree and add a work package under 4 · Build.', 'Back on the board, move cards to Done until a milestone is reached.'],
+        also: [['../workspace/dsdm.html', 'Prioritize requirements with MoSCoW (DSDM page)']] },
     check: [
         { q: 'What is the lowest level of a WBS called?', o: ['Activity', 'Work package', 'Milestone', 'Task list'], a: 1, why: 'Work packages are the lowest WBS level. Activities come later, when the schedule is built.' },
         { q: 'What does the 100% rule mean?', o: ['Every task must be 100% done before the next starts', 'The WBS includes all the project work and nothing outside scope', 'The budget must be 100% spent', 'Every stakeholder must approve the WBS'], a: 1, why: 'The WBS captures all of the scope, no more and no less.' },
@@ -244,8 +244,8 @@ const MODULES = [
             <li><strong>Network diagram</strong>: shows the logic. Best for finding the critical path.</li>
         </ul>
         <p class="callout">To finish sooner, shorten <em>critical</em> activities: <strong>crashing</strong> (add resources, costs money) or <strong>fast tracking</strong> (overlap activities, adds risk).</p>`,
-    tryIt: { icon: '🛤️', href: 'cpm.html', label: 'Open the critical path tool', steps: ['Step through all 5 stages of the CPM walkthrough.', 'Answer the 4 practice questions at the bottom.'],
-        also: [['gantt.html', 'See the same schedule as a Gantt chart'], ['milestones.html', 'Delay a task and watch which milestones slip']] },
+    tryIt: { icon: '🛤️', href: '../workspace/cpm.html', label: 'Open the critical path tool', steps: ['Step through all 5 stages of the CPM walkthrough.', 'Answer the 4 practice questions at the bottom.'],
+        also: [['../workspace/gantt.html', 'See the same schedule as a Gantt chart'], ['../workspace/milestones.html', 'Delay a task and watch which milestones slip']] },
     check: [
         { q: 'What is the critical path?', o: ['The shortest path through the network', 'The longest path; it has zero float', 'The path with the most expensive tasks', 'The path with the most people'], a: 1, why: 'The longest path determines the earliest the project can finish.' },
         { q: 'An activity with 3 days of float is delayed by 2 days. What happens to the project end date?', o: ['It moves 2 days', 'It moves 3 days', 'No change', 'It moves 5 days'], a: 2, why: 'The delay is smaller than the float, so it is absorbed.' },
@@ -256,8 +256,7 @@ const MODULES = [
     id: 6, title: 'People: RACI, stakeholders, conflict', minutes: 6,
     goal: 'Assign clear responsibilities, engage stakeholders, and handle conflict.',
     read: `
-        <p>The People domain is <strong>33%</strong> of the PMP exam (2026 outline).</p>
-        <h3>Stakeholders</h3>
+                <h3>Stakeholders</h3>
         <p>Identify everyone affected early. Map them on a <span class="term">power/interest grid</span>:</p>
         <ul>
             <li>High power, high interest → <strong>manage closely</strong></li>
@@ -273,8 +272,8 @@ const MODULES = [
             <li>Conflict techniques, best to worst for lasting results: <strong>collaborate/problem-solve</strong>, compromise, smooth, force, withdraw.</li>
             <li>Modern PMs are <span class="term">servant leaders</span>: they remove obstacles and support the team rather than command it.</li>
         </ul>`,
-    tryIt: { icon: '👥', href: 'raci.html', label: 'Open the RACI matrix', steps: ['Fix the broken RACI matrix until the checker shows it\'s valid.', 'Compare your answer with the model answer.'],
-        also: [['game-interactive.html#cases', 'Try the team-conflict case study']] },
+    tryIt: { icon: '👥', href: '../workspace/raci.html', label: 'Open the RACI matrix', steps: ['Fix the broken RACI matrix until the checker shows it\'s valid.', 'Compare your answer with the model answer.'],
+        also: [['practice-lab.html#cases', 'Try the team-conflict case study']] },
     check: [
         { q: 'How many people should be Accountable for one task?', o: ['None', 'Exactly one', 'At least two', 'Everyone involved'], a: 1, why: 'One accountable owner avoids confusion over who signs off.' },
         { q: 'Which conflict technique gives the most lasting result?', o: ['Forcing', 'Withdrawing', 'Collaborating / problem solving', 'Smoothing'], a: 2, why: 'Collaboration builds consensus and commitment: a win-win outcome.' },
@@ -285,7 +284,7 @@ const MODULES = [
     id: 7, title: 'Agile: Scrum, Kanban, XP, DSDM', minutes: 8,
     goal: 'Understand the Agile Manifesto and how the main agile frameworks work.',
     read: `
-        <p>Agile and hybrid approaches appear throughout the PMP exam, alongside predictive ones. Everything starts with the <span class="term">Agile Manifesto</span>:</p>
+        <p>Many teams now work in agile or hybrid ways, alongside predictive ones. Everything starts with the <span class="term">Agile Manifesto</span>:</p>
         <ul>
             <li><strong>Individuals and interactions</strong> over processes and tools</li>
             <li><strong>Working software</strong> over comprehensive documentation</li>
@@ -304,8 +303,8 @@ const MODULES = [
             <li><strong>XP:</strong> engineering practices: pair programming, test-driven development, continuous integration, small releases.</li>
             <li><strong>DSDM:</strong> fixes time and cost, flexes features with MoSCoW; adds Feasibility and Foundations before building.</li>
         </ul>`,
-    tryIt: { icon: '🔄', href: 'agile-board.html', label: 'Open the Scrum board', steps: ['As 🧭 Scrum Master, end days until the sprint review.', 'As 💻 Developer, tick the Definition of Done; as 🎯 Product Owner, accept a story.', 'Switch to 🏫 Stakeholder and notice what\'s hidden.'],
-        also: [['xp.html', 'Play the XP planning game'], ['dsdm.html', 'Pass the DSDM gates']] },
+    tryIt: { icon: '🔄', href: '../workspace/scrum.html', label: 'Open the Scrum board', steps: ['As 🧭 Scrum Master, end days until the sprint review.', 'As 💻 Developer, tick the Definition of Done; as 🎯 Product Owner, accept a story.', 'Switch to 🏫 Stakeholder and notice what\'s hidden.'],
+        also: [['../workspace/xp.html', 'Play the XP planning game'], ['../workspace/dsdm.html', 'Pass the DSDM gates']] },
     check: [
         { q: 'Who orders the product backlog in Scrum?', o: ['Scrum Master', 'Developers', 'Product Owner', 'Stakeholders'], a: 2, why: 'The Product Owner is accountable for maximizing value and owns the backlog order.' },
         { q: 'A story isn\'t finished at the end of the sprint. What happens to it?', o: ['The sprint is extended', 'It goes back to the product backlog', 'It counts as half done', 'It is deleted'], a: 1, why: 'Sprints are fixed. Unfinished work returns to the backlog and is re-planned; it doesn\'t count toward velocity.' },
@@ -335,7 +334,7 @@ const MODULES = [
         </ul>
         <h3>Closing</h3>
         <p>Get formal acceptance, hand the product to operations, close contracts, release the team, and archive <strong>lessons learned</strong>. Even cancelled projects go through Closing.</p>`,
-    tryIt: { icon: '🎮', href: 'project-simulator.html', label: 'Open the project simulator', steps: ['Play one full scenario.', 'After each decision, note how time, budget, scope, and quality changed, and why.'] },
+    tryIt: { icon: '🎮', href: 'simulator.html', label: 'Open the project simulator', steps: ['Play one full scenario.', 'After each decision, note how time, budget, scope, and quality changed, and why.'] },
     check: [
         { q: 'A stakeholder asks for a new feature. What should the project manager do first?', o: ['Build it right away', 'Reject it', 'Evaluate its impact', 'Ask the team to work overtime'], a: 2, why: 'Always analyze the impact first, then raise a change request.' },
         { q: 'EV = $50,000 and AC = $40,000. What is the CPI?', o: ['0.8: over budget', '1.25: under budget', '1.25: behind schedule', '0.8: ahead of schedule'], a: 1, why: 'CPI = EV ÷ AC = 50,000 ÷ 40,000 = 1.25. Above 1 means you\'re getting more value than you\'re spending.' },
@@ -347,7 +346,7 @@ const MODULES = [
 // ════════════════════════════════════════════════════════════════════
 //  Rendering
 // ════════════════════════════════════════════════════════════════════
-const C = window.PMPCourse;
+const C = window.PMCourse;
 let answers = {}; // per-render answers for the current module's check
 
 // The hash is either a module (#m3) or a step inside it (#try-3); remember the module across both
@@ -427,7 +426,7 @@ function renderModule(id) {
 
         <div class="mod-nav">
             ${prev ? `<a class="btn btn-ghost" href="#m${prev.id}">← ${prev.title}</a>` : '<span></span>'}
-            ${next ? `<a class="btn btn-primary" href="#m${next.id}">Next: ${next.title} →</a>` : '<a class="btn btn-primary" href="exam.html">Go to exam prep →</a>'}
+            ${next ? `<a class="btn btn-primary" href="#m${next.id}">Next: ${next.title} →</a>` : '<a class="btn btn-primary" href="practice.html">Go to practice →</a>'}
         </div>`;
 }
 

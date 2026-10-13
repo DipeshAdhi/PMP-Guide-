@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Board - PMP Guide</title>
+    <title>Task Board - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
     <style>
         :root { --accent: var(--teal); --tab-color: var(--teal); }
 
@@ -138,7 +138,7 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="board"></script>
+    <script src="../assets/js/site-nav.js" data-page="task-board"></script>
 
     <header class="page-hero">
         <div class="container">
@@ -204,8 +204,8 @@
 
         <section class="block">
             <div class="container">
-                <div class="exam-tips">
-                    <h3>📝 PMP exam tips</h3>
+                <div class="key-points">
+                    <h3>📝 Key points to remember</h3>
                     <ul>
                         <li>A task board or Kanban board is an <strong>information radiator</strong>: a visible display that shows progress without status meetings.</li>
                         <li><strong>WIP limits</strong> expose bottlenecks and improve flow. If a column is always full, that's where the work is stuck.</li>
@@ -216,7 +216,7 @@
                 </div>
                 <div class="next-tool">
                     <a href="cpm.html">← Critical path</a>
-                    <a href="pm-tools.html">Back to the workspace →</a>
+                    <a href="index.html">Back to the workspace →</a>
                 </div>
             </div>
         </section>
@@ -249,11 +249,11 @@
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <footer>
-        <p>PMP Guide · Workspace</p>
-        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="board.html">Task board</a></p>
+        <p>PM Ready · Workspace</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="task-board.html">Task board</a></p>
     </footer>
 
-<script src="pm-schedule.js"></script>
+<script src="../assets/js/schedule.js"></script>
 <script>
 // ─── Reference data ──────────────────────────────────────────────────
 const COLUMNS = [

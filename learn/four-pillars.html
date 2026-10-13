@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMP Guide - Four Pillars of Project Management</title>
+    <title>Four Pillars - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
@@ -772,7 +772,7 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="dashboard"></script>
+    <script src="../assets/js/site-nav.js" data-page="four-pillars"></script>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -956,19 +956,19 @@
     <section class="cta-section">
         <div class="cta-content">
             <h2 class="cta-title">Ready to Master Project Management?</h2>
-            <p class="cta-text">Choose your learning path and start building the skills that make projects succeed. Whether you're preparing for PMP certification or improving your project leadership, we have the tools you need.</p>
+            <p class="cta-text">Choose your learning path and start building the skills that make projects succeed. Whether you're new to projects or improving your project leadership, we have the tools you need.</p>
 
             <div class="cta-buttons">
-                <a href="learn.html" class="cta-btn primary">Start the course</a>
-                <a href="triple-constraint-advanced.html" class="cta-btn">Try Interactive Tools</a>
+                <a href="index.html" class="cta-btn primary">Start the course</a>
+                <a href="triple-constraint.html" class="cta-btn">Try Interactive Tools</a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
     <footer>
-        <p>&copy; 2026 PMP Guide. Comprehensive project management learning platform.</p>
-        <p><a href="index.html">Back to Main Guide</a></p>
+        <p>&copy; 2026 PM Ready. Comprehensive project management learning platform.</p>
+        <p><a href="../index.html">Back to Main Guide</a></p>
     </footer>
 
     <script>
@@ -980,7 +980,7 @@
                 facts: [
                     ['Who owns it', 'The project manager, with support from the sponsor and functional managers.'],
                     ['Key question', 'Does everyone know their role, and are the right people engaged at the right time?'],
-                    ['On the PMP exam', 'The People domain is 33% of the exam (2026 outline).']
+                    ['Watch for', 'Unclear roles, poor communication, and stakeholders who were never brought on board.']
                 ],
                 steps: [
                     ['Identify stakeholders', 'List everyone affected and map them by power and interest.', 'Stakeholder register'],
@@ -990,7 +990,7 @@
                     ['Resolve conflict', 'Collaborate on problems; keep stakeholders engaged.', 'Issue log'],
                     ['Release & recognize', 'Appraise performance, celebrate, release resources.', 'Lessons learned']
                 ],
-                link: ['game-interactive.html#cases', 'Practice people decisions in the PM Lab →']
+                link: ['practice-lab.html#cases', 'Practice people decisions in the Practice lab →']
             },
             process: {
                 color: 'var(--teal)', icon: '⚙️', name: 'Process',
@@ -999,7 +999,7 @@
                 facts: [
                     ['Who owns it', 'The project manager, following the organization\'s methods and the PMO\'s standards.'],
                     ['Key question', 'Is there a clear, repeatable way to plan, build, check, and change the work?'],
-                    ['On the PMP exam', 'The Process domain is 41% of the exam (2026 outline).']
+                    ['Watch for', 'Skipped quality checks and changes that bypass change control.']
                 ],
                 steps: [
                     ['Choose the approach', 'Pick predictive, agile, or hybrid based on how clear the requirements are.', 'Development approach'],
@@ -1009,7 +1009,7 @@
                     ['Monitor & control', 'Compare actuals to plan; route every change through change control.', 'Change requests · Reports'],
                     ['Close', 'Get acceptance, hand over, and archive what you learned.', 'Final report']
                 ],
-                link: ['game-interactive.html#builder', 'Build a workflow for each approach →']
+                link: ['practice-lab.html#builder', 'Build a workflow for each approach →']
             },
             project: {
                 color: 'var(--gold)', icon: '📊', name: 'Project',
@@ -1028,7 +1028,7 @@
                     ['Plan for risk', 'Identify threats and opportunities and plan responses.', 'Risk register'],
                     ['Track & balance', 'Measure with earned value and trade off scope, time, and cost.', 'Approved changes']
                 ],
-                link: ['triple-constraint-advanced.html', 'Balance scope, time, and cost in the triangle tool →']
+                link: ['triple-constraint.html', 'Balance scope, time, and cost in the triangle tool →']
             },
             product: {
                 color: 'var(--purple)', icon: '📦', name: 'Product',
@@ -1037,7 +1037,7 @@
                 facts: [
                     ['Who owns it', 'The product owner or business sponsor, working with users and the project team.'],
                     ['Key question', 'Will people use this, and does it deliver the benefits in the business case?'],
-                    ['On the PMP exam', 'Shows up in the Business Environment domain (26% in the 2026 outline): benefits, value, and compliance.']
+                    ['Watch for', 'A product that meets the spec but solves the wrong problem.']
                 ],
                 steps: [
                     ['Understand the problem', 'Confirm the need and the expected benefits.', 'Business case'],
@@ -1047,7 +1047,7 @@
                     ['Validate with users', 'The customer formally accepts what was built.', 'Accepted deliverables'],
                     ['Transition & measure', 'Hand over to operations and track whether benefits are realized.', 'Benefits report']
                 ],
-                link: ['project-simulator.html', 'See how product decisions play out in the simulator →']
+                link: ['simulator.html', 'See how product decisions play out in the simulator →']
             }
         };
 
@@ -1089,7 +1089,7 @@
                                 ${cells.map((c, j) => `<div class="matrix-cell" style="--cell-color:${PILLARS[ORDER[j]].color}"><b>${PILLARS[ORDER[j]].icon} ${PILLARS[ORDER[j]].name}</b>${c}</div>`).join('')}
                             </div>`).join('')}
                     </div>
-                    <a class="detail-link" href="game-interactive.html#process">Explore each phase in the PM Lab →</a>`;
+                    <a class="detail-link" href="practice-lab.html#process">Explore each phase in the Practice lab →</a>`;
                 return;
             }
 

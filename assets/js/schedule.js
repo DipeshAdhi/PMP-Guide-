@@ -32,7 +32,7 @@ function cloneTasks(tasks) {
 
 /**
  * Forward pass, backward pass, float, critical path.
- * Uses the convention common in PMP study: ES of first activity = 0, EF = ES + duration,
+ * Uses the common "day 0" convention: ES of first activity = 0, EF = ES + duration,
  * successor ES = max(predecessor EF). Total float = LS − ES.
  */
 function computeCPM(input) {

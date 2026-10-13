@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gantt Chart - PMP Guide</title>
+    <title>Gantt Chart - PM Ready</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="pm-tools.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
     <style>
         :root { --accent: var(--gold); --tab-color: var(--gold); --label-w: 250px; --day-w: 30px; --row-h: 46px; }
 
@@ -77,14 +77,14 @@
     </style>
 </head>
 <body>
-    <script src="site-nav.js" data-page="gantt"></script>
+    <script src="../assets/js/site-nav.js" data-page="gantt"></script>
 
     <header class="page-hero">
         <div class="container">
             <span class="eyebrow">Tool 3 · Process · When things happen</span>
             <h1>Gantt chart</h1>
             <p class="lead">A Gantt chart is a bar chart of the schedule. Activities run down the left, time runs across the top, and each bar's length shows how long the activity takes. It's the most common way to show a project schedule because anyone can read it at a glance.</p>
-            <div class="definition"><strong>PMBOK term:</strong> a <strong>bar chart</strong>, one of the formats of the project schedule produced by <em>Develop Schedule</em>. Named after Henry Gantt, who popularized it in the 1910s.</div>
+            <div class="definition"><strong>Also called:</strong> a <strong>bar chart</strong>, one of the formats of the project schedule produced by <em>Develop Schedule</em>. Named after Henry Gantt, who popularized it in the 1910s.</div>
         </div>
     </header>
 
@@ -197,13 +197,13 @@
 
         <section class="block">
             <div class="container">
-                <div class="exam-tips">
-                    <h3>📝 PMP exam tips</h3>
+                <div class="key-points">
+                    <h3>📝 Key points to remember</h3>
                     <ul>
                         <li>Bar charts, milestone charts, and network diagrams are all <strong>presentations of the project schedule</strong> (output of <em>Develop Schedule</em>).</li>
                         <li><strong>FS is the most common</strong> dependency type; <strong>SF is the rarest</strong>.</li>
                         <li>A <strong>lag</strong> adds waiting time; a <strong>lead</strong> lets work overlap. Using leads is a form of <strong>fast tracking</strong>.</li>
-                        <li>Questions about communicating the schedule to executives point to the <strong>milestone chart</strong>, not the detailed Gantt.</li>
+                        <li>To report the schedule to executives, use a <strong>milestone chart</strong>, not the detailed Gantt.</li>
                         <li>Dependencies are documented in <em>Sequence Activities</em>, before any Gantt chart is drawn.</li>
                     </ul>
                 </div>
@@ -216,11 +216,11 @@
     </main>
 
     <footer>
-        <p>PMP Guide · Workspace</p>
-        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="board.html">Task board</a></p>
+        <p>PM Ready · Workspace</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="task-board.html">Task board</a></p>
     </footer>
 
-<script src="pm-schedule.js"></script>
+<script src="../assets/js/schedule.js"></script>
 <script>
 const BASE_END = computeCPM(SCHOLAR_TASKS).projectEnd;
 let tasks = SCHOLAR_TASKS.map(t => ({ ...t }));
