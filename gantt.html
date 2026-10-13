@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt Chart - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        :root { --accent: var(--gold); --tab-color: var(--gold); --label-w: 250px; --day-w: 30px; --row-h: 46px; }
+
+        .gantt-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .toggles { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.88em; }
+        .toggles label { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+        .toggles input { accent-color: var(--indigo); width: 16px; height: 16px; }
+        .end-date { font-family: 'IBM Plex Mono', monospace; font-size: 0.9em; }
+        .end-date strong { font-family: 'Syne', sans-serif; font-size: 1.3em; color: var(--indigo); }
+        .end-date .late { color: var(--crit); font-weight: 600; }
+        .end-date .early { color: var(--ok); font-weight: 600; }
+
+        .gantt-scroll { overflow-x: auto; border: 1.5px solid var(--line); border-radius: 10px; background: var(--paper); }
+        .gantt { position: relative; }
+        .g-row { display: flex; height: var(--row-h); border-bottom: 1px solid var(--line); }
+        .g-row:last-child { border-bottom: none; }
+        .g-label {
+            position: sticky; left: 0; z-index: 3; flex: 0 0 var(--label-w); width: var(--label-w);
+            background: var(--paper); border-right: 1.5px solid var(--line);
+            display: flex; align-items: center; gap: 0.5rem; padding: 0 0.6rem; font-size: 0.86em;
+        }
+        .g-label .tid { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--muted); width: 1.2em; }
+        .g-label .tname { flex: 1; font-weight: 600; color: var(--indigo); line-height: 1.2; }
+        .g-label .tname small { display: block; font-weight: 400; color: var(--muted); font-size: 0.85em; }
+        .dur { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+        .dur button { background: var(--white); border: none; width: 22px; height: 24px; font-weight: 700; color: var(--indigo); }
+        .dur button:hover { background: var(--line); }
+        .dur span { font-family: 'IBM Plex Mono', monospace; font-size: 0.85em; width: 30px; text-align: center; }
+        .dur.changed { border-color: var(--coral); }
+
+        .g-track { position: relative; flex: 0 0 auto; }
+        .g-head .g-label { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--indigo); }
+        .g-head { background: var(--white); }
+        .day-num { position: absolute; top: 0; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.68em; color: var(--muted); width: var(--day-w); }
+        .day-num b { font-weight: 600; color: var(--indigo); font-size: 1.1em; }
+        .grid-lines { position: absolute; inset: 0; pointer-events: none;
+            background-image: linear-gradient(90deg, var(--line) 1px, transparent 1px);
+            background-size: var(--day-w) 100%; opacity: 0.6; }
+        .week-line { position: absolute; top: 0; bottom: 0; width: 1.5px; background: #cfccc5; pointer-events: none; }
+
+        .bar {
+            position: absolute; top: 10px; height: calc(var(--row-h) - 20px); border-radius: 5px;
+            background: var(--teal); color: #fff; font-size: 0.72em; font-weight: 600;
+            display: flex; align-items: center; padding: 0 6px; white-space: nowrap; overflow: hidden;
+            transition: left 0.35s ease, width 0.35s ease, background 0.2s ease; z-index: 2;
+        }
+        .bar.critical { background: var(--crit); }
+        .float-bar {
+            position: absolute; top: 50%; height: 0; border-top: 2px dashed var(--gold);
+            transition: left 0.35s ease, width 0.35s ease; z-index: 1;
+        }
+        .float-bar span { position: absolute; top: -8px; left: calc(100% + 4px); background: var(--paper); padding: 0 2px; font-family: 'IBM Plex Mono', monospace; font-size: 0.66em; color: var(--warn); white-space: nowrap; }
+        .ms-diamond { position: absolute; top: 50%; width: 14px; height: 14px; background: var(--indigo); transform: translate(-50%, -50%) rotate(45deg); z-index: 2; transition: left 0.35s ease; }
+        .deps { position: absolute; left: var(--label-w); top: 0; pointer-events: none; z-index: 1; overflow: visible; }
+        .deps path { fill: none; stroke: #8a8f98; stroke-width: 1.4; }
+        .deps path.crit { stroke: var(--crit); }
+
+        /* Dependency types */
+        .dep-card svg { width: 100%; height: auto; margin: 0.6rem 0; }
+        .dep-card .code { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--coral); }
+
+        @media (max-width: 700px) {
+            :root { --label-w: 150px; --day-w: 26px; }
+            .g-label .tname small, .g-label .tid { display: none; }
+            .g-label { font-size: 0.76em; gap: 0.3rem; padding: 0 0.4rem; }
+            .dur button { width: 20px; }
+            .dur span { width: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html" aria-current="page">PM Tools</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="pm-tools.html">Overview</a>
+        <a href="raci.html">👥 RACI matrix</a>
+        <a href="milestones.html">🏁 Milestones</a>
+        <a href="gantt.html" aria-current="page">📊 Gantt chart</a>
+        <a href="cpm.html">🛤️ Critical path (CPM)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Tool 3 · Process · When things happen</span>
+            <h1>Gantt chart</h1>
+            <p class="lead">A Gantt chart is a bar chart of the schedule. Activities run down the left, time runs across the top, and each bar's length shows how long the activity takes. It's the most common way to show a project schedule because anyone can read it at a glance.</p>
+            <div class="definition"><strong>PMBOK term:</strong> a <strong>bar chart</strong>, one of the formats of the project schedule produced by <em>Develop Schedule</em>. Named after Henry Gantt, who popularized it in the 1910s.</div>
+        </div>
+    </header>
+
+    <main>
+        <section class="block" id="chart">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Try it: the Scholar Academy schedule</h2>
+                    <p>Use − and + to change any task's duration. Bars move to respect the dependencies, and the end date updates. Turn on the critical path to see which tasks control the end date, and float to see how much each other task can slip.</p>
+                </div>
+                <div class="card">
+                    <div class="gantt-toolbar">
+                        <div class="toggles">
+                            <label><input type="checkbox" id="tCritical" checked> Critical path</label>
+                            <label><input type="checkbox" id="tFloat" checked> Float</label>
+                            <label><input type="checkbox" id="tDeps" checked> Dependencies</label>
+                            <label><input type="checkbox" id="tMilestones" checked> Milestones</label>
+                        </div>
+                        <div class="btn-row">
+                            <span class="end-date" id="endDate"></span>
+                            <button class="btn btn-ghost" id="resetBtn">Reset</button>
+                        </div>
+                    </div>
+                    <div class="gantt-scroll"><div class="gantt" id="gantt"></div></div>
+                    <div class="legend">
+                        <span><span class="swatch" style="background: var(--teal);"></span> Activity</span>
+                        <span><span class="swatch" style="background: var(--crit);"></span> Critical activity (zero float)</span>
+                        <span><span class="swatch" style="border-top: 2px dashed var(--gold); height: 0; width: 18px;"></span> Total float (slack)</span>
+                        <span><span class="swatch" style="background: var(--indigo); transform: rotate(45deg); width: 11px; height: 11px;"></span> Milestone</span>
+                    </div>
+                    <div id="ganttInsight"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container grid-2">
+                <div class="card">
+                    <h3>How to read a Gantt chart</h3>
+                    <ul>
+                        <li><strong>Each row</strong> is an activity, usually from the WBS.</li>
+                        <li><strong>Bar start and end</strong> show the planned start and finish dates.</li>
+                        <li><strong>Bar length</strong> shows the duration.</li>
+                        <li><strong>Arrows</strong> show dependencies: which task must finish before another can start.</li>
+                        <li><strong>Diamonds</strong> are milestones (zero duration).</li>
+                        <li><strong>Overlapping bars</strong> are tasks that run in parallel. Check that they don't need the same person.</li>
+                        <li>A <strong>"today" line</strong> and percent-complete shading are often added for tracking.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>Strengths and limits</h3>
+                    <p><strong style="color: var(--ok);">Good for:</strong></p>
+                    <ul>
+                        <li>Communicating the schedule to the team and stakeholders</li>
+                        <li>Seeing parallel work and resource clashes</li>
+                        <li>Tracking progress against the baseline</li>
+                    </ul>
+                    <p style="margin-top: 0.8rem;"><strong style="color: var(--bad);">Not good for:</strong></p>
+                    <ul>
+                        <li>Showing complex logic. A network diagram is clearer for that.</li>
+                        <li>Showing float and the critical path, unless the tool computes them (as here)</li>
+                        <li>Executive reporting. Use a milestone chart instead.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>The four dependency types</h2>
+                    <p>Every arrow in a schedule is one of these. Finish-to-Start is by far the most common, and it's the only type used in the chart above.</p>
+                </div>
+                <div class="grid-4" id="depTypes"></div>
+                <div class="grid-2" style="margin-top: 1.2rem;">
+                    <div class="card">
+                        <h3>Leads and lags</h3>
+                        <p><strong>Lag</strong> = a forced wait after the predecessor. <em>"Paint, then wait 2 days for it to dry before carpeting"</em> → FS + 2.</p>
+                        <p style="margin-top: 0.5rem;"><strong>Lead</strong> = the successor starts early, overlapping the predecessor. <em>"Start testing 3 days before coding finishes"</em> → FS − 3.</p>
+                    </div>
+                    <div class="card">
+                        <h3>Why dependencies exist</h3>
+                        <ul>
+                            <li><strong>Mandatory</strong> (hard logic): physically required. You can't test code that isn't written.</li>
+                            <li><strong>Discretionary</strong> (soft logic): best practice the team chooses.</li>
+                            <li><strong>External</strong>: depends on something outside the project, like a vendor delivery.</li>
+                            <li><strong>Internal</strong>: between activities inside the project.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Gantt chart vs. other schedule views</h2></div>
+                <div class="scroll-x">
+                    <table class="data" style="min-width: 640px;">
+                        <thead><tr><th></th><th>📊 Gantt (bar) chart</th><th>🛤️ Network diagram</th><th>🏁 Milestone chart</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Shows</strong></td><td>Activities on a timeline</td><td>Logic: which activity depends on which</td><td>Only key events and dates</td></tr>
+                            <tr><td><strong>Audience</strong></td><td>Team, project manager</td><td>Project manager, schedulers</td><td>Sponsor, executives</td></tr>
+                            <tr><td><strong>Best for</strong></td><td>Day-to-day tracking</td><td>Finding the critical path</td><td>Status reporting</td></tr>
+                            <tr><td><strong>Detail</strong></td><td>High</td><td>High</td><td>Low</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="exam-tips">
+                    <h3>📝 PMP exam tips</h3>
+                    <ul>
+                        <li>Bar charts, milestone charts, and network diagrams are all <strong>presentations of the project schedule</strong> (output of <em>Develop Schedule</em>).</li>
+                        <li><strong>FS is the most common</strong> dependency type; <strong>SF is the rarest</strong>.</li>
+                        <li>A <strong>lag</strong> adds waiting time; a <strong>lead</strong> lets work overlap. Using leads is a form of <strong>fast tracking</strong>.</li>
+                        <li>Questions about communicating the schedule to executives point to the <strong>milestone chart</strong>, not the detailed Gantt.</li>
+                        <li>Dependencies are documented in <em>Sequence Activities</em>, before any Gantt chart is drawn.</li>
+                    </ul>
+                </div>
+                <div class="next-tool">
+                    <a href="milestones.html">← Milestones</a>
+                    <a href="cpm.html">Next: Critical path method →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · PM Tools</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a></p>
+    </footer>
+
+<script src="pm-schedule.js"></script>
+<script>
+const BASE_END = computeCPM(SCHOLAR_TASKS).projectEnd;
+let tasks = SCHOLAR_TASKS.map(t => ({ ...t }));
+const opt = { critical: true, float: true, deps: true, milestones: true };
+
+function cssPx(name) {
+    return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+}
+
+function render() {
+    const cpm = computeCPM(tasks);
+    const dayW = cssPx('--day-w');
+    const rowH = cssPx('--row-h');
+    const days = Math.max(cpm.projectEnd + 4, 26);
+    const trackW = days * dayW;
+    const x = d => d * dayW;
+
+    let html = `<div class="g-row g-head"><div class="g-label">Activity · duration</div><div class="g-track" style="width:${trackW}px">
+        ${Array.from({ length: days }, (_, d) => `<div class="day-num" style="left:${x(d)}px">${d % 5 === 0 ? `<b>W${d / 5 + 1}</b>` : ''}${d + 1}</div>`).join('')}
+    </div></div>`;
+
+    if (opt.milestones) {
+        html += `<div class="g-row"><div class="g-label"><span class="tid">◆</span><span class="tname">Milestones<small>Zero-duration checkpoints</small></span></div>
+            <div class="g-track" style="width:${trackW}px"><div class="grid-lines"></div>
+            ${SCHOLAR_MILESTONES.map(m => {
+                const d = milestoneDay(m, cpm);
+                return `<div class="ms-diamond" style="left:${x(d)}px" title="${m.name}: end of day ${d}"></div>`;
+            }).join('')}
+            </div></div>`;
+    }
+
+    tasks.forEach(t => {
+        const c = cpm.byId[t.id];
+        const base = SCHOLAR_TASKS.find(s => s.id === t.id).duration;
+        const crit = opt.critical && c.critical;
+        html += `<div class="g-row">
+            <div class="g-label">
+                <span class="tid">${t.id}</span>
+                <span class="tname">${t.name}<small>${t.preds.length ? 'after ' + t.preds.join(', ') : 'starts day 1'} · ${c.critical ? 'critical' : `float ${c.float}d`}</small></span>
+                <span class="dur ${t.duration !== base ? 'changed' : ''}">
+                    <button data-id="${t.id}" data-d="-1" aria-label="Shorten ${t.name}">−</button>
+                    <span>${t.duration}d</span>
+                    <button data-id="${t.id}" data-d="1" aria-label="Lengthen ${t.name}">+</button>
+                </span>
+            </div>
+            <div class="g-track" style="width:${trackW}px">
+                <div class="grid-lines"></div>
+                ${opt.float && c.float > 0 ? `<div class="float-bar" style="left:${x(c.ef)}px; width:${x(c.float)}px"><span>${c.float}d float</span></div>` : ''}
+                <div class="bar ${crit ? 'critical' : ''}" style="left:${x(c.es)}px; width:${x(t.duration)}px" title="${t.name}: day ${c.es + 1}–${c.ef}">${t.duration >= 3 ? `${t.duration}d` : ''}</div>
+            </div>
+        </div>`;
+    });
+
+    const gantt = document.getElementById('gantt');
+    gantt.style.width = `calc(var(--label-w) + ${trackW}px)`;
+    gantt.innerHTML = html;
+
+    // Dependency arrows: from the end of the predecessor into the top/bottom of the successor bar
+    if (opt.deps) {
+        const offset = 1 + (opt.milestones ? 1 : 0); // header (+ milestone row)
+        const rowIndex = Object.fromEntries(tasks.map((t, i) => [t.id, i + offset]));
+        const height = (tasks.length + offset) * rowH;
+        let paths = '';
+        tasks.forEach(t => t.preds.forEach(p => {
+            const from = cpm.byId[p], to = cpm.byId[t.id];
+            const x1 = x(from.ef), y1 = rowIndex[p] * rowH + rowH / 2;
+            const x2 = x(to.es) + 8;
+            const down = rowIndex[t.id] > rowIndex[p];
+            const y2 = rowIndex[t.id] * rowH + (down ? 10 : rowH - 10);
+            const crit = opt.critical && from.critical && to.critical && from.ef === to.es;
+            paths += `<path class="${crit ? 'crit' : ''}" marker-end="url(#${crit ? 'arrowCrit' : 'arrow'})" d="M${x1} ${y1} H${x2} V${y2}"/>`;
+        }));
+        gantt.insertAdjacentHTML('beforeend', `<svg class="deps" width="${trackW}" height="${height}">
+            <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a8f98" stroke="none"/></marker>
+                <marker id="arrowCrit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--crit)" stroke="none"/></marker>
+            </defs>${paths}</svg>`);
+    }
+
+    gantt.querySelectorAll('.dur button').forEach(b => b.addEventListener('click', () => {
+        const t = tasks.find(x => x.id === b.dataset.id);
+        t.duration = Math.min(20, Math.max(1, t.duration + +b.dataset.d));
+        render();
+        document.querySelector(`.dur button[data-id="${b.dataset.id}"][data-d="${b.dataset.d}"]`).focus();
+    }));
+
+    // End date + insight
+    const diff = cpm.projectEnd - BASE_END;
+    document.getElementById('endDate').innerHTML = `Project length: <strong>${cpm.projectEnd} days</strong> ${diff > 0 ? `<span class="late">(+${diff} vs plan)</span>` : diff < 0 ? `<span class="early">(${diff} vs plan)</span>` : ''}`;
+    const critPath = cpm.order.filter(id => cpm.byId[id].critical).join(' → ');
+    const changed = tasks.filter(t => t.duration !== SCHOLAR_TASKS.find(s => s.id === t.id).duration);
+    let msg = `Critical path: <strong>${critPath}</strong> (${cpm.projectEnd} days). `;
+    if (!changed.length) msg += 'Try adding 3 days to G (Training materials), then 1 day to E (Back-end build). Which one moves the end date?';
+    else if (diff === 0) msg += 'The end date hasn\'t moved: your changes were absorbed by float.';
+    else if (diff > 0) msg += 'The end date moved because a change hit the critical path or used up all of a task\'s float.';
+    else msg += 'You shortened a critical task, so the project got shorter. Keep going and another path may become critical.';
+    document.getElementById('ganttInsight').innerHTML = `<div class="feedback ${diff > 0 ? 'error' : diff < 0 ? 'success' : 'partial'}" style="${diff === 0 ? 'color: var(--charcoal);' : ''}">${msg}</div>`;
+}
+
+[['tCritical', 'critical'], ['tFloat', 'float'], ['tDeps', 'deps'], ['tMilestones', 'milestones']].forEach(([el, key]) =>
+    document.getElementById(el).addEventListener('change', e => { opt[key] = e.target.checked; render(); }));
+document.getElementById('resetBtn').addEventListener('click', () => { tasks = SCHOLAR_TASKS.map(t => ({ ...t })); render(); });
+window.addEventListener('resize', () => { clearTimeout(window._rt); window._rt = setTimeout(render, 150); });
+render();
+
+// ─── Dependency type illustrations ───
+const DEPS = [
+    ['FS', 'Finish-to-Start', 'B can\'t start until A finishes.', 'Write code → test code', [[10, 60], [70, 120]], 'M70 18 H78 V44 H70', 'Most common'],
+    ['SS', 'Start-to-Start', 'B can\'t start until A starts.', 'Start pouring concrete → start levelling it', [[10, 80], [10, 110]], 'M10 18 H4 V44 H10', ''],
+    ['FF', 'Finish-to-Finish', 'B can\'t finish until A finishes.', 'Finish writing docs → finish reviewing docs', [[10, 90], [40, 90]], 'M90 18 H98 V44 H90', ''],
+    ['SF', 'Start-to-Finish', 'B can\'t finish until A starts.', 'New guard starts shift → old guard ends shift', [[70, 130], [10, 70]], 'M70 18 H64 V44 H70', 'Rarest']
+];
+document.getElementById('depTypes').innerHTML = DEPS.map(([code, name, rule, ex, bars, path, note]) => `
+    <div class="card dep-card">
+        <span class="code">${code}</span> ${note ? `<span style="font-size:0.75em;color:var(--muted)">· ${note}</span>` : ''}
+        <h3>${name}</h3>
+        <svg viewBox="0 0 140 62" role="img" aria-label="${name} diagram">
+            <rect x="${bars[0][0]}" y="8" width="${bars[0][1] - bars[0][0]}" height="18" rx="3" fill="#20B2AA"/>
+            <text x="${bars[0][0] + 5}" y="21" font-size="10" fill="#fff" font-family="Inter">A</text>
+            <rect x="${bars[1][0]}" y="36" width="${bars[1][1] - bars[1][0]}" height="18" rx="3" fill="#FFB700"/>
+            <text x="${bars[1][0] + 5}" y="49" font-size="10" fill="#2C3E50" font-family="Inter">B</text>
+            <path d="${path}" fill="none" stroke="#2C3E50" stroke-width="1.5"/>
+        </svg>
+        <p>${rule}</p>
+        <p style="color: var(--muted); margin-top: 0.3rem;"><em>${ex}</em></p>
+    </div>`).join('');
+</script>
+</body>
+</html>

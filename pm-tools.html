@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM Tools - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        :root { --accent: var(--coral); }
+        .chain { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 0.5rem; }
+        .chain-step { position: relative; padding-right: 1.5rem; }
+        .chain-step::after { content: '→'; position: absolute; right: 0.3rem; top: 0.9rem; color: var(--muted); font-size: 1.3em; }
+        .chain-step:last-child::after { display: none; }
+        .tool-card {
+            display: flex; flex-direction: column; gap: 0.5rem; height: 100%;
+            text-decoration: none; color: inherit; background: var(--paper); border: 1.5px solid var(--line);
+            border-top: 5px solid var(--c); border-radius: 14px; padding: 1.4rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tool-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(44, 62, 80, 0.1); }
+        .tool-card .icon { font-size: 2em; }
+        .tool-card h3 { font-size: 1.25em; }
+        .tool-card .question { font-family: 'IBM Plex Mono', monospace; font-size: 0.8em; color: var(--c); font-weight: 600; }
+        .tool-card p { font-size: 0.92em; color: var(--muted); }
+        .tool-card .go { margin-top: auto; font-weight: 700; color: var(--indigo); font-size: 0.9em; }
+        @media (max-width: 860px) {
+            .chain { grid-template-columns: 1fr; gap: 1rem; }
+            .chain-step { padding-right: 0; }
+            .chain-step::after { content: '↓'; position: static; display: block; text-align: center; margin-top: 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html" aria-current="page">PM Tools</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="pm-tools.html" aria-current="page">Overview</a>
+        <a href="raci.html">👥 RACI matrix</a>
+        <a href="milestones.html">🏁 Milestones</a>
+        <a href="gantt.html">📊 Gantt chart</a>
+        <a href="cpm.html">🛤️ Critical path (CPM)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">PM Tools</span>
+            <h1>Four tools for planning and tracking</h1>
+            <p class="lead">Each tool answers one question a project manager is asked every week. They all use the same example project, the Scholar Academy school system, so you can see one plan from four angles.</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>How they fit together</h2>
+                    <p>In planning, you usually work in this order: decide who does what, work out the sequence and what controls the end date, draw the schedule, then pick the checkpoints you'll report on.</p>
+                </div>
+                <div class="chain">
+                    <div class="chain-step">
+                        <a class="tool-card" href="raci.html" style="--c: var(--coral);">
+                            <span class="icon">👥</span>
+                            <span class="question">WHO does what?</span>
+                            <h3>RACI matrix</h3>
+                            <p>Assigns Responsible, Accountable, Consulted, and Informed for every task. Fix a broken RACI matrix.</p>
+                            <span class="go">Open →</span>
+                        </a>
+                    </div>
+                    <div class="chain-step">
+                        <a class="tool-card" href="cpm.html" style="--c: var(--purple);">
+                            <span class="icon">🛤️</span>
+                            <span class="question">WHICH tasks control the end date?</span>
+                            <h3>Critical path (CPM)</h3>
+                            <p>Forward pass, backward pass, float. Step through it, then try the practice questions and PERT calculator.</p>
+                            <span class="go">Open →</span>
+                        </a>
+                    </div>
+                    <div class="chain-step">
+                        <a class="tool-card" href="gantt.html" style="--c: var(--gold);">
+                            <span class="icon">📊</span>
+                            <span class="question">WHEN does each task happen?</span>
+                            <h3>Gantt chart</h3>
+                            <p>The schedule as bars on a timeline. Change durations and watch dependencies push other tasks.</p>
+                            <span class="go">Open →</span>
+                        </a>
+                    </div>
+                    <div class="chain-step">
+                        <a class="tool-card" href="milestones.html" style="--c: var(--teal);">
+                            <span class="icon">🏁</span>
+                            <span class="question">ARE we on track?</span>
+                            <h3>Milestones</h3>
+                            <p>Zero-duration checkpoints for reporting. Delay a task and see which milestones slip.</p>
+                            <span class="go">Open →</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>The example project</h2>
+                    <p>Scholar Academy is building a school management system. These eight activities appear on the Gantt chart, CPM, and milestone pages. Durations are in working days.</p>
+                </div>
+                <div class="scroll-x">
+                    <table class="data" id="projectTable" style="min-width: 600px;"></table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · PM Tools</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a></p>
+    </footer>
+
+<script src="pm-schedule.js"></script>
+<script>
+const cpm = computeCPM(SCHOLAR_TASKS);
+document.getElementById('projectTable').innerHTML = `
+    <thead><tr><th>ID</th><th>Activity</th><th>Duration</th><th>Depends on</th><th>Owner</th><th>Float</th></tr></thead>
+    <tbody>${SCHOLAR_TASKS.map(t => {
+        const c = cpm.byId[t.id];
+        return `<tr><td class="mono"><strong>${t.id}</strong></td><td>${t.name}</td><td class="mono">${t.duration}d</td><td class="mono">${t.preds.join(', ') || '—'}</td><td>${t.owner}</td>
+            <td class="mono" style="color:${c.critical ? 'var(--crit)' : 'var(--warn)'}">${c.critical ? '0 · critical' : c.float + 'd'}</td></tr>`;
+    }).join('')}</tbody>`;
+</script>
+</body>
+</html>

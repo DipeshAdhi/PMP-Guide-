@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Critical Path Method - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        :root { --accent: var(--purple); --tab-color: var(--purple); }
+
+        .terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; }
+        .term { background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.9rem 1rem; }
+        .term .abbr { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 1.2em; color: var(--purple); }
+        .term h4 { font-size: 0.95em; margin: 0.15rem 0 0.3rem; }
+        .term p { font-size: 0.84em; color: var(--muted); }
+
+        .stepper { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .step-pill { border: 1.5px solid var(--line); background: var(--paper); border-radius: 20px; padding: 6px 14px; font-size: 0.85em; font-weight: 600; color: var(--indigo); }
+        .step-pill.active { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+        .step-pill.done { border-color: var(--purple); }
+
+        .network-wrap { overflow-x: auto; background: var(--white); border-radius: 10px; padding: 0.5rem; }
+        #network { display: block; width: 100%; min-width: 760px; height: auto; }
+        .node rect.box { fill: #fff; stroke: #B9B6AE; stroke-width: 1.5; transition: stroke 0.3s ease, fill 0.3s ease; }
+        .node.crit rect.box { stroke: var(--crit); stroke-width: 2.5; fill: #FFF5F5; }
+        .node.focus rect.box { stroke: var(--gold); stroke-width: 3; }
+        .node line { stroke: #D6D3CC; stroke-width: 1; }
+        .node text { font-family: 'IBM Plex Mono', monospace; font-size: 12px; fill: var(--charcoal); text-anchor: middle; dominant-baseline: middle; }
+        .node text.name { font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; fill: var(--indigo); }
+        .node text.id { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; fill: var(--purple); }
+        .node text.lbl { font-size: 8.5px; fill: #9a978f; }
+        .node text.val { font-weight: 600; }
+        .node text.float-pos { fill: var(--warn); }
+        .node text.float-zero { fill: var(--crit); }
+        .edge { stroke: #9a978f; stroke-width: 1.5; fill: none; }
+        .edge.crit { stroke: var(--crit); stroke-width: 2.5; }
+
+        .step-explain { margin-top: 1rem; background: var(--paper); border-left: 5px solid var(--purple); border-radius: 8px; padding: 1rem 1.2rem; }
+        .step-explain h3 { font-size: 1.1em; margin-bottom: 0.4rem; }
+        .formula { font-family: 'IBM Plex Mono', monospace; background: var(--white); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+        .step-nav { display: flex; justify-content: space-between; margin-top: 1rem; }
+
+        .editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.5rem; }
+        .editor label { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: var(--white); padding: 0.45rem 0.7rem; border-radius: 8px; font-size: 0.86em; }
+        .editor input { width: 56px; padding: 4px 6px; border: 1.5px solid var(--line); border-radius: 6px; font-family: 'IBM Plex Mono', monospace; }
+        .editor input.changed { border-color: var(--coral); }
+        .paths td.len { font-family: 'IBM Plex Mono', monospace; }
+        .tag { display: inline-block; font-size: 0.75em; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #FFE9E9; color: var(--crit); }
+
+        .practice { display: flex; flex-direction: column; gap: 1rem; }
+        .pq h4 { font-size: 1em; margin-bottom: 0.6rem; }
+        .pq .opts { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .pq .opt { border: 1.5px solid var(--line); background: var(--white); border-radius: 8px; padding: 7px 14px; font-size: 0.9em; }
+        .pq .opt:hover { border-color: var(--indigo); }
+        .pq .opt.right { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+        .pq .opt.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+
+        .pert { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .pert-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+        .pert-inputs label { font-size: 0.82em; font-weight: 600; color: var(--indigo); }
+        .pert-inputs input { width: 100%; padding: 8px; border: 1.5px solid var(--line); border-radius: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 1em; margin-top: 0.3rem; }
+        .pert-result { background: var(--white); border-radius: 10px; padding: 1rem 1.2rem; font-size: 0.93em; }
+        .pert-result .big { font-family: 'Syne', sans-serif; font-size: 2em; font-weight: 800; color: var(--purple); }
+        .range-bar { position: relative; height: 26px; background: var(--line); border-radius: 13px; margin: 0.8rem 0 0.3rem; }
+        .range-bar div { position: absolute; top: 0; bottom: 0; border-radius: 13px; }
+
+        @media (max-width: 700px) { .pert { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html" aria-current="page">PM Tools</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="pm-tools.html">Overview</a>
+        <a href="raci.html">👥 RACI matrix</a>
+        <a href="milestones.html">🏁 Milestones</a>
+        <a href="gantt.html">📊 Gantt chart</a>
+        <a href="cpm.html" aria-current="page">🛤️ Critical path (CPM)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Tool 4 · Project · Which tasks control the end date</span>
+            <h1>Critical Path Method (CPM)</h1>
+            <p class="lead">The critical path is the longest chain of dependent activities from start to finish. Its length is the shortest time the project can take. Any delay on it delays the whole project; activities off it have "float" and can slip a little without harm.</p>
+            <div class="definition"><strong>PMBOK term:</strong> CPM is a schedule network analysis technique used in <em>Develop Schedule</em>. It calculates the early and late start and finish dates of every activity, and the <strong>total float</strong> of each one.</div>
+        </div>
+    </header>
+
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Key terms</h2></div>
+                <div class="terms">
+                    <div class="term"><span class="abbr">ES</span><h4>Early start</h4><p>Earliest day the activity can start.</p></div>
+                    <div class="term"><span class="abbr">EF</span><h4>Early finish</h4><p>ES + duration.</p></div>
+                    <div class="term"><span class="abbr">LS</span><h4>Late start</h4><p>Latest start without delaying the project.</p></div>
+                    <div class="term"><span class="abbr">LF</span><h4>Late finish</h4><p>Latest finish without delaying the project.</p></div>
+                    <div class="term"><span class="abbr">TF</span><h4>Total float</h4><p>LS − ES. Slip allowed before the <em>project</em> is late.</p></div>
+                    <div class="term"><span class="abbr">FF</span><h4>Free float</h4><p>Slip allowed before the <em>next activity</em> is late.</p></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block" id="walkthrough">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Walk through it step by step</h2>
+                    <p>The Scholar Academy network diagram, the same project as the Gantt chart. Step through the calculation; each step fills in more of every box.</p>
+                </div>
+                <div class="card">
+                    <div class="stepper" id="stepper"></div>
+                    <div class="network-wrap"><svg id="network" viewBox="0 0 1010 395" role="img" aria-label="Network diagram of the Scholar Academy project"></svg></div>
+                    <div class="legend">
+                        <span>Each box: <span class="mono">ES | duration | EF</span> on top, <span class="mono">LS | float | LF</span> below</span>
+                    </div>
+                    <div class="step-explain" id="stepExplain"></div>
+                    <div class="step-nav">
+                        <button class="btn btn-ghost" id="prevStep">← Previous</button>
+                        <button class="btn btn-primary" id="nextStep">Next step →</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Change durations, find the new critical path</h2>
+                    <p>Edit any duration. The diagram above and the path list below recalculate. Try making D (Front-end build) 3 days longer: the critical path switches to a different route.</p>
+                </div>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Durations (days)</h3>
+                        <div class="editor" id="editor" style="margin-top: 0.8rem;"></div>
+                        <div class="btn-row" style="margin-top: 1rem;"><button class="btn btn-ghost" id="resetDur">Reset durations</button></div>
+                    </div>
+                    <div class="card">
+                        <h3>Every path through the network</h3>
+                        <p style="color: var(--muted); margin-bottom: 0.8rem;">The longest path is the critical path. The difference from the longest tells you how much that path can slip.</p>
+                        <div class="scroll-x"><table class="data paths" id="pathsTable"></table></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Practice questions</h2>
+                    <p>Based on the original schedule (before your edits). Each question explains the answer once you pick one.</p>
+                </div>
+                <div class="card practice" id="practice"></div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>PERT: estimating a duration when you're unsure</h2>
+                    <p>CPM needs a duration for every activity. When an estimate is uncertain, PERT (three-point estimating) combines an optimistic, a most likely, and a pessimistic guess into one weighted estimate.</p>
+                </div>
+                <div class="card pert">
+                    <div>
+                        <div class="pert-inputs">
+                            <label>Optimistic (O)<input type="number" id="pO" value="6" min="0" step="0.5"></label>
+                            <label>Most likely (M)<input type="number" id="pM" value="8" min="0" step="0.5"></label>
+                            <label>Pessimistic (P)<input type="number" id="pP" value="14" min="0" step="0.5"></label>
+                        </div>
+                        <p style="margin-top: 1rem; font-size: 0.9em;">Formulas:<br>
+                            <span class="formula">E = (O + 4M + P) ÷ 6</span> (beta / PERT)<br>
+                            <span class="formula">σ = (P − O) ÷ 6</span> (standard deviation)<br>
+                            <span class="formula">E = (O + M + P) ÷ 3</span> (triangular, simple average)</p>
+                    </div>
+                    <div class="pert-result" id="pertResult"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container grid-2">
+                <div class="card">
+                    <h3>Shortening the schedule</h3>
+                    <p>Only shortening <strong>critical</strong> activities shortens the project.</p>
+                    <ul style="margin-top: 0.5rem;">
+                        <li><strong>Crashing</strong>: add resources (overtime, more people) to critical activities. Costs more money. Crash the cheapest critical activity first.</li>
+                        <li><strong>Fast tracking</strong>: do activities in parallel that were planned in sequence. Costs nothing extra but adds <strong>risk</strong> and possible rework.</li>
+                    </ul>
+                    <p style="margin-top: 0.5rem; color: var(--muted);">Watch out: shorten the critical path enough and another path becomes critical, so savings shrink.</p>
+                </div>
+                <div class="card">
+                    <h3>Convention: start at day 0 or day 1?</h3>
+                    <p>This page uses the <strong>day 0</strong> convention: the first activity has ES = 0 and EF = ES + duration. Some books start at day 1 and use EF = ES + duration − 1. Both give the same critical path and float. Just don't mix them in one calculation.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="exam-tips">
+                    <h3>📝 PMP exam tips</h3>
+                    <ul>
+                        <li>The critical path is the <strong>longest</strong> path, with <strong>zero total float</strong> (normally). It is <em>not</em> the path with the most activities or the most expensive ones.</li>
+                        <li>There can be <strong>more than one</strong> critical path. More critical paths means more schedule risk.</li>
+                        <li><strong>Negative float</strong> means the project is already behind its required finish date.</li>
+                        <li>Forward pass → ES, EF (take the <strong>max</strong> at merges). Backward pass → LS, LF (take the <strong>min</strong> at bursts).</li>
+                        <li>Exam questions often list paths with durations. Just add each path up; the biggest total is the critical path.</li>
+                        <li>PERT: <strong>(O + 4M + P) ÷ 6</strong>; standard deviation <strong>(P − O) ÷ 6</strong>; ±1σ ≈ 68%, ±2σ ≈ 95%, ±3σ ≈ 99.7%.</li>
+                    </ul>
+                </div>
+                <div class="next-tool">
+                    <a href="gantt.html">← Gantt chart</a>
+                    <a href="pm-tools.html">All PM tools →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · PM Tools</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a></p>
+    </footer>
+
+<script src="pm-schedule.js"></script>
+<script>
+// ─── Network diagram ───
+const POS = { A: [0, 1.5], B: [1, 0.75], C: [1, 2.5], G: [2, 0], D: [2, 1.25], E: [2, 2.5], F: [3, 1.85], H: [4, 1] };
+const NW = 150, NH = 92, COLW = 200, ROWH = 105, PADX = 30, PADY = 20;
+const nodeXY = id => [PADX + POS[id][0] * COLW, PADY + POS[id][1] * ROWH];
+
+const STEPS = ['1 · The network', '2 · Forward pass', '3 · Backward pass', '4 · Float', '5 · Critical path'];
+let step = 0;
+let tasks = SCHOLAR_TASKS.map(t => ({ ...t }));
+
+function drawNetwork(cpm) {
+    const svg = document.getElementById('network');
+    const focus = step === 1 ? 'F' : step === 2 ? 'B' : null;
+    let edges = '', nodes = '';
+
+    cpm.tasks.forEach(t => t.preds.forEach(p => {
+        const [x1, y1] = nodeXY(p), [x2, y2] = nodeXY(t.id);
+        const crit = step >= 4 && cpm.byId[p].critical && t.critical && cpm.byId[p].ef === t.es;
+        edges += `<line class="edge ${crit ? 'crit' : ''}" x1="${x1 + NW}" y1="${y1 + NH / 2}" x2="${x2 - 2}" y2="${y2 + NH / 2}" marker-end="url(#${crit ? 'ah-crit' : 'ah'})"/>`;
+    }));
+
+    cpm.tasks.forEach(t => {
+        const [x, y] = nodeXY(t.id);
+        const cw = NW / 3;
+        const v = (show, val) => show ? val : '';
+        const cls = ['node', step >= 4 && t.critical ? 'crit' : '', focus === t.id ? 'focus' : ''].join(' ');
+        const floatCls = t.float === 0 ? 'float-zero' : 'float-pos';
+        nodes += `<g class="${cls}">
+            <rect class="box" x="${x}" y="${y}" width="${NW}" height="${NH}" rx="6"/>
+            <line x1="${x}" y1="${y + 26}" x2="${x + NW}" y2="${y + 26}"/>
+            <line x1="${x}" y1="${y + NH - 26}" x2="${x + NW}" y2="${y + NH - 26}"/>
+            <line x1="${x + cw}" y1="${y}" x2="${x + cw}" y2="${y + 26}"/><line x1="${x + 2 * cw}" y1="${y}" x2="${x + 2 * cw}" y2="${y + 26}"/>
+            <line x1="${x + cw}" y1="${y + NH - 26}" x2="${x + cw}" y2="${y + NH}"/><line x1="${x + 2 * cw}" y1="${y + NH - 26}" x2="${x + 2 * cw}" y2="${y + NH}"/>
+            <text class="lbl" x="${x + cw / 2}" y="${y + 7}">ES</text><text class="val" x="${x + cw / 2}" y="${y + 17}">${v(step >= 1, t.es)}</text>
+            <text class="lbl" x="${x + cw * 1.5}" y="${y + 7}">DUR</text><text class="val" x="${x + cw * 1.5}" y="${y + 17}">${t.duration}</text>
+            <text class="lbl" x="${x + cw * 2.5}" y="${y + 7}">EF</text><text class="val" x="${x + cw * 2.5}" y="${y + 17}">${v(step >= 1, t.ef)}</text>
+            <text class="id" x="${x + NW / 2}" y="${y + 38}">${t.id}</text>
+            <text class="name" x="${x + NW / 2}" y="${y + 54}">${t.name}</text>
+            <text class="lbl" x="${x + cw / 2}" y="${y + NH - 19}">LS</text><text class="val" x="${x + cw / 2}" y="${y + NH - 9}">${v(step >= 2, t.ls)}</text>
+            <text class="lbl" x="${x + cw * 1.5}" y="${y + NH - 19}">FLOAT</text><text class="val ${step >= 3 ? floatCls : ''}" x="${x + cw * 1.5}" y="${y + NH - 9}">${v(step >= 3, t.float)}</text>
+            <text class="lbl" x="${x + cw * 2.5}" y="${y + NH - 19}">LF</text><text class="val" x="${x + cw * 2.5}" y="${y + NH - 9}">${v(step >= 2, t.lf)}</text>
+        </g>`;
+    });
+
+    svg.innerHTML = `<defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#9a978f"/></marker>
+        <marker id="ah-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#E5484D"/></marker>
+    </defs>${edges}${nodes}`;
+}
+
+function explain(cpm) {
+    const b = cpm.byId;
+    const critIds = cpm.order.filter(id => b[id].critical);
+    const floaters = cpm.tasks.filter(t => t.float > 0).sort((x, y) => x.float - y.float);
+    switch (step) {
+        case 0: return `<h3>An activity-on-node network</h3>
+            <p>This is a <strong>precedence diagram</strong> (also called activity-on-node). Each box is an activity; each arrow means "must finish before the next can start" (finish-to-start). After A, the work splits into parallel paths, which join again at F and H.</p>`;
+        case 1: return `<h3>Forward pass: earliest dates, left to right</h3>
+            <p>The first activity starts at <span class="formula">ES = 0</span>. For each activity, <span class="formula">EF = ES + duration</span>. Its successor starts when it finishes.</p>
+            <p style="margin-top: 0.5rem;"><strong>At a merge, take the larger EF.</strong> F (highlighted) needs both D (EF ${b.D.ef}) and E (EF ${b.E.ef}), so F can't start until day <strong>${b.F.es}</strong>. The last EF gives the project duration: <strong>${cpm.projectEnd} days</strong>.</p>`;
+        case 2: return `<h3>Backward pass: latest dates, right to left</h3>
+            <p>The last activity's <span class="formula">LF = ${cpm.projectEnd}</span> (the project end). For each activity, <span class="formula">LS = LF − duration</span>. Its predecessor must finish by then.</p>
+            <p style="margin-top: 0.5rem;"><strong>At a burst, take the smaller LS.</strong> B (highlighted) feeds D (LS ${b.D.ls}) and G (LS ${b.G.ls}), so B must finish by day <strong>${b.B.lf}</strong>, or D would be late.</p>`;
+        case 3: return `<h3>Float: how much each activity can slip</h3>
+            <p><span class="formula">Total float = LS − ES</span> (or LF − EF). ${floaters.length
+                ? `Activities with float: ${floaters.map(t => `<strong>${t.id}</strong> ${t.float}d`).join(', ')}. ${floaters[floaters.length - 1].name} could slip ${floaters[floaters.length - 1].float} days and the project would still finish on day ${cpm.projectEnd}.`
+                : 'Every activity has zero float: the whole network is critical.'}</p>
+            <p style="margin-top: 0.5rem;">Activities with <strong>zero float</strong> (shown in red) have no room at all.</p>`;
+        default: return `<h3>The critical path</h3>
+            <p>The zero-float activities form the critical path: <strong>${critIds.join(' → ')}</strong> = <strong>${cpm.projectEnd} days</strong>. It's the longest path, so it sets the shortest possible project duration.</p>
+            <p style="margin-top: 0.5rem;">To finish sooner, you must shorten activities <em>on this path</em>. Shortening ${floaters.length ? floaters[0].name : 'a non-critical task'} wouldn't change the end date at all.</p>`;
+    }
+}
+
+function render() {
+    const cpm = computeCPM(tasks);
+    drawNetwork(cpm);
+    document.getElementById('stepExplain').innerHTML = explain(cpm);
+    document.getElementById('stepper').innerHTML = STEPS.map((s, i) =>
+        `<button class="step-pill ${i === step ? 'active' : i < step ? 'done' : ''}" data-step="${i}">${s}</button>`).join('');
+    document.querySelectorAll('.step-pill').forEach(p => p.addEventListener('click', () => { step = +p.dataset.step; render(); }));
+    document.getElementById('prevStep').disabled = step === 0;
+    document.getElementById('nextStep').disabled = step === STEPS.length - 1;
+
+    const paths = allPaths(cpm);
+    const max = paths[0].length;
+    document.getElementById('pathsTable').innerHTML = `<thead><tr><th>Path</th><th>Length</th><th>Slack</th></tr></thead><tbody>
+        ${paths.map(p => `<tr><td>${p.ids.join(' → ')} ${p.length === max ? '<span class="tag">critical</span>' : ''}</td><td class="len">${p.length}d</td><td class="len">${max - p.length}d</td></tr>`).join('')}</tbody>`;
+}
+
+document.getElementById('prevStep').addEventListener('click', () => { if (step > 0) { step--; render(); } });
+document.getElementById('nextStep').addEventListener('click', () => { if (step < STEPS.length - 1) { step++; render(); } });
+
+// ─── Duration editor ───
+function renderEditor() {
+    document.getElementById('editor').innerHTML = tasks.map(t => {
+        const base = SCHOLAR_TASKS.find(s => s.id === t.id).duration;
+        return `<label><span><strong>${t.id}</strong> ${t.name}</span><input type="number" min="1" max="30" value="${t.duration}" data-id="${t.id}" class="${t.duration !== base ? 'changed' : ''}" aria-label="Duration of ${t.name}"></label>`;
+    }).join('');
+    document.querySelectorAll('#editor input').forEach(inp => inp.addEventListener('input', () => {
+        const val = Math.max(1, Math.min(30, parseInt(inp.value, 10) || 1));
+        tasks.find(t => t.id === inp.dataset.id).duration = val;
+        inp.classList.toggle('changed', val !== SCHOLAR_TASKS.find(s => s.id === inp.dataset.id).duration);
+        render();
+    }));
+}
+document.getElementById('resetDur').addEventListener('click', () => { tasks = SCHOLAR_TASKS.map(t => ({ ...t })); renderEditor(); render(); });
+
+// ─── Practice (always based on the original schedule) ───
+const base = computeCPM(SCHOLAR_TASKS);
+const withChange = (id, d) => computeCPM(SCHOLAR_TASKS.map(t => t.id === id ? { ...t, duration: t.duration + d } : t)).projectEnd;
+const QUESTIONS = [
+    { q: 'What is the total float of D (Front-end build)?', opts: ['0 days', '1 day', '2 days', '6 days'], a: `${base.byId.D.float} day${base.byId.D.float === 1 ? '' : 's'}`,
+      why: `LS − ES = ${base.byId.D.ls} − ${base.byId.D.es} = ${base.byId.D.float}. Path A-B-D-F-H is ${base.projectEnd - base.byId.D.float} days, one day shorter than the critical path.` },
+    { q: 'E (Back-end build) is delayed by 2 days. How long is the project now?', opts: ['21 days', '22 days', '23 days', '25 days'], a: `${withChange('E', 2)} days`,
+      why: `E is on the critical path (zero float), so every day of delay adds a day to the project: ${base.projectEnd} + 2 = ${withChange('E', 2)}.` },
+    { q: 'G (Training materials) slips by 5 days. What happens to go-live?', opts: ['5 days late', '3 days late', 'No impact', '8 days late'], a: withChange('G', 5) === base.projectEnd ? 'No impact' : `${withChange('G', 5) - base.projectEnd} days late`,
+      why: `G has ${base.byId.G.float} days of total float, so a 5-day slip is absorbed. The project still finishes on day ${base.projectEnd}.` },
+    { q: 'You need to finish sooner. Crashing which activity can shorten the project?', opts: ['G · Training materials', 'D · Front-end build', 'E · Back-end build', 'B · UI design'], a: 'E · Back-end build',
+      why: `Only critical activities shorten the project, and E is the only critical one listed. But cutting E by 2 days only saves ${base.projectEnd - withChange('E', -2)} day: path A-B-D-F-H (${base.projectEnd - base.byId.D.float} days) then becomes critical.` }
+];
+document.getElementById('practice').innerHTML = QUESTIONS.map((q, qi) => `
+    <div class="pq"><h4>${qi + 1}. ${q.q}</h4>
+        <div class="opts">${q.opts.map(o => `<button class="opt" data-q="${qi}" data-o="${o}">${o}</button>`).join('')}</div>
+        <div class="pq-fb" id="pqfb${qi}"></div>
+    </div>`).join('');
+document.querySelectorAll('.pq .opt').forEach(btn => btn.addEventListener('click', () => {
+    const q = QUESTIONS[+btn.dataset.q];
+    const right = btn.dataset.o === q.a;
+    btn.parentElement.querySelectorAll('.opt').forEach(b => b.classList.remove('right', 'wrong'));
+    btn.classList.add(right ? 'right' : 'wrong');
+    document.getElementById(`pqfb${btn.dataset.q}`).innerHTML = `<div class="feedback ${right ? 'success' : 'error'}">${right ? '✓ Correct.' : '✗ Not quite.'} ${q.why}</div>`;
+}));
+
+// ─── PERT ───
+function renderPert() {
+    const O = parseFloat(document.getElementById('pO').value), M = parseFloat(document.getElementById('pM').value), P = parseFloat(document.getElementById('pP').value);
+    const out = document.getElementById('pertResult');
+    if ([O, M, P].some(isNaN)) { out.innerHTML = 'Enter all three estimates.'; return; }
+    if (!(O <= M && M <= P)) { out.innerHTML = '<div class="feedback error" style="margin: 0;">Estimates must be in order: Optimistic ≤ Most likely ≤ Pessimistic.</div>'; return; }
+    const E = (O + 4 * M + P) / 6, sd = (P - O) / 6, tri = (O + M + P) / 3;
+    const f = n => (Math.round(n * 100) / 100).toString();
+    const span = P - O || 1, pct = v => ((v - O) / span) * 100;
+    out.innerHTML = `
+        <div>PERT estimate</div><div class="big">${f(E)} days</div>
+        <div>Standard deviation σ = <strong>${f(sd)}</strong> · triangular estimate = ${f(tri)}</div>
+        <div class="range-bar" aria-hidden="true">
+            <div style="left:${Math.max(0, pct(E - 2 * sd))}%; right:${Math.max(0, 100 - pct(E + 2 * sd))}%; background: #DDD6FE;"></div>
+            <div style="left:${Math.max(0, pct(E - sd))}%; right:${Math.max(0, 100 - pct(E + sd))}%; background: var(--purple);"></div>
+        </div>
+        <div class="legend" style="margin-top: 0.2rem;"><span>O = ${O}</span><span style="margin-left:auto">P = ${P}</span></div>
+        <ul style="margin: 0.6rem 0 0 1.2rem;">
+            <li>68% chance: <strong>${f(E - sd)} – ${f(E + sd)}</strong> days (±1σ)</li>
+            <li>95% chance: <strong>${f(E - 2 * sd)} – ${f(E + 2 * sd)}</strong> days (±2σ)</li>
+        </ul>
+        <p style="margin-top: 0.6rem; color: var(--muted);">The pessimistic value pulls the estimate above "most likely": ${f(E)} vs ${M}. That's PERT accounting for risk.</p>`;
+}
+['pO', 'pM', 'pP'].forEach(id => document.getElementById(id).addEventListener('input', renderPert));
+
+renderEditor();
+render();
+renderPert();
+</script>
+</body>
+</html>

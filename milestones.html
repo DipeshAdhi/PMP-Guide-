@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestones - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        :root { --accent: var(--teal); --tab-color: var(--teal); }
+
+        /* Sorting exercise */
+        .sort-list { display: flex; flex-direction: column; gap: 0.55rem; }
+        .sort-item {
+            display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+            background: var(--white); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.7rem 0.9rem;
+        }
+        .sort-item.right { border-color: var(--ok); background: var(--ok-bg); }
+        .sort-item.wrong { border-color: var(--bad); background: var(--bad-bg); }
+        .sort-item .label { font-weight: 600; color: var(--indigo); }
+        .sort-item .why { flex-basis: 100%; font-size: 0.86em; color: var(--charcoal); }
+        .choice { border: 1.5px solid var(--line); background: var(--paper); border-radius: 20px; padding: 5px 12px; font-size: 0.85em; font-weight: 600; color: var(--indigo); }
+        .choice:hover { border-color: var(--indigo); }
+        .choice.picked { background: var(--indigo); color: #fff; border-color: var(--indigo); }
+
+        /* Milestone chart */
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.5rem; margin-bottom: 1.5rem; }
+        .controls label { display: block; font-size: 0.85em; font-weight: 600; color: var(--indigo); margin-bottom: 0.3rem; }
+        .controls select { width: 100%; padding: 9px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--paper); font-size: 0.93em; }
+        .controls input[type=range] { width: 100%; accent-color: var(--coral); }
+        .delay-value { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--coral); }
+
+        .ms-chart { position: relative; }
+        .ms-row { display: grid; grid-template-columns: 210px 1fr 110px; align-items: center; gap: 0.8rem; padding: 0.55rem 0; border-bottom: 1px solid var(--line); }
+        .ms-row:last-child { border-bottom: none; }
+        .ms-name { font-weight: 600; color: var(--indigo); font-size: 0.93em; }
+        .ms-name span { display: block; font-weight: 400; font-size: 0.8em; color: var(--muted); }
+        .ms-track { position: relative; height: 30px; background: repeating-linear-gradient(90deg, transparent 0, transparent calc(var(--step) - 1px), var(--line) calc(var(--step) - 1px), var(--line) var(--step)); border-radius: 4px; }
+        .diamond {
+            position: absolute; top: 50%; width: 16px; height: 16px; transform: translate(-50%, -50%) rotate(45deg);
+            transition: left 0.4s ease;
+        }
+        .diamond.baseline { border: 2px solid var(--muted); background: var(--paper); }
+        .diamond.forecast { background: var(--teal); }
+        .diamond.forecast.late { background: var(--crit); }
+        .slip-line { position: absolute; top: 50%; height: 2px; background: var(--crit); transition: all 0.4s ease; }
+        .ms-status { font-family: 'IBM Plex Mono', monospace; font-size: 0.8em; text-align: right; }
+        .ms-status.late { color: var(--crit); font-weight: 600; }
+        .ms-status.ok { color: var(--ok); }
+        .axis { display: grid; grid-template-columns: 210px 1fr 110px; gap: 0.8rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.72em; color: var(--muted); }
+        .axis-track { position: relative; height: 18px; }
+        .axis-track span { position: absolute; transform: translateX(-50%); }
+        .insight { margin-top: 1.2rem; }
+
+        @media (max-width: 700px) {
+            .controls { grid-template-columns: 1fr; }
+            .ms-row, .axis { grid-template-columns: 1fr 70px; }
+            .ms-row .ms-name { grid-column: 1 / -1; }
+            .axis > div:first-child { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="site-nav">
+        <a class="logo" href="index.html">PMP Guide</a>
+        <ul>
+            <li><a href="index.html">Learn</a></li>
+            <li><a href="dashboard.html">Four Pillars</a></li>
+            <li><a href="pm-tools.html" aria-current="page">PM Tools</a></li>
+            <li><a href="game-interactive.html">PM Lab</a></li>
+            <li><a href="project-simulator.html">Simulator</a></li>
+        </ul>
+    </nav>
+    <div class="tool-tabs">
+        <a href="pm-tools.html">Overview</a>
+        <a href="raci.html">👥 RACI matrix</a>
+        <a href="milestones.html" aria-current="page">🏁 Milestones</a>
+        <a href="gantt.html">📊 Gantt chart</a>
+        <a href="cpm.html">🛤️ Critical path (CPM)</a>
+    </div>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Tool 2 · Project · Checkpoints</span>
+            <h1>Milestones</h1>
+            <p class="lead">A milestone marks a significant point in a project: a moment when something important is finished or approved. Milestones don't take time themselves; they tell everyone where the project stands.</p>
+            <div class="definition"><strong>PMBOK definition:</strong> A milestone is a significant point or event in a project. It has <strong>zero duration</strong> and uses no resources. Milestones are listed in the <strong>milestone list</strong>, an output of <em>Define Activities</em>.</div>
+        </div>
+    </header>
+
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Milestone vs. activity vs. deliverable</h2>
+                    <p>People mix these up constantly. The difference is what each one represents.</p>
+                </div>
+                <div class="grid-4" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+                    <div class="card letter-card" style="--c: var(--teal);">
+                        <div class="big">◆</div>
+                        <h3>Milestone</h3>
+                        <p>A <strong>point in time</strong>. Zero duration, done or not done.</p>
+                        <p style="margin-top: 0.5rem; color: var(--muted);"><em>"Design approved"</em></p>
+                    </div>
+                    <div class="card letter-card" style="--c: var(--gold);">
+                        <div class="big">▬</div>
+                        <h3>Activity</h3>
+                        <p><strong>Work that takes time</strong> and resources. Has a start, a finish, and a duration.</p>
+                        <p style="margin-top: 0.5rem; color: var(--muted);"><em>"Design the user interface" (4 days)</em></p>
+                    </div>
+                    <div class="card letter-card" style="--c: var(--purple);">
+                        <div class="big">▣</div>
+                        <h3>Deliverable</h3>
+                        <p>A <strong>product or result</strong> produced by activities. Approving it is often a milestone.</p>
+                        <p style="margin-top: 0.5rem; color: var(--muted);"><em>"UI design document"</em></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Milestone or activity?</h2>
+                    <p>Sort each item. A good test: if you can say "we're halfway through it", it's an activity. A milestone is either reached or not.</p>
+                </div>
+                <div class="card">
+                    <div class="sort-list" id="sortList"></div>
+                    <div id="sortFeedback"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block" id="chart">
+            <div class="container">
+                <div class="block-head">
+                    <h2>Milestone chart: what happens when a task slips?</h2>
+                    <p>Executives rarely read a full schedule. They read a milestone chart. Below is the Scholar Academy milestone chart. Delay any task and watch which milestones move. Some delays move everything; some move nothing.</p>
+                </div>
+                <div class="card">
+                    <div class="controls">
+                        <div>
+                            <label for="taskSelect">Delay this task</label>
+                            <select id="taskSelect"></select>
+                        </div>
+                        <div>
+                            <label for="delayRange">By <span class="delay-value" id="delayValue">0 days</span></label>
+                            <input type="range" id="delayRange" min="0" max="10" value="0">
+                        </div>
+                    </div>
+                    <div class="ms-chart" id="msChart"></div>
+                    <div class="legend">
+                        <span><span class="swatch" style="border: 2px solid var(--muted); transform: rotate(45deg); width: 11px; height: 11px;"></span> Baseline date</span>
+                        <span><span class="swatch" style="background: var(--teal); transform: rotate(45deg); width: 12px; height: 12px;"></span> Forecast, on time</span>
+                        <span><span class="swatch" style="background: var(--crit); transform: rotate(45deg); width: 12px; height: 12px;"></span> Forecast, late</span>
+                    </div>
+                    <div class="insight" id="insight"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container grid-2">
+                <div class="card">
+                    <h3>Types of milestones</h3>
+                    <ul>
+                        <li><strong>Mandatory</strong>: required by a contract, law, or the sponsor. E.g. "Regulatory approval received", "Payment milestone 2".</li>
+                        <li><strong>Optional</strong>: set by the team to track progress. E.g. "Prototype demoed to teachers".</li>
+                        <li><strong>Phase gates</strong>: a milestone at the end of a phase where the sponsor decides to continue, change, or stop.</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>What makes a good milestone</h3>
+                    <ul>
+                        <li><strong>Binary</strong>: clearly reached or not. "Design 80% done" is not a milestone.</li>
+                        <li><strong>Verifiable</strong>: tied to an approval or sign-off someone can show.</li>
+                        <li><strong>Meaningful</strong>: marks a real step forward stakeholders care about.</li>
+                        <li><strong>Evenly spaced</strong>: roughly every few weeks, so problems show up early.</li>
+                        <li><strong>Named as an outcome</strong>: "Requirements signed off", not "Do requirements".</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="exam-tips">
+                    <h3>📝 PMP exam tips</h3>
+                    <ul>
+                        <li>Milestones have <strong>zero duration</strong>. If an option gives a milestone a duration, it's wrong.</li>
+                        <li>The <strong>milestone list</strong> is an output of <em>Define Activities</em>; it states whether each milestone is mandatory or optional.</li>
+                        <li>A <strong>milestone chart</strong> is a summary schedule for senior stakeholders. Detailed bar charts are for the team.</li>
+                        <li>A <strong>milestone schedule</strong> can appear in the project charter as a summary of key dates.</li>
+                        <li>Contracts often tie payments to milestones. Missing one can have financial consequences.</li>
+                        <li>In agile, sprint reviews and release dates serve as milestones.</li>
+                    </ul>
+                </div>
+                <div class="next-tool">
+                    <a href="raci.html">← RACI matrix</a>
+                    <a href="gantt.html">Next: Gantt chart →</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · PM Tools</p>
+        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a></p>
+    </footer>
+
+<script src="pm-schedule.js"></script>
+<script>
+// ─── Sorting exercise ───
+const ITEMS = [
+    ['Contract signed with the school', 'm', 'A single moment: the contract is signed or it isn\'t.'],
+    ['Write test cases', 'a', 'Takes days of effort and can be half done, so it\'s an activity.'],
+    ['Design approved by the principal', 'm', 'An approval event with zero duration.'],
+    ['Build the login page', 'a', 'Work with a duration and a developer assigned.'],
+    ['System goes live', 'm', 'The moment users start using it. The cut-over work before it is an activity.'],
+    ['Train teachers', 'a', 'Sessions take hours or days, so it\'s an activity.'],
+    ['Phase gate: approval to start build', 'm', 'Phase gates are decision points: milestones.'],
+    ['Weekly status meeting', 'a', 'Recurring work that takes time; not a significant event.']
+];
+const picks = {};
+
+function renderSort() {
+    document.getElementById('sortList').innerHTML = ITEMS.map(([label, ans, why], i) => {
+        const p = picks[i];
+        const cls = p ? (p === ans ? 'right' : 'wrong') : '';
+        return `<div class="sort-item ${cls}">
+            <span class="label">${label}</span>
+            <span class="btn-row">
+                <button class="choice ${p === 'm' ? 'picked' : ''}" data-i="${i}" data-v="m">◆ Milestone</button>
+                <button class="choice ${p === 'a' ? 'picked' : ''}" data-i="${i}" data-v="a">▬ Activity</button>
+            </span>
+            ${p ? `<span class="why">${p === ans ? '✓' : '✗'} ${why}</span>` : ''}
+        </div>`;
+    }).join('');
+    document.querySelectorAll('.choice').forEach(b => b.addEventListener('click', () => {
+        picks[b.dataset.i] = b.dataset.v;
+        renderSort();
+        const btn = document.querySelector(`.choice[data-i="${b.dataset.i}"][data-v="${b.dataset.v}"]`);
+        if (btn) btn.focus();
+    }));
+    const answered = Object.keys(picks).length;
+    const right = Object.entries(picks).filter(([i, v]) => ITEMS[i][1] === v).length;
+    document.getElementById('sortFeedback').innerHTML = answered === ITEMS.length
+        ? `<div class="feedback ${right === ITEMS.length ? 'success' : 'partial'}">${right}/${ITEMS.length} correct.${right === ITEMS.length ? ' You can tell a point in time from a piece of work.' : ' Change any red answers, and check the explanation.'}</div>`
+        : '';
+}
+renderSort();
+
+// ─── Milestone chart ───
+const baseline = computeCPM(SCHOLAR_TASKS);
+const select = document.getElementById('taskSelect');
+select.innerHTML = SCHOLAR_TASKS.map(t => `<option value="${t.id}">${t.id} · ${t.name} (${t.duration}d, float ${baseline.byId[t.id].float}d)</option>`).join('');
+select.value = 'E';
+
+function renderChart() {
+    const id = select.value;
+    const delay = +document.getElementById('delayRange').value;
+    document.getElementById('delayValue').textContent = `${delay} day${delay === 1 ? '' : 's'}`;
+
+    const tasks = SCHOLAR_TASKS.map(t => t.id === id ? { ...t, duration: t.duration + delay } : t);
+    const forecast = computeCPM(tasks);
+    const maxDay = baseline.projectEnd + 10;
+    const pct = d => (d / maxDay) * 100;
+
+    let html = `<div class="axis"><div>Working day →</div><div class="axis-track">${Array.from({ length: Math.floor(maxDay / 5) + 1 }, (_, i) => `<span style="left:${pct(i * 5)}%">${i * 5}</span>`).join('')}</div><div></div></div>`;
+    let lateCount = 0;
+    SCHOLAR_MILESTONES.forEach(m => {
+        const b = milestoneDay(m, baseline);
+        const f = milestoneDay(m, forecast);
+        const slip = f - b;
+        if (slip > 0) lateCount++;
+        html += `<div class="ms-row">
+            <div class="ms-name">◆ ${m.name}<span>${m.note}</span></div>
+            <div class="ms-track" style="--step:${100 / maxDay}%">
+                ${slip > 0 ? `<div class="slip-line" style="left:${pct(b)}%; width:${pct(slip)}%"></div>` : ''}
+                <div class="diamond baseline" style="left:${pct(b)}%" title="Baseline: day ${b}"></div>
+                <div class="diamond forecast ${slip > 0 ? 'late' : ''}" style="left:${pct(f)}%" title="Forecast: day ${f}"></div>
+            </div>
+            <div class="ms-status ${slip > 0 ? 'late' : 'ok'}">Day ${f}${slip > 0 ? ` (+${slip})` : ' ✓'}</div>
+        </div>`;
+    });
+    document.getElementById('msChart').innerHTML = html;
+
+    const t = baseline.byId[id];
+    const endSlip = forecast.projectEnd - baseline.projectEnd;
+    let msg;
+    if (delay === 0) {
+        msg = `<div class="feedback partial" style="color: var(--charcoal);">Move the slider to delay <strong>${t.name}</strong>. It has <strong>${t.float} day${t.float === 1 ? '' : 's'} of float</strong>${t.critical ? ', so it\'s on the critical path' : ''}. Predict what will happen before you move it.</div>`;
+    } else if (endSlip === 0) {
+        msg = `<div class="feedback success">Go-live doesn't move. <strong>${t.name}</strong> has ${t.float} days of float, so a ${delay}-day delay is absorbed. ${lateCount ? `${lateCount} intermediate milestone${lateCount > 1 ? 's' : ''} still slip${lateCount > 1 ? '' : 's'}, though, which stakeholders will notice.` : 'No milestone moves at all.'}</div>`;
+    } else {
+        msg = `<div class="feedback error">Go-live slips <strong>${endSlip} day${endSlip > 1 ? 's' : ''}</strong>. ${t.critical
+            ? `<strong>${t.name}</strong> is on the critical path (zero float), so every day of delay moves the end date.`
+            : `<strong>${t.name}</strong> had ${t.float} day${t.float === 1 ? '' : 's'} of float. The first ${t.float} day${t.float === 1 ? ' was' : 's were'} absorbed; the rest pushed the end date, and the task is now on the critical path.`}
+            ${lateCount} of ${SCHOLAR_MILESTONES.length} milestones are now late. <a href="cpm.html" style="color: inherit;">See why on the critical path page →</a></div>`;
+    }
+    document.getElementById('insight').innerHTML = msg;
+}
+
+select.addEventListener('change', () => { document.getElementById('delayRange').value = 0; renderChart(); });
+document.getElementById('delayRange').addEventListener('input', renderChart);
+renderChart();
+</script>
+</body>
+</html>
