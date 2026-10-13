@@ -81,7 +81,7 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
-            padding-top: 6rem;
+            padding-top: 2.5rem;
             padding-bottom: 2rem;
             background: linear-gradient(135deg, var(--indigo) 0%, rgba(44, 62, 80, 0.9) 100%);
         }
@@ -390,9 +390,11 @@
         
         @media (max-width: 1200px) {
             .main-layout {
-                grid-template-columns: 1fr;
+                grid-template-columns: minmax(0, 1fr);
             }
         }
+        .main-layout > * { min-width: 0; }
+        .main-layout svg { max-width: 100%; height: auto; }
         
         @media (max-width: 768px) {
             nav {
@@ -417,14 +419,7 @@
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav>
-        <div class="logo">PMP Guide</div>
-        <ul class="nav-links">
-            <li><a href="index.html">Learning</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
-        </ul>
-    </nav>
+    <script src="site-nav.js" data-page="triple-constraint-advanced"></script>
     
     <header>
         <h1>🔺 Interactive Triple Constraint Triangle</h1>

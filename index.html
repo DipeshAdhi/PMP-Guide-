@@ -3,723 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMP Guide - Project Management Learning</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>PMP Guide - Learn Project Management Step by Step</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .home-hero { padding: 4rem 0 3rem; border-bottom: 1px solid var(--line); }
+        .home-hero h1 { font-size: clamp(2em, 6vw, 3.4em); font-weight: 800; max-width: 820px; overflow-wrap: break-word; }
+        .home-hero h1 span { color: var(--coral); }
+        .home-hero p { font-size: 1.12em; color: var(--muted); max-width: 640px; margin: 1rem 0 1.6rem; }
+        .continue { display: inline-flex; align-items: center; gap: 0.8rem; background: var(--indigo); color: #fff; text-decoration: none; border-radius: 12px; padding: 0.9rem 1.3rem; }
+        .continue:hover { background: var(--coral); }
+        .continue small { display: block; font-size: 0.78em; opacity: 0.8; }
+        .continue strong { font-family: 'Syne', sans-serif; font-size: 1.05em; }
+        .continue .arrow { font-size: 1.4em; }
+
+        .doors { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .door { display: flex; flex-direction: column; gap: 0.5rem; text-decoration: none; color: inherit; background: var(--paper); border: 1.5px solid var(--line); border-top: 6px solid var(--c); border-radius: 16px; padding: 1.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .door:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(44, 62, 80, 0.12); }
+        .door .step { font-family: 'IBM Plex Mono', monospace; font-size: 0.75em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c); }
+        .door h2 { font-size: 1.5em; }
+        .door p { color: var(--muted); font-size: 0.95em; }
+        .door ul { margin-left: 1.1rem; font-size: 0.9em; }
+        .door .go { margin-top: auto; padding-top: 0.6rem; font-weight: 700; color: var(--indigo); }
+
+        .map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.7rem; }
+        .map a { display: flex; gap: 0.7rem; align-items: flex-start; text-decoration: none; color: var(--charcoal); background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 0.9rem; font-size: 0.92em; line-height: 1.3; }
+        .map a:hover { border-color: var(--indigo); }
+        .map .num { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.85em; color: var(--indigo); }
+        .map .num.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+        .map .num.next { border-color: var(--coral); color: var(--coral); }
+        .map small { display: block; color: var(--muted); font-size: 0.82em; margin-top: 0.2rem; }
+
+        @media (max-width: 860px) {
+            .doors { grid-template-columns: 1fr; }
+            .map { grid-template-columns: repeat(2, 1fr); }
         }
-
-        :root {
-            --indigo: #2C3E50;
-            --coral: #FF6B5B;
-            --teal: #20B2AA;
-            --gold: #FFB700;
-            --white: #F9F7F4;
-            --charcoal: #3D3D3D;
-            --light-gray: #E8E6E1;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--white);
-            color: var(--charcoal);
-        }
-
-        /* Navigation */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: var(--white);
-            border-bottom: 1px solid var(--light-gray);
-            padding: 1.5rem 2rem;
-            z-index: 1000;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-family: 'Syne', sans-serif;
-            font-size: 1.4em;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--coral), var(--teal), var(--gold));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--charcoal);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95em;
-            transition: color 0.3s;
-        }
-
-        .nav-links a:hover {
-            color: var(--indigo);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            color: white;
-            margin-bottom: 0;
-            padding-top: 8rem;
-            padding-bottom: 4rem;
-            background: linear-gradient(135deg, var(--indigo) 0%, rgba(44, 62, 80, 0.9) 100%);
-        }
-
-        header h1 {
-            font-family: 'Syne', sans-serif;
-            font-size: 3.5em;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        header p {
-            font-size: 1.2em;
-            opacity: 0.95;
-        }
-
-        .header-cta {
-            display: inline-block;
-            margin-top: 20px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            border: 2px solid white;
-            transition: all 0.3s;
-        }
-
-        .header-cta:hover {
-            background: white;
-            color: var(--indigo);
-        }
-
-        .buttons-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin: 50px auto;
-            padding: 0 2rem;
-        }
-
-        .button-card {
-            background: white;
-            border-radius: 12px;
-            padding: 40px 30px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            cursor: pointer;
-            transition: all 0.3s;
-            border-left: 4px solid var(--light-gray);
-        }
-
-        .button-card:nth-child(1) {
-            border-left-color: var(--coral);
-        }
-
-        .button-card:nth-child(2) {
-            border-left-color: var(--teal);
-        }
-
-        .button-card:nth-child(3) {
-            border-left-color: var(--gold);
-        }
-
-        .button-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .button-card h2 {
-            font-family: 'Syne', sans-serif;
-            font-size: 1.8em;
-            margin-bottom: 15px;
-            font-weight: 600;
-            color: var(--indigo);
-        }
-
-        .button-card:nth-child(1) h2 { color: var(--coral); }
-        .button-card:nth-child(2) h2 { color: var(--teal); }
-        .button-card:nth-child(3) h2 { color: var(--gold); }
-
-        .button-card p {
-            color: #555;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-
-        .button-card button {
-            background: linear-gradient(135deg, var(--indigo) 0%, rgba(44, 62, 80, 0.8) 100%);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-family: 'Syne', sans-serif;
-            font-size: 1em;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .button-card button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .content-section {
-            display: none;
-            background: white;
-            border-radius: 12px;
-            padding: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            margin: 0 2rem 50px;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        .back-button {
-            background: var(--indigo);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-bottom: 30px;
-            font-size: 1em;
-            font-weight: 600;
-        }
-
-        .back-button:hover {
-            background: var(--teal);
-        }
-
-        .content-section h2 {
-            font-family: 'Syne', sans-serif;
-            color: var(--indigo);
-            margin-bottom: 30px;
-            font-size: 2.2em;
-            font-weight: 700;
-        }
-
-        .content-section h3 {
-            font-family: 'Syne', sans-serif;
-            color: var(--coral);
-            margin-top: 30px;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-            font-weight: 600;
-        }
-
-        .content-section p {
-            color: #555;
-            line-height: 1.8;
-            margin-bottom: 15px;
-        }
-
-        .content-section ul, .content-section ol {
-            margin-left: 30px;
-            margin-bottom: 15px;
-            color: #555;
-            line-height: 1.8;
-        }
-
-        .content-section li {
-            margin-bottom: 10px;
-        }
-
-        .constraint-box {
-            background: #f8f9ff;
-            border-left: 4px solid var(--coral);
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 6px;
-        }
-
-        .constraint-box strong {
-            color: var(--coral);
-            display: block;
-            font-size: 1.1em;
-            margin-bottom: 8px;
-        }
-
-        .section-highlight {
-            background: linear-gradient(135deg, rgba(255, 107, 91, 0.1), rgba(32, 178, 170, 0.1));
-            border-left: 4px solid var(--teal);
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-        }
-
-        .section-highlight strong {
-            color: var(--teal);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        table th, table td {
-            border: 1px solid var(--light-gray);
-            padding: 12px;
-            text-align: left;
-        }
-
-        table th {
-            background: var(--indigo);
-            color: white;
-            font-weight: 600;
-        }
-
-        table tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        table tr:hover {
-            background: #f5f5f5;
-        }
-
-        .interactive-link {
-            display: inline-block;
-            margin-top: 12px;
-            background: var(--indigo);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            cursor: pointer;
-            border: none;
-            font-size: 1em;
-        }
-
-        .interactive-link:hover {
-            background: var(--coral);
-            transform: translateY(-2px);
-        }
-
-        .info-panel {
-            background: #e7f3ff;
-            border-left: 4px solid var(--indigo);
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 20px;
-        }
-
-        .info-panel strong {
-            color: var(--indigo);
-        }
-
-        footer {
-            background: var(--indigo);
-            color: white;
-            text-align: center;
-            padding: 3rem 2rem;
-            margin-top: 50px;
-        }
-
-        footer a {
-            color: var(--coral);
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 768px) {
-            nav {
-                flex-direction: column;
-                gap: 1rem;
-                padding: 1rem;
-            }
-
-            .nav-links {
-                gap: 1rem;
-                font-size: 0.9em;
-            }
-
-            header h1 {
-                font-size: 2.2em;
-            }
-
-            .buttons-section {
-                grid-template-columns: 1fr;
-            }
-
-            .content-section {
-                padding: 30px;
-            }
-
-            .content-section h2 {
-                font-size: 1.8em;
-            }
-        }
+        @media (max-width: 480px) { .map { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav>
-        <div class="logo">PMP Guide</div>
-        <ul class="nav-links">
-            <li><a href="project-simulator.html" style="color: var(--coral); font-weight: 700;">🎮 PLAY SIMULATOR</a></li>
-            <li><a href="game-interactive.html" style="color: var(--teal); font-weight: 700;">🧪 PM LAB</a></li>
-            <li><a href="pm-tools.html">PM Tools</a></li>
-            <li><a href="agile-board.html">Agile</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="triple-constraint-advanced.html">Interactive Tools</a></li>
-            <li><a href="#mainMenu">Learn</a></li>
-        </ul>
-    </nav>
+    <script src="site-nav.js" data-page="index"></script>
 
-    <!-- Header -->
-    <header>
+    <header class="home-hero">
         <div class="container">
-            <h1>📚 PMP Guide</h1>
-            <p>Master Project Management Fundamentals & Exam Preparation</p>
-            <a href="dashboard.html" class="header-cta">✨ View Three Pillars Dashboard</a>
+            <h1>Learn project management <span>one step at a time</span>.</h1>
+            <p>An 8-module course for the PMP exam. Every module is short: read a lesson, try it in an interactive tool, then check what you learned.</p>
+            <a class="continue" id="continue" href="learn.html"></a>
         </div>
     </header>
 
-    <!-- Main Menu -->
-    <div id="mainMenu" class="buttons-section">
-        <div class="button-card">
-            <h2>🚀 Starting Learner</h2>
-            <p>Begin your journey into project management with fundamental concepts, SDLC overview, and key methodologies used in the industry.</p>
-            <button onclick="showContent('starter')">Start Learning</button>
-        </div>
-
-        <div class="button-card">
-            <h2>🎯 PMP Exam Preparation</h2>
-            <p>Comprehensive guide tailored for PMP certification exam. Learn constraints, frameworks, and best practices with detailed examples.</p>
-            <button onclick="showContent('pmp')">Prepare for Exam</button>
-        </div>
-
-        <div class="button-card">
-            <h2>🔺 Interactive Triangle</h2>
-            <p>Fully interactive constraint triangle! Change constraints and watch impacts on quality in real-time with scenario simulations.</p>
-            <button onclick="window.location.href='triple-constraint-advanced.html'">Launch Tool</button>
-        </div>
-    </div>
-
-    <!-- Starting Learner Content -->
-    <div id="starterContent" class="content-section">
-        <div class="container">
-            <button class="back-button" onclick="showMenu()">← Back to Menu</button>
-
-            <h2>🚀 Starting Learner: Project Management Fundamentals</h2>
-
-            <h3>1. Introduction to Software Project Management</h3>
-            <p>Software Project Management is the discipline of planning, organizing, and managing software development projects to deliver quality products on time and within budget.</p>
-
-            <p><strong>Key Roles:</strong></p>
-            <ul>
-                <li>Project Manager - Oversees planning, execution, and monitoring</li>
-                <li>Team Lead - Manages technical team and day-to-day activities</li>
-                <li>Business Analyst - Gathers requirements and defines scope</li>
-                <li>Quality Assurance - Ensures product meets quality standards</li>
-            </ul>
-
-            <h3>2. Software Development Life Cycle (SDLC)</h3>
-            <p>SDLC is a structured process that defines the stages involved in software development, from conception to deployment and maintenance.</p>
-
-            <p><strong>Main Stages:</strong></p>
-            <ul>
-                <li><strong>Planning & Requirements:</strong> Define project scope, objectives, and gather requirements</li>
-                <li><strong>Analysis:</strong> Analyze requirements and create detailed specifications</li>
-                <li><strong>Design:</strong> Create architecture and design documents</li>
-                <li><strong>Development:</strong> Write and code the software</li>
-                <li><strong>Testing:</strong> Quality assurance and testing phases</li>
-                <li><strong>Deployment:</strong> Release to production environment</li>
-                <li><strong>Maintenance:</strong> Support and updates post-deployment</li>
-            </ul>
-
-            <h3>3. Project Management Lifecycle</h3>
-            <p>Projects go through distinct phases that help in organizing and controlling the work:</p>
-
-            <div class="constraint-box">
-                <strong>Project Initiation</strong>
-                Define project goals, stakeholders, and business case
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="doors">
+                    <a class="door" href="learn.html" style="--c: var(--coral);">
+                        <span class="step">Start here</span>
+                        <h2>📘 Learn</h2>
+                        <p>The guided course, in order. Each module takes 5–8 minutes.</p>
+                        <ul><li>Read a short lesson</li><li>Try it in an interactive tool</li><li>Answer 3 check questions</li></ul>
+                        <span class="go">Open the course →</span>
+                    </a>
+                    <a class="door" href="pm-tools.html" style="--c: var(--teal);">
+                        <span class="step">Practise freely</span>
+                        <h2>🛠️ Workspace</h2>
+                        <p>All the project tools in one place: WBS and task board, RACI, milestones, Gantt, critical path, and the Scrum, DSDM, and XP boards.</p>
+                        <span class="go">Open the workspace →</span>
+                    </a>
+                    <a class="door" href="exam.html" style="--c: var(--gold);">
+                        <span class="step">When you're ready</span>
+                        <h2>🎯 Exam prep</h2>
+                        <p>See your readiness, take the mock quiz and scenario questions, run the simulator, and keep the formula sheet handy.</p>
+                        <span class="go">Open exam prep →</span>
+                    </a>
+                </div>
             </div>
+        </section>
 
-            <div class="constraint-box">
-                <strong>Project Planning</strong>
-                Develop schedule, budget, resources, and risk management plans
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>The course</h2><p>Work through the modules in order. Each one builds on the last.</p></div>
+                <div class="map" id="map"></div>
             </div>
+        </section>
+    </main>
 
-            <div class="constraint-box">
-                <strong>Project Execution</strong>
-                Execute project work and deliver project outputs
-            </div>
-
-            <div class="constraint-box">
-                <strong>Project Monitoring & Controlling</strong>
-                Track progress, manage changes, and ensure compliance
-            </div>
-
-            <div class="constraint-box">
-                <strong>Project Closure</strong>
-                Finalize deliverables, document lessons learned, archive project information
-            </div>
-
-            <h3>4. The Four Pillars of Project Success</h3>
-            <p>Great projects require balance between four interconnected elements:</p>
-
-            <table>
-                <tr>
-                    <th>Pillar</th>
-                    <th>Focus</th>
-                    <th>Key Activities</th>
-                </tr>
-                <tr>
-                    <td><strong>👥 PEOPLE</strong></td>
-                    <td>Team & Leadership</td>
-                    <td>Recruitment, training, stakeholder engagement, communication</td>
-                </tr>
-                <tr>
-                    <td><strong>⚙️ PROCESS</strong></td>
-                    <td>SDLC & Methods</td>
-                    <td>Planning, workflows, quality gates, change management</td>
-                </tr>
-                <tr>
-                    <td><strong>📊 PROJECT</strong></td>
-                    <td>Constraints & Goals</td>
-                    <td>Scope, schedule, budget, risk management, WBS</td>
-                </tr>
-                <tr>
-                    <td><strong>📦 PRODUCT</strong></td>
-                    <td>Deliverables & Value</td>
-                    <td>Requirements, features, quality, user satisfaction</td>
-                </tr>
-            </table>
-
-            <h3>5. The Triple Constraint Triangle</h3>
-            <p>Every project is constrained by three primary factors that must be balanced:</p>
-
-            <div class="constraint-box">
-                <strong>⏱️ Time</strong>
-                The schedule and deadline. Includes duration of tasks, milestones, and project completion date. Shorter timelines increase risk and cost.
-            </div>
-
-            <div class="constraint-box">
-                <strong>💰 Cost</strong>
-                The budget and resources. Includes personnel, equipment, software, and other expenses. Limited budget constrains scope and timeline.
-            </div>
-
-            <div class="constraint-box">
-                <strong>📋 Scope</strong>
-                What will be delivered. Includes features, functions, and requirements. Expanding scope requires more time and resources.
-            </div>
-
-            <div class="section-highlight">
-                <strong>⚡ Key Insight:</strong> Project managers must balance these three constraints. Changing one typically impacts the others. For example, reducing time may require increasing cost or reducing scope.
-            </div>
-
-            <div class="info-panel">
-                <strong>🎯 Try the Interactive Triple Constraint Triangle!</strong><br>
-                <p style="margin-top: 10px;">Change any constraint and watch the others adjust automatically! See real-time impacts on project quality, budget, timeline, and features.</p>
-                <a href="triple-constraint-advanced.html" class="interactive-link">→ Launch Interactive Tool</a>
-            </div>
-
-            <h3>6. Software Quality Management</h3>
-            <p>Quality management ensures that the software product meets defined standards and customer expectations.</p>
-
-            <p><strong>Components:</strong></p>
-            <ul>
-                <li><strong>Quality Assurance (QA):</strong> Process-focused, preventive approach to maintain quality standards</li>
-                <li><strong>Quality Control (QC):</strong> Product-focused, inspective approach to verify deliverables meet requirements</li>
-            </ul>
-
-            <h3>7. Common Project Management Methodologies</h3>
-
-            <p><strong>Agile Methodology:</strong></p>
-            <ul>
-                <li>Iterative and incremental development</li>
-                <li>Frequent releases and continuous feedback</li>
-                <li>Flexible to changing requirements</li>
-                <li>Self-organizing teams</li>
-            </ul>
-
-            <p><strong>Prototype Methodology:</strong></p>
-            <ul>
-                <li>Build proof-of-concept prototypes early</li>
-                <li>Gather user feedback iteratively</li>
-                <li>Refine and develop based on feedback</li>
-                <li>Reduces risk by validating concepts</li>
-            </ul>
-
-            <p><strong>Waterfall Methodology:</strong></p>
-            <ul>
-                <li>Sequential, phase-by-phase approach</li>
-                <li>Each phase completed before next begins</li>
-                <li>Detailed documentation at each stage</li>
-                <li>Best for well-defined, stable requirements</li>
-            </ul>
-
-            <h3>8. Key Takeaways</h3>
-            <ul>
-                <li>Project management requires balance between People, Process, Project, and Product</li>
-                <li>Triple constraints (time, cost, scope) must be managed interdependently</li>
-                <li>SDLC provides structure for software development</li>
-                <li>Clear planning and communication are critical for success</li>
-                <li>Different methodologies suit different project types</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- PMP Exam Preparation Content -->
-    <div id="pmpContent" class="content-section">
-        <div class="container">
-            <button class="back-button" onclick="showMenu()">← Back to Menu</button>
-
-            <h2>🎯 PMP Exam Preparation: Advanced Project Management</h2>
-
-            <h3>1. The Triple Constraint Triangle - Deep Dive</h3>
-            <p>Understanding the triple constraints is fundamental for the PMP exam. Every project decision must consider these three dimensions:</p>
-
-            <div class="constraint-box">
-                <strong>⏱️ TIME CONSTRAINT</strong>
-                <p><strong>Definition:</strong> The project schedule and deadline - when deliverables must be completed.</p>
-                <p style="margin-top: 8px;"><strong>Key Concepts:</strong></p>
-                <ul style="margin-top: 5px;">
-                    <li>Duration - Total time from start to finish</li>
-                    <li>Milestone - Significant point in project timeline</li>
-                    <li>Critical Path - Sequence of activities that determines project duration</li>
-                    <li>Schedule Variance - Difference between planned and actual schedule</li>
-                </ul>
-                <p style="margin-top: 8px;"><strong>Impact:</strong> Shorter timelines increase cost and risk, may reduce scope.</p>
-            </div>
-
-            <div class="constraint-box">
-                <strong>💰 COST CONSTRAINT</strong>
-                <p><strong>Definition:</strong> The project budget and resources required to execute the project.</p>
-                <p style="margin-top: 8px;"><strong>Key Concepts:</strong></p>
-                <ul style="margin-top: 5px;">
-                    <li>Budget - Total financial resources allocated</li>
-                    <li>Resources - Personnel, equipment, software needed</li>
-                    <li>Cost Variance - Difference between budgeted and actual costs</li>
-                    <li>ROI - Return on investment considerations</li>
-                </ul>
-                <p style="margin-top: 8px;"><strong>Impact:</strong> Limited budget may require extended timeline or reduced scope.</p>
-            </div>
-
-            <h3>2. Work Breakdown Structure (WBS)</h3>
-            <p>WBS is a hierarchical decomposition of project work into manageable components. It's a foundational tool in project management.</p>
-
-            <p><strong>Key Characteristics:</strong></p>
-            <ul>
-                <li>100% rule - All project work is included, nothing is left out</li>
-                <li>Hierarchical - Organized in levels from high-level to detailed tasks</li>
-                <li>Deliverable-focused - Focuses on what will be delivered</li>
-                <li>Mutually exclusive - No overlap between components</li>
-            </ul>
-
-            <h3>3. Project Management Processes (PMBOK Framework)</h3>
-            <p>The Project Management Body of Knowledge (PMBOK) defines 5 process groups and 10 knowledge areas essential for project management.</p>
-
-            <p><strong>5 Process Groups:</strong></p>
-            <ul>
-                <li><strong>Initiating:</strong> Define project, obtain authorization, identify stakeholders</li>
-                <li><strong>Planning:</strong> Develop project management plan, define scope, schedule, budget</li>
-                <li><strong>Executing:</strong> Perform project work, produce deliverables, manage team</li>
-                <li><strong>Monitoring & Controlling:</strong> Track progress, manage changes, ensure quality</li>
-                <li><strong>Closing:</strong> Finalize deliverables, document lessons learned, formally close project</li>
-            </ul>
-
-            <h3>4. Quality Assurance vs Quality Control</h3>
-            <table>
-                <tr>
-                    <th>Aspect</th>
-                    <th>Quality Assurance</th>
-                    <th>Quality Control</th>
-                </tr>
-                <tr>
-                    <td>Focus</td>
-                    <td>Process</td>
-                    <td>Product</td>
-                </tr>
-                <tr>
-                    <td>Timing</td>
-                    <td>Before work is done</td>
-                    <td>After work is done</td>
-                </tr>
-                <tr>
-                    <td>Approach</td>
-                    <td>Preventive</td>
-                    <td>Inspective</td>
-                </tr>
-            </table>
-
-            <h3>5. PMP Exam Tips</h3>
-            <ul>
-                <li>Understand the triple constraints and their interdependencies</li>
-                <li>Master the 5 process groups and their sequence</li>
-                <li>Know the 10 knowledge areas in depth</li>
-                <li>Understand different methodologies and when to apply them</li>
-                <li>Study project management formulas and calculations</li>
-                <li>Practice with sample exam questions and simulations</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Footer -->
     <footer>
-        <div class="container">
-            <p>&copy; 2026 PMP Guide. Comprehensive project management learning platform.</p>
-            <p><a href="dashboard.html">← Back to Dashboard</a></p>
-        </div>
+        <p>PMP Guide · <a href="learn.html">Learn</a> · <a href="pm-tools.html">Workspace</a> · <a href="exam.html">Exam prep</a></p>
     </footer>
 
-    <script>
-        function showContent(contentType) {
-            document.getElementById('mainMenu').style.display = 'none';
+<script>
+const C = window.PMPCourse;
+const p = C.load();
+const next = C.next();
+const done = C.completed();
+const started = Object.keys(p.read).length || Object.keys(p.tried).length || Object.keys(p.check).length;
+document.getElementById('continue').innerHTML = next
+    ? `<span><small>${started ? `Continue · ${done} of ${C.COURSE.length} modules done` : 'Start the course'}</small><strong>Module ${next.id}: ${next.title}</strong></span><span class="arrow">→</span>`
+    : `<span><small>Course complete 🎉</small><strong>Go to exam prep</strong></span><span class="arrow">→</span>`;
+document.getElementById('continue').href = next ? `learn.html#m${next.id}` : 'exam.html';
 
-            if (contentType === 'starter') {
-                document.getElementById('starterContent').classList.add('active');
-                document.getElementById('pmpContent').classList.remove('active');
-            } else if (contentType === 'pmp') {
-                document.getElementById('pmpContent').classList.add('active');
-                document.getElementById('starterContent').classList.remove('active');
-            }
-
-            window.scrollTo(0, 0);
-        }
-
-        function showMenu() {
-            document.getElementById('mainMenu').style.display = 'grid';
-            document.getElementById('starterContent').classList.remove('active');
-            document.getElementById('pmpContent').classList.remove('active');
-            window.scrollTo(0, 0);
-        }
-    </script>
+document.getElementById('map').innerHTML = C.COURSE.map(m => {
+    const isDone = C.isDone(p, m.id);
+    const steps = [p.read[m.id], p.tried[m.id], (p.check[m.id] || 0) >= 2].filter(Boolean).length;
+    return `<a href="learn.html#m${m.id}"><span class="num ${isDone ? 'done' : next && next.id === m.id ? 'next' : ''}">${isDone ? '✓' : m.id}</span><span>${m.title}<small>${isDone ? 'Complete' : `${steps}/3 steps`}</small></span></a>`;
+}).join('');
+</script>
 </body>
 </html>

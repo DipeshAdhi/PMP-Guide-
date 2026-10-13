@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PM Tools - PMP Guide</title>
+    <title>Workspace - PMP Guide</title>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="pm-tools.css">
     <style>
         :root { --accent: var(--coral); }
-        .chain { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 0.5rem; }
-        .chain-step { position: relative; padding-right: 1.5rem; }
-        .chain-step::after { content: '→'; position: absolute; right: 0.3rem; top: 0.9rem; color: var(--muted); font-size: 1.3em; }
-        .chain-step:last-child::after { display: none; }
         .tool-card {
             display: flex; flex-direction: column; gap: 0.5rem; height: 100%;
             text-decoration: none; color: inherit; background: var(--paper); border: 1.5px solid var(--line);
@@ -25,100 +21,100 @@
         .tool-card p { font-size: 0.92em; color: var(--muted); }
         .tool-card .go { margin-top: auto; font-weight: 700; color: var(--indigo); font-size: 0.9em; }
         @media (max-width: 860px) {
-            .chain { grid-template-columns: 1fr; gap: 1rem; }
-            .chain-step { padding-right: 0; }
-            .chain-step::after { content: '↓'; position: static; display: block; text-align: center; margin-top: 0.5rem; }
         }
+            .ws-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
     </style>
 </head>
 <body>
-    <nav class="site-nav">
-        <a class="logo" href="index.html">PMP Guide</a>
-        <ul>
-            <li><a href="index.html">Learn</a></li>
-            <li><a href="dashboard.html">Four Pillars</a></li>
-            <li><a href="pm-tools.html" aria-current="page">PM Tools</a></li>
-            <li><a href="agile-board.html">Agile</a></li>
-            <li><a href="game-interactive.html">PM Lab</a></li>
-            <li><a href="project-simulator.html">Simulator</a></li>
-        </ul>
-    </nav>
-    <div class="tool-tabs">
-        <a href="pm-tools.html" aria-current="page">Overview</a>
-        <a href="raci.html">👥 RACI matrix</a>
-        <a href="milestones.html">🏁 Milestones</a>
-        <a href="gantt.html">📊 Gantt chart</a>
-        <a href="cpm.html">🛤️ Critical path (CPM)</a>
-        <a href="board.html">🗂️ Task board</a>
-    </div>
+    <script src="site-nav.js" data-page="pm-tools"></script>
 
     <header class="page-hero">
         <div class="container">
-            <span class="eyebrow">PM Tools</span>
-            <h1>Tools for planning and tracking</h1>
-            <p class="lead">Each tool answers one question a project manager is asked every week. They all use the same example project, the Scholar Academy school system, so you can see one plan from four angles.</p>
+            <span class="eyebrow">Workspace</span>
+            <h1>Project workspace</h1>
+            <p class="lead">Every tool you need to plan, schedule, and deliver a project. They all use the same example project, the Scholar Academy school system, so you see one plan from several angles. Following the course? Each module tells you which tool to open.</p>
+            <div class="definition"><strong>Coming next:</strong> these tools will become one connected workspace. You'll pick a methodology (predictive, Scrum, Kanban, DSDM, or a hybrid), and the tools will share one project and change how they work to match.</div>
         </div>
     </header>
 
     <main>
         <section class="block">
             <div class="container">
-                <div class="block-head">
-                    <h2>How they fit together</h2>
-                    <p>In planning, you usually work in this order: decide who does what, work out the sequence and what controls the end date, draw the schedule, then pick the checkpoints you'll report on.</p>
-                </div>
-                <div class="chain">
-                    <div class="chain-step">
-                        <a class="tool-card" href="raci.html" style="--c: var(--coral);">
-                            <span class="icon">👥</span>
-                            <span class="question">WHO does what?</span>
-                            <h3>RACI matrix</h3>
-                            <p>Assigns Responsible, Accountable, Consulted, and Informed for every task. Fix a broken RACI matrix.</p>
-                            <span class="go">Open →</span>
-                        </a>
-                    </div>
-                    <div class="chain-step">
-                        <a class="tool-card" href="cpm.html" style="--c: var(--purple);">
-                            <span class="icon">🛤️</span>
-                            <span class="question">WHICH tasks control the end date?</span>
-                            <h3>Critical path (CPM)</h3>
-                            <p>Forward pass, backward pass, float. Step through it, then try the practice questions and PERT calculator.</p>
-                            <span class="go">Open →</span>
-                        </a>
-                    </div>
-                    <div class="chain-step">
-                        <a class="tool-card" href="gantt.html" style="--c: var(--gold);">
-                            <span class="icon">📊</span>
-                            <span class="question">WHEN does each task happen?</span>
-                            <h3>Gantt chart</h3>
-                            <p>The schedule as bars on a timeline. Change durations and watch dependencies push other tasks.</p>
-                            <span class="go">Open →</span>
-                        </a>
-                    </div>
-                    <div class="chain-step">
-                        <a class="tool-card" href="milestones.html" style="--c: var(--teal);">
-                            <span class="icon">🏁</span>
-                            <span class="question">ARE we on track?</span>
-                            <h3>Milestones</h3>
-                            <p>Zero-duration checkpoints for reporting. Delay a task and see which milestones slip.</p>
-                            <span class="go">Open →</span>
-                        </a>
-                    </div>
+                <div class="block-head"><h2>Plan the scope and the team</h2><p>What will we deliver, and who does what?</p></div>
+                <div class="ws-grid">
+                    <a class="tool-card" href="board.html" style="--c: var(--teal);">
+                        <span class="icon">🗂️</span>
+                        <span class="question">WHAT is the work?</span>
+                        <h3>Task board: WBS + milestones</h3>
+                        <p>Work packages as cards on a board, or as a WBS tree. Move cards to Done and watch milestones fill in.</p>
+                        <span class="go">Open →</span>
+                    </a>
+                    <a class="tool-card" href="raci.html" style="--c: var(--coral);">
+                        <span class="icon">👥</span>
+                        <span class="question">WHO does what?</span>
+                        <h3>RACI matrix</h3>
+                        <p>Responsible, Accountable, Consulted, Informed for every task. Fix a broken RACI matrix.</p>
+                        <span class="go">Open →</span>
+                    </a>
                 </div>
             </div>
         </section>
 
         <section class="block">
             <div class="container">
-                <a class="tool-card" href="board.html" style="--c: var(--teal); flex-direction: row; align-items: center; gap: 1.2rem; flex-wrap: wrap;">
-                    <span class="icon">🗂️</span>
-                    <span style="flex: 1; min-width: 220px;">
-                        <span class="question">THEN: run the work</span>
-                        <h3 style="margin: 0.2rem 0;">Task board: WBS + milestones</h3>
-                        <p>A Trello-style board where every card is a WBS work package tagged with its milestone. Drag cards to Done and watch milestones fill in, or switch to the WBS tree.</p>
-                    </span>
-                    <span class="go">Open the board →</span>
-                </a>
+                <div class="block-head"><h2>Schedule and track</h2><p>Which tasks control the end date, when does each happen, and are we on track?</p></div>
+                <div class="ws-grid">
+                    <a class="tool-card" href="cpm.html" style="--c: var(--purple);">
+                        <span class="icon">🛤️</span>
+                        <span class="question">WHICH tasks matter most?</span>
+                        <h3>Critical path (CPM)</h3>
+                        <p>Forward pass, backward pass, float, PERT. Change durations and see the critical path move.</p>
+                        <span class="go">Open →</span>
+                    </a>
+                    <a class="tool-card" href="gantt.html" style="--c: var(--gold);">
+                        <span class="icon">📊</span>
+                        <span class="question">WHEN does it happen?</span>
+                        <h3>Gantt chart</h3>
+                        <p>The schedule as bars on a timeline, with dependencies, float, and the critical path.</p>
+                        <span class="go">Open →</span>
+                    </a>
+                    <a class="tool-card" href="milestones.html" style="--c: var(--teal);">
+                        <span class="icon">🏁</span>
+                        <span class="question">ARE we on track?</span>
+                        <h3>Milestones</h3>
+                        <p>Zero-duration checkpoints for reporting. Delay a task and see which milestones slip.</p>
+                        <span class="go">Open →</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Deliver with agile</h2><p>Iterative ways of working, each with its own board and rules.</p></div>
+                <div class="ws-grid">
+                    <a class="tool-card" href="agile-board.html" style="--c: var(--teal);">
+                        <span class="icon">🔄</span>
+                        <span class="question">SCRUM</span>
+                        <h3>Scrum board</h3>
+                        <p>Backlog, sprint planning, tasks, daily scrum, review, retrospective, with a view for each role.</p>
+                        <span class="go">Open →</span>
+                    </a>
+                    <a class="tool-card" href="dsdm.html" style="--c: #E8A317;">
+                        <span class="icon">🧭</span>
+                        <span class="question">DSDM</span>
+                        <h3>DSDM</h3>
+                        <p>Feasibility and Foundations gates, MoSCoW prioritization, and timeboxes.</p>
+                        <span class="go">Open →</span>
+                    </a>
+                    <a class="tool-card" href="xp.html" style="--c: #3A6FD8;">
+                        <span class="icon">⚡</span>
+                        <span class="question">EXTREME PROGRAMMING</span>
+                        <h3>XP</h3>
+                        <p>The XP flow, the planning game with spikes, and test-driven development.</p>
+                        <span class="go">Open →</span>
+                    </a>
+                </div>
             </div>
         </section>
 
@@ -126,7 +122,7 @@
             <div class="container">
                 <div class="block-head">
                     <h2>The example project</h2>
-                    <p>Scholar Academy is building a school management system. These eight activities appear on the Gantt chart, CPM, and milestone pages. Durations are in working days.</p>
+                    <p>Scholar Academy is building a school management system. These eight activities appear on the critical path, Gantt chart, and milestone pages. Durations are in working days.</p>
                 </div>
                 <div class="scroll-x">
                     <table class="data" id="projectTable" style="min-width: 600px;"></table>
@@ -136,8 +132,7 @@
     </main>
 
     <footer>
-        <p>PMP Guide · PM Tools</p>
-        <p><a href="raci.html">RACI</a> · <a href="milestones.html">Milestones</a> · <a href="gantt.html">Gantt chart</a> · <a href="cpm.html">Critical path</a> · <a href="board.html">Task board</a></p>
+        <p>PMP Guide · <a href="learn.html">Learn</a> · <a href="pm-tools.html">Workspace</a> · <a href="exam.html">Exam prep</a></p>
     </footer>
 
 <script src="pm-schedule.js"></script>

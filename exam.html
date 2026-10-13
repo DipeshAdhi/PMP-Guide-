@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Prep - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        :root { --accent: var(--coral); }
+        .ready { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 1.5rem; align-items: center; }
+        .ring { width: 180px; height: 180px; position: relative; margin: 0 auto; }
+        .ring svg { transform: rotate(-90deg); }
+        .ring circle { fill: none; stroke-width: 14; }
+        .ring .track { stroke: var(--line); }
+        .ring .fill { stroke: var(--teal); stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+        .ring span { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2.2em; color: var(--indigo); }
+        .ring small { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 0.38em; color: var(--muted); }
+        .mod-scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.4rem; }
+        .ms { display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; background: var(--white); border-radius: 8px; padding: 0.45rem 0.7rem; font-size: 0.86em; text-decoration: none; color: var(--charcoal); }
+        .ms:hover { outline: 1.5px solid var(--indigo); }
+        .ms .s { font-family: 'IBM Plex Mono', monospace; font-weight: 600; white-space: nowrap; }
+        .ms .s.ok { color: var(--ok); } .ms .s.weak { color: var(--bad); } .ms .s.none { color: var(--muted); }
+
+        .practice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+        .p-card { display: flex; flex-direction: column; gap: 0.4rem; text-decoration: none; color: inherit; background: var(--paper); border: 1.5px solid var(--line); border-top: 5px solid var(--c); border-radius: 14px; padding: 1.3rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .p-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(44,62,80,0.1); }
+        .p-card .icon { font-size: 1.8em; }
+        .p-card h3 { font-size: 1.1em; }
+        .p-card p { font-size: 0.9em; color: var(--muted); }
+        .p-card .go { margin-top: auto; font-weight: 700; color: var(--indigo); font-size: 0.88em; }
+
+        .formulas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; }
+        .formulas h3 { font-size: 1em; margin-bottom: 0.5rem; }
+        .f-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.2rem 0.8rem; padding: 0.4rem 0; border-bottom: 1px dashed var(--line); font-size: 0.9em; }
+        .f-row:last-child { border-bottom: none; }
+        .f-row code { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--indigo); overflow-wrap: anywhere; }
+        .f-row span { color: var(--muted); text-align: right; }
+
+        .facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; }
+        .fact { background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 1rem; }
+        .fact .n { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.7em; color: var(--indigo); }
+        .fact .l { font-size: 0.85em; color: var(--muted); }
+
+        @media (max-width: 760px) {
+            .ready { grid-template-columns: 1fr; }
+            .facts { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <script src="site-nav.js" data-page="exam"></script>
+
+    <header class="page-hero">
+        <div class="container">
+            <span class="eyebrow">Exam prep</span>
+            <h1>Get ready for the PMP exam</h1>
+            <p class="lead">Your readiness is based on the course checks. Practise with exam-style questions and scenarios, then keep the formula sheet handy.</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="block">
+            <div class="container">
+                <div class="card ready">
+                    <div class="ring">
+                        <svg width="180" height="180" viewBox="0 0 180 180"><circle class="track" cx="90" cy="90" r="76"/><circle class="fill" id="ringFill" cx="90" cy="90" r="76"/></svg>
+                        <span id="ringText"></span>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.4em; margin-bottom: 0.3rem;" id="readyTitle"></h2>
+                        <p style="color: var(--muted); margin-bottom: 0.9rem;" id="readyText"></p>
+                        <div class="mod-scores" id="modScores"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Practise</h2><p>Each activity explains every answer, so a wrong answer still teaches you something.</p></div>
+                <div class="practice-grid">
+                    <a class="p-card" href="game-interactive.html#quiz" style="--c: var(--coral);"><span class="icon">📝</span><h3>Mock quiz</h3><p>12 exam-style questions, including the formulas. Explanations for every question at the end.</p><span class="go">Start the quiz →</span></a>
+                    <a class="p-card" href="game-interactive.html#cases" style="--c: var(--purple);"><span class="icon">🤔</span><h3>Scenario questions</h3><p>"What should the project manager do first?" Five situations written like real PMP questions.</p><span class="go">Open the scenarios →</span></a>
+                    <a class="p-card" href="project-simulator.html" style="--c: var(--gold);"><span class="icon">🎮</span><h3>Project simulator</h3><p>Run a project and live with the consequences of your decisions on time, cost, scope, and quality.</p><span class="go">Play a scenario →</span></a>
+                    <a class="p-card" href="game-interactive.html#order" style="--c: var(--teal);"><span class="icon">🔢</span><h3>Process order challenge</h3><p>Put the planning steps in the order PMI expects, from charter to closing.</p><span class="go">Try the challenge →</span></a>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>Formula sheet</h2><p>The calculations that show up most often.</p></div>
+                <div class="formulas">
+                    <div class="card"><h3>Earned value</h3>
+                        <div class="f-row"><code>CV = EV − AC</code><span>negative = over budget</span></div>
+                        <div class="f-row"><code>SV = EV − PV</code><span>negative = behind</span></div>
+                        <div class="f-row"><code>CPI = EV ÷ AC</code><span>&lt; 1 = over budget</span></div>
+                        <div class="f-row"><code>SPI = EV ÷ PV</code><span>&lt; 1 = behind</span></div>
+                        <div class="f-row"><code>EAC = BAC ÷ CPI</code><span>forecast at completion</span></div>
+                        <div class="f-row"><code>ETC = EAC − AC</code><span>cost still to come</span></div>
+                        <div class="f-row"><code>VAC = BAC − EAC</code><span>expected over/under</span></div>
+                        <div class="f-row"><code>TCPI = (BAC − EV) ÷ (BAC − AC)</code><span>efficiency needed</span></div>
+                    </div>
+                    <div class="card"><h3>Schedule</h3>
+                        <div class="f-row"><code>EF = ES + duration</code><span>forward pass</span></div>
+                        <div class="f-row"><code>LS = LF − duration</code><span>backward pass</span></div>
+                        <div class="f-row"><code>Float = LS − ES</code><span>or LF − EF</span></div>
+                        <div class="f-row"><code>PERT = (O + 4M + P) ÷ 6</code><span>beta estimate</span></div>
+                        <div class="f-row"><code>Triangular = (O + M + P) ÷ 3</code><span>simple average</span></div>
+                        <div class="f-row"><code>σ = (P − O) ÷ 6</code><span>standard deviation</span></div>
+                    </div>
+                    <div class="card"><h3>Other</h3>
+                        <div class="f-row"><code>Channels = n(n − 1) ÷ 2</code><span>10 people = 45</span></div>
+                        <div class="f-row"><code>EMV = probability × impact</code><span>risk value</span></div>
+                        <div class="f-row"><code>±1σ / ±2σ / ±3σ</code><span>68% / 95% / 99.7%</span></div>
+                        <div class="f-row"><code>Musts ≤ 60%</code><span>MoSCoW (DSDM)</span></div>
+                        <div class="f-row"><code>8–80 hours</code><span>work package size</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <div class="container">
+                <div class="block-head"><h2>About the exam</h2></div>
+                <div class="facts">
+                    <div class="fact"><div class="n">~180</div><div class="l">questions, about 170 of them scored</div></div>
+                    <div class="fact"><div class="n">240</div><div class="l">minutes, with two scheduled breaks</div></div>
+                    <div class="fact"><div class="n">3</div><div class="l">approaches tested: predictive, agile, hybrid</div></div>
+                    <div class="fact"><div class="n">35</div><div class="l">hours of PM education required to apply</div></div>
+                </div>
+                <div class="scroll-x" style="margin-top: 1rem;"><table class="data" style="min-width: 520px;">
+                    <thead><tr><th>Domain</th><th>Weight</th><th>Where it's covered</th></tr></thead>
+                    <tbody>
+                        <tr><td><strong>People</strong></td><td>33%</td><td>Modules 1 and 6, Scrum roles in module 7</td></tr>
+                        <tr><td><strong>Process</strong></td><td>41%</td><td>Modules 2–5, 7, and 8</td></tr>
+                        <tr><td><strong>Business environment</strong></td><td>26%</td><td>Module 1 (value), module 3 (tailoring), module 8 (benefits, compliance)</td></tr>
+                    </tbody></table></div>
+                <p style="font-size: 0.82em; color: var(--muted); margin-top: 0.6rem;">Based on the PMP Examination Content Outline that took effect on 9 July 2026 (aligned with PMBOK 8). It adds topics such as value delivery, sustainability, and AI, and new question types like case studies and hotspots. Check pmi.org for the official details before you book.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>PMP Guide · <a href="learn.html">Learn</a> · <a href="pm-tools.html">Workspace</a> · <a href="exam.html">Exam prep</a></p>
+    </footer>
+
+<script>
+const C = window.PMPCourse;
+const p = C.load();
+const total = C.COURSE.length;
+const scores = C.COURSE.map(m => p.check[m.id] || 0);
+const correct = scores.reduce((a, b) => a + b, 0);
+const pct = Math.round(correct / (total * 3) * 100);
+const done = C.completed();
+
+const circ = 2 * Math.PI * 76;
+const fill = document.getElementById('ringFill');
+fill.style.strokeDasharray = circ;
+fill.style.strokeDashoffset = circ - (pct / 100) * circ;
+document.getElementById('ringText').innerHTML = `${pct}%<small>of check questions right</small>`;
+
+const weak = C.COURSE.filter((m, i) => p.check[m.id] != null && scores[i] < 2);
+const untested = C.COURSE.filter(m => p.check[m.id] == null);
+let title, text;
+if (!Object.keys(p.check).length) { title = 'Start with the course'; text = 'Readiness builds as you complete the check at the end of each module.'; }
+else if (pct >= 80 && !untested.length) { title = 'Looking ready'; text = 'Strong scores across all modules. Use the mock quiz and scenarios to practise under exam-style wording.'; }
+else { title = `${done} of ${total} modules complete`; text = [weak.length ? `Review ${weak.map(m => `module ${m.id}`).join(', ')}.` : '', untested.length ? `${untested.length} module check${untested.length > 1 ? 's' : ''} still to take.` : ''].filter(Boolean).join(' '); }
+document.getElementById('readyTitle').textContent = title;
+document.getElementById('readyText').textContent = text;
+document.getElementById('modScores').innerHTML = C.COURSE.map((m, i) => {
+    const s = p.check[m.id];
+    const cls = s == null ? 'none' : s >= 2 ? 'ok' : 'weak';
+    return `<a class="ms" href="learn.html#m${m.id}"><span>${m.id} · ${m.title}</span><span class="s ${cls}">${s == null ? 'not taken' : `${s}/3`}</span></a>`;
+}).join('');
+</script>
+</body>
+</html>

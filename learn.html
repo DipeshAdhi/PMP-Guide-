@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course - PMP Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="pm-tools.css">
+    <style>
+        .course { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 2rem; align-items: start; padding: 2rem 0 3rem; }
+
+        /* Sidebar */
+        .outline { position: sticky; top: 16px; background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 1rem; }
+        .outline h2 { font-size: 1em; margin-bottom: 0.2rem; }
+        .outline .overall { font-size: 0.82em; color: var(--muted); margin-bottom: 0.6rem; }
+        .overall-bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 0.8rem; }
+        .overall-bar div { height: 100%; background: var(--teal); }
+        .outline ol { list-style: none; display: flex; flex-direction: column; gap: 0.2rem; }
+        .outline a { display: flex; gap: 0.6rem; align-items: flex-start; text-decoration: none; color: var(--charcoal); padding: 0.5rem 0.55rem; border-radius: 8px; font-size: 0.88em; line-height: 1.3; }
+        .outline a:hover { background: var(--white); }
+        .outline a[aria-current] { background: var(--indigo); color: #fff; }
+        .outline .num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.8em; }
+        .outline a[aria-current] .num { border-color: var(--gold); color: var(--gold); }
+        .outline .num.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+        .outline .num.part { border-color: var(--gold); }
+        .outline .pips { display: block; font-size: 0.75em; opacity: 0.75; margin-top: 0.15rem; }
+
+        /* Module */
+        .mod-head .eyebrow { color: var(--coral); }
+        .mod-head h1 { font-size: clamp(1.7em, 5vw, 2.4em); margin: 0.3rem 0 0.5rem; overflow-wrap: break-word; }
+        .mod-head .goal { color: var(--muted); font-size: 1.05em; }
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 1.4rem 0 1.6rem; }
+        .step-chip { display: flex; align-items: center; gap: 0.5rem; background: var(--paper); border: 1.5px solid var(--line); border-radius: 10px; padding: 0.6rem 0.8rem; text-decoration: none; color: var(--indigo); font-weight: 600; font-size: 0.9em; }
+        .step-chip .tick { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 0.75em; flex-shrink: 0; }
+        .step-chip.done { border-color: var(--ok); }
+        .step-chip.done .tick { background: var(--ok); border-color: var(--ok); color: #fff; }
+
+        .part { background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 1.6rem 1.8rem; margin-bottom: 1.2rem; scroll-margin-top: 16px; }
+        .part > h2 { font-size: 1.3em; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 0.6rem; }
+        .part > h2 .n { font-family: 'IBM Plex Mono', monospace; font-size: 0.6em; background: var(--white); color: var(--muted); padding: 2px 8px; border-radius: 10px; }
+        .reading p, .reading li { line-height: 1.7; }
+        .reading p + p, .reading p + ul, .reading ul + p, .reading .callout + p, .reading p + .callout, .reading table + p { margin-top: 0.8rem; }
+        .reading h3 { font-size: 1.05em; margin: 1.3rem 0 0.5rem; }
+        .reading ul, .reading ol { margin-left: 1.3rem; }
+        .reading li + li { margin-top: 0.3rem; }
+        .reading table { margin-top: 0.6rem; }
+        .callout { background: var(--warn-bg); border-left: 4px solid var(--gold); border-radius: 6px; padding: 0.8rem 1rem; font-size: 0.95em; }
+        .term { font-weight: 700; color: var(--indigo); }
+
+        .try-card { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+        .try-card .icon { font-size: 2em; }
+        .try-card ol { margin: 0.5rem 0 0 1.2rem; }
+        .try-card .also { font-size: 0.88em; color: var(--muted); margin-top: 0.6rem; }
+        .try-card .also a { color: var(--indigo); font-weight: 600; }
+
+        .q { padding: 1rem 0; border-bottom: 1px solid var(--line); }
+        .q:last-of-type { border-bottom: none; }
+        .q h4 { font-size: 1em; margin-bottom: 0.6rem; font-family: 'Inter', sans-serif; font-weight: 700; }
+        .q .opts { display: grid; gap: 0.4rem; }
+        .q .opt { text-align: left; background: var(--white); border: 1.5px solid var(--line); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.93em; }
+        .q .opt:hover:not(:disabled) { border-color: var(--indigo); }
+        .q .opt.right { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); font-weight: 600; }
+        .q .opt.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+        .q .opt:disabled { cursor: default; }
+        .check-result { margin-top: 1rem; }
+
+        .mod-nav { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .mod-nav a { text-decoration: none; }
+
+        @media (max-width: 900px) {
+            .course { grid-template-columns: minmax(0, 1fr); }
+            .outline { position: static; }
+            .outline ol { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+        }
+        @media (max-width: 560px) {
+            .steps { grid-template-columns: 1fr; }
+            .part { padding: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <script src="site-nav.js" data-page="learn"></script>
+
+    <main class="container course">
+        <aside class="outline" aria-label="Course modules">
+            <h2>PMP course</h2>
+            <div class="overall" id="overallText"></div>
+            <div class="overall-bar"><div id="overallBar"></div></div>
+            <ol id="outline"></ol>
+        </aside>
+        <article id="module" aria-live="polite"></article>
+    </main>
+
+    <footer>
+        <p>PMP Guide · <a href="learn.html">Learn</a> · <a href="pm-tools.html">Workspace</a> · <a href="exam.html">Exam prep</a></p>
+    </footer>
+
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  Course content. Each module: read → try (one tool) → check (3 questions).
+// ════════════════════════════════════════════════════════════════════
+const MODULES = [
+{
+    id: 1, title: 'Projects and the four pillars', minutes: 5,
+    goal: 'Know what makes something a project, and the four things every project must balance.',
+    read: `
+        <p>A <span class="term">project</span> is a <strong>temporary</strong> effort to create a <strong>unique</strong> product, service, or result. Temporary means it has a start and an end; unique means it hasn't been done in exactly this way before. Building the Scholar Academy school system is a project. Running the school's monthly payroll is <em>operations</em>: ongoing and repetitive.</p>
+        <p>Projects are planned in more detail as you learn more. PMI calls this <span class="term">progressive elaboration</span>.</p>
+        <h3>Who's involved</h3>
+        <ul>
+            <li><strong>Sponsor</strong>: funds the project and formally authorizes it by signing the <strong>project charter</strong>.</li>
+            <li><strong>Project manager</strong>: leads the team to deliver the objectives.</li>
+            <li><strong>Team</strong>: does the work.</li>
+            <li><strong>Stakeholders</strong>: anyone affected by the project, such as teachers, parents, and the principal.</li>
+        </ul>
+        <h3>The four pillars</h3>
+        <p>Successful projects keep four things in balance. Neglect any one and the others can't save the project:</p>
+        <table class="data"><thead><tr><th>Pillar</th><th>Question it answers</th></tr></thead><tbody>
+            <tr><td><strong>👥 People</strong></td><td>Does everyone know their role, and are stakeholders engaged?</td></tr>
+            <tr><td><strong>⚙️ Process</strong></td><td>Is there a clear way to plan, build, check, and change the work?</td></tr>
+            <tr><td><strong>📊 Project</strong></td><td>What are we delivering, by when, for how much?</td></tr>
+            <tr><td><strong>📦 Product</strong></td><td>Will people use it, and does it deliver the expected value?</td></tr>
+        </tbody></table>
+        <p class="callout">A project can finish on time and on budget and still fail, if nobody uses what it built. That's a Product failure.</p>`,
+    tryIt: { icon: '🏛️', href: 'dashboard.html', label: 'Open the four pillars', steps: ['Select each pillar and read its six-step workflow.', 'Select 🎯 Successful Project to see what all four pillars do in each phase.'] },
+    check: [
+        { q: 'Which of these is a project?', o: ['Running the monthly payroll', 'Building a new school management system', 'Answering support calls every day', 'Printing the weekly timetable'], a: 1, why: 'It\'s temporary and creates something unique. The others are ongoing operations.' },
+        { q: 'A system was delivered on time and on budget, but teachers refuse to use it. Which pillar was neglected?', o: ['People', 'Process', 'Project', 'Product'], a: 3, why: 'The product didn\'t deliver value to its users, even though time and budget were met.' },
+        { q: 'Who formally authorizes a project?', o: ['The project manager', 'The sponsor, through the project charter', 'The development team', 'The QA lead'], a: 1, why: 'The sponsor issues the charter, which authorizes the project and the PM\'s use of resources.' }
+    ]
+},
+{
+    id: 2, title: 'The triple constraint', minutes: 5,
+    goal: 'See why changing scope, time, or cost always affects the others.',
+    read: `
+        <p>Every project is bounded by three constraints:</p>
+        <ul>
+            <li><span class="term">Scope</span>: what will be delivered.</li>
+            <li><span class="term">Time</span>: when it will be delivered.</li>
+            <li><span class="term">Cost</span>: how much it may spend.</li>
+        </ul>
+        <p><strong>Quality</strong> sits in the middle: squeeze the triangle without adjusting anything and quality is what breaks.</p>
+        <h3>They move together</h3>
+        <p>Change one side and at least one other must change too:</p>
+        <ul>
+            <li>Deadline moves earlier → add people (cost ↑) or cut features (scope ↓).</li>
+            <li>Budget cut → deliver less (scope ↓) or take longer with a smaller team (time ↑).</li>
+            <li>New features added → more time, more money, or both.</li>
+        </ul>
+        <p>A project manager's job isn't to avoid trade-offs. It's to make them <strong>visible</strong> so the sponsor can choose.</p>
+        <h3>Predictive vs. agile view</h3>
+        <p>In predictive projects, scope is usually fixed and time and cost are estimated. In agile and DSDM projects, <strong>time and cost are fixed</strong> (sprints, timeboxes) and <strong>scope flexes</strong>: the least valuable features are dropped to protect the date.</p>
+        <p class="callout">Exam clue: "the deadline can't move and the budget is fixed" almost always means the answer involves adjusting scope.</p>`,
+    tryIt: { icon: '🔺', href: 'triple-constraint-advanced.html', label: 'Open the triangle tool', steps: ['Drag the time slider to its minimum. Watch cost and scope react.', 'Try the "Rush" and "Iterative" scenarios and compare the quality score.'] },
+    check: [
+        { q: 'The deadline moves two months earlier and the budget is fixed. What is most likely to change?', o: ['Nothing, if the team works hard', 'Scope is reduced', 'The charter is rewritten', 'Cost increases'], a: 1, why: 'With time and cost fixed, scope is the only remaining lever (or quality suffers).' },
+        { q: 'What usually suffers if all three constraints are squeezed at once?', o: ['Quality', 'The stakeholder register', 'The sponsor', 'The WBS'], a: 0, why: 'Quality sits in the middle of the triangle and absorbs pressure nobody plans for.' },
+        { q: 'In agile and DSDM, which constraint is normally allowed to flex?', o: ['Time', 'Cost', 'Scope', 'Quality'], a: 2, why: 'Sprints and timeboxes fix time and cost; features are prioritized and the lowest-value ones are dropped.' }
+    ]
+},
+{
+    id: 3, title: 'Life cycles and process groups', minutes: 6,
+    goal: 'Know the five process groups and when to use a predictive, agile, or hybrid life cycle.',
+    read: `
+        <p>PMI organizes project management work into five <span class="term">process groups</span>:</p>
+        <ol>
+            <li><strong>Initiating</strong>: authorize the project; identify stakeholders. Output: <em>project charter</em>.</li>
+            <li><strong>Planning</strong>: define scope, schedule, cost, quality, risk, and more. Most processes live here.</li>
+            <li><strong>Executing</strong>: do the work, manage the team, produce deliverables. Spends the most money.</li>
+            <li><strong>Monitoring & Controlling</strong>: compare progress with the plan and control changes. Runs <em>throughout</em> the project.</li>
+            <li><strong>Closing</strong>: get acceptance, hand over, record lessons learned.</li>
+        </ol>
+        <p class="callout">Process groups are not phases. They overlap and repeat. A large project runs all five inside each phase.</p>
+        <h3>Choosing a life cycle</h3>
+        <table class="data"><thead><tr><th>Life cycle</th><th>How it works</th><th>Use when</th></tr></thead><tbody>
+            <tr><td><strong>Predictive</strong> (waterfall)</td><td>Plan everything up front, then execute in phases</td><td>Requirements are clear and stable; regulated work</td></tr>
+            <tr><td><strong>Adaptive</strong> (agile)</td><td>Deliver in short iterations, re-plan as you learn</td><td>Requirements are uncertain or changing</td></tr>
+            <tr><td><strong>Hybrid</strong></td><td>Mix: e.g. predictive planning with agile delivery</td><td>Fixed budget or milestones, but uncertain features</td></tr>
+        </tbody></table>
+        <p>Adjusting the approach to fit the project is called <span class="term">tailoring</span>, and it's a core idea in PMBOK 7.</p>`,
+    tryIt: { icon: '🧪', href: 'game-interactive.html#process', label: 'Open the Practice lab', steps: ['Open all five process groups and read each exam tip.', 'Scroll to the order challenge and put the 8 planning steps in order.'] },
+    check: [
+        { q: 'Which process group contains the most processes?', o: ['Initiating', 'Planning', 'Executing', 'Closing'], a: 1, why: 'Planning has the most processes: scope, schedule, cost, quality, resources, communications, risk, procurement, stakeholders.' },
+        { q: 'When does Monitoring & Controlling happen?', o: ['Only at the end', 'Only after Executing', 'Throughout the project', 'Only during Planning'], a: 2, why: 'It runs alongside all the other groups, from start to finish.' },
+        { q: 'Requirements are unclear and expected to change. Which life cycle fits best?', o: ['Predictive', 'Adaptive (agile)', 'None; wait until they\'re clear', 'Closing'], a: 1, why: 'Agile delivers in short cycles so the team can learn and adapt as requirements emerge.' }
+    ]
+},
+{
+    id: 4, title: 'Scope: WBS and MoSCoW', minutes: 6,
+    goal: 'Break the work down with a WBS and prioritize it with MoSCoW.',
+    read: `
+        <p>Scope management defines <strong>what is and isn't</strong> in the project. Three documents make up the <span class="term">scope baseline</span>:</p>
+        <ul>
+            <li><strong>Scope statement</strong>: deliverables, exclusions, acceptance criteria.</li>
+            <li><strong>Work breakdown structure (WBS)</strong>: the scope broken down into smaller pieces.</li>
+            <li><strong>WBS dictionary</strong>: details for each WBS element.</li>
+        </ul>
+        <h3>Building a WBS</h3>
+        <ul>
+            <li><strong>Decompose</strong> deliverables into smaller deliverables until each piece can be estimated, assigned, and tracked.</li>
+            <li>The lowest level is the <span class="term">work package</span>. Rule of thumb: 8–80 hours of effort.</li>
+            <li><strong>100% rule</strong>: the WBS contains all the work, and nothing outside the scope.</li>
+            <li>Name elements as <strong>deliverables</strong> (nouns), e.g. "Grades module", not actions.</li>
+            <li>The WBS has <strong>no dates or sequence</strong>. That comes later, in the schedule.</li>
+        </ul>
+        <h3>Prioritizing with MoSCoW</h3>
+        <p>When not everything fits, prioritize:</p>
+        <ul>
+            <li><strong>Must</strong>: without it the solution is useless, unsafe, or illegal.</li>
+            <li><strong>Should</strong>: important, but there's a workaround.</li>
+            <li><strong>Could</strong>: nice to have; first to drop.</li>
+            <li><strong>Won't</strong> (this time): agreed to be out.</li>
+        </ul>
+        <p class="callout">DSDM rule of thumb: Musts should be no more than <strong>60%</strong> of the effort, so there's room to protect the deadline.</p>`,
+    tryIt: { icon: '🗂️', href: 'board.html', label: 'Open the task board', steps: ['Switch to the 🌳 WBS tree and add a work package under 4 · Build.', 'Back on the board, move cards to Done until a milestone is reached.'],
+        also: [['dsdm.html', 'Prioritize requirements with MoSCoW (DSDM page)']] },
+    check: [
+        { q: 'What is the lowest level of a WBS called?', o: ['Activity', 'Work package', 'Milestone', 'Task list'], a: 1, why: 'Work packages are the lowest WBS level. Activities come later, when the schedule is built.' },
+        { q: 'What does the 100% rule mean?', o: ['Every task must be 100% done before the next starts', 'The WBS includes all the project work and nothing outside scope', 'The budget must be 100% spent', 'Every stakeholder must approve the WBS'], a: 1, why: 'The WBS captures all of the scope, no more and no less.' },
+        { q: 'In MoSCoW, about how much of the effort should Musts take at most?', o: ['30%', '60%', '90%', '100%'], a: 1, why: 'Keeping Musts at or below ~60% leaves room for Shoulds and Coulds to be dropped if time runs short.' }
+    ]
+},
+{
+    id: 5, title: 'Schedule: milestones, CPM, Gantt', minutes: 8,
+    goal: 'Turn work packages into a schedule, find the critical path, and report with milestones.',
+    read: `
+        <p>Scheduling turns the WBS into dates:</p>
+        <ol>
+            <li><strong>Define activities</strong>: split work packages into activities. Also produces the <span class="term">milestone list</span>.</li>
+            <li><strong>Sequence activities</strong>: set dependencies. Finish-to-Start (FS) is the most common.</li>
+            <li><strong>Estimate durations</strong>: for uncertain estimates, use PERT: (O + 4M + P) ÷ 6.</li>
+            <li><strong>Develop the schedule</strong>: find the critical path and set the schedule baseline.</li>
+        </ol>
+        <h3>Critical path method (CPM)</h3>
+        <ul>
+            <li>The <span class="term">critical path</span> is the <strong>longest</strong> path through the network. Its length is the shortest possible project duration.</li>
+            <li><strong>Forward pass</strong> gives early start and early finish (take the <em>max</em> at merges). <strong>Backward pass</strong> gives late start and late finish (take the <em>min</em> at bursts).</li>
+            <li><span class="term">Float</span> = LS − ES: how long an activity can slip without delaying the project. Critical activities have zero float.</li>
+        </ul>
+        <h3>Showing the schedule</h3>
+        <ul>
+            <li><strong>Gantt (bar) chart</strong>: activities on a timeline. Best for the team.</li>
+            <li><strong>Milestone chart</strong>: only key events. Best for executives. Milestones have <strong>zero duration</strong>.</li>
+            <li><strong>Network diagram</strong>: shows the logic. Best for finding the critical path.</li>
+        </ul>
+        <p class="callout">To finish sooner, shorten <em>critical</em> activities: <strong>crashing</strong> (add resources, costs money) or <strong>fast tracking</strong> (overlap activities, adds risk).</p>`,
+    tryIt: { icon: '🛤️', href: 'cpm.html', label: 'Open the critical path tool', steps: ['Step through all 5 stages of the CPM walkthrough.', 'Answer the 4 practice questions at the bottom.'],
+        also: [['gantt.html', 'See the same schedule as a Gantt chart'], ['milestones.html', 'Delay a task and watch which milestones slip']] },
+    check: [
+        { q: 'What is the critical path?', o: ['The shortest path through the network', 'The longest path; it has zero float', 'The path with the most expensive tasks', 'The path with the most people'], a: 1, why: 'The longest path determines the earliest the project can finish.' },
+        { q: 'An activity with 3 days of float is delayed by 2 days. What happens to the project end date?', o: ['It moves 2 days', 'It moves 3 days', 'No change', 'It moves 5 days'], a: 2, why: 'The delay is smaller than the float, so it is absorbed.' },
+        { q: 'What is the duration of a milestone?', o: ['One day', 'Zero', 'One week', 'Same as the phase'], a: 1, why: 'A milestone is a point in time, a significant event with zero duration.' }
+    ]
+},
+{
+    id: 6, title: 'People: RACI, stakeholders, conflict', minutes: 6,
+    goal: 'Assign clear responsibilities, engage stakeholders, and handle conflict.',
+    read: `
+        <p>The People domain is <strong>33%</strong> of the PMP exam (2026 outline).</p>
+        <h3>Stakeholders</h3>
+        <p>Identify everyone affected early. Map them on a <span class="term">power/interest grid</span>:</p>
+        <ul>
+            <li>High power, high interest → <strong>manage closely</strong></li>
+            <li>High power, low interest → <strong>keep satisfied</strong></li>
+            <li>Low power, high interest → <strong>keep informed</strong></li>
+            <li>Low power, low interest → <strong>monitor</strong></li>
+        </ul>
+        <h3>RACI matrix</h3>
+        <p>A grid of tasks × people showing who is <strong>R</strong>esponsible (does the work), <strong>A</strong>ccountable (owns the result), <strong>C</strong>onsulted (gives input before), and <strong>I</strong>nformed (told after). Rule: <strong>exactly one A per task</strong>.</p>
+        <h3>Teams and conflict</h3>
+        <ul>
+            <li>Teams develop through <strong>forming → storming → norming → performing → adjourning</strong> (Tuckman).</li>
+            <li>Conflict techniques, best to worst for lasting results: <strong>collaborate/problem-solve</strong>, compromise, smooth, force, withdraw.</li>
+            <li>Modern PMs are <span class="term">servant leaders</span>: they remove obstacles and support the team rather than command it.</li>
+        </ul>`,
+    tryIt: { icon: '👥', href: 'raci.html', label: 'Open the RACI matrix', steps: ['Fix the broken RACI matrix until the checker shows it\'s valid.', 'Compare your answer with the model answer.'],
+        also: [['game-interactive.html#cases', 'Try the team-conflict case study']] },
+    check: [
+        { q: 'How many people should be Accountable for one task?', o: ['None', 'Exactly one', 'At least two', 'Everyone involved'], a: 1, why: 'One accountable owner avoids confusion over who signs off.' },
+        { q: 'Which conflict technique gives the most lasting result?', o: ['Forcing', 'Withdrawing', 'Collaborating / problem solving', 'Smoothing'], a: 2, why: 'Collaboration builds consensus and commitment: a win-win outcome.' },
+        { q: 'A stakeholder has high power but low interest. How should you manage them?', o: ['Manage closely', 'Keep satisfied', 'Keep informed', 'Ignore'], a: 1, why: 'Keep them satisfied so they don\'t become a blocker, without overloading them with detail.' }
+    ]
+},
+{
+    id: 7, title: 'Agile: Scrum, Kanban, XP, DSDM', minutes: 8,
+    goal: 'Understand the Agile Manifesto and how the main agile frameworks work.',
+    read: `
+        <p>Agile and hybrid approaches appear throughout the PMP exam, alongside predictive ones. Everything starts with the <span class="term">Agile Manifesto</span>:</p>
+        <ul>
+            <li><strong>Individuals and interactions</strong> over processes and tools</li>
+            <li><strong>Working software</strong> over comprehensive documentation</li>
+            <li><strong>Customer collaboration</strong> over contract negotiation</li>
+            <li><strong>Responding to change</strong> over following a plan</li>
+        </ul>
+        <h3>Scrum</h3>
+        <ul>
+            <li><strong>Roles:</strong> Product Owner (orders the backlog), Scrum Master (servant leader, removes impediments), Developers (estimate and build).</li>
+            <li><strong>Events:</strong> Sprint (fixed, ≤ 1 month), Sprint Planning, Daily Scrum (15 min), Sprint Review, Retrospective.</li>
+            <li><strong>Artifacts:</strong> Product Backlog, Sprint Backlog, Increment. Each item must meet the <strong>Definition of Done</strong>.</li>
+        </ul>
+        <h3>The others</h3>
+        <ul>
+            <li><strong>Kanban:</strong> visualize work on a board, limit work in progress (WIP), pull the next item when there's capacity.</li>
+            <li><strong>XP:</strong> engineering practices: pair programming, test-driven development, continuous integration, small releases.</li>
+            <li><strong>DSDM:</strong> fixes time and cost, flexes features with MoSCoW; adds Feasibility and Foundations before building.</li>
+        </ul>`,
+    tryIt: { icon: '🔄', href: 'agile-board.html', label: 'Open the Scrum board', steps: ['As 🧭 Scrum Master, end days until the sprint review.', 'As 💻 Developer, tick the Definition of Done; as 🎯 Product Owner, accept a story.', 'Switch to 🏫 Stakeholder and notice what\'s hidden.'],
+        also: [['xp.html', 'Play the XP planning game'], ['dsdm.html', 'Pass the DSDM gates']] },
+    check: [
+        { q: 'Who orders the product backlog in Scrum?', o: ['Scrum Master', 'Developers', 'Product Owner', 'Stakeholders'], a: 2, why: 'The Product Owner is accountable for maximizing value and owns the backlog order.' },
+        { q: 'A story isn\'t finished at the end of the sprint. What happens to it?', o: ['The sprint is extended', 'It goes back to the product backlog', 'It counts as half done', 'It is deleted'], a: 1, why: 'Sprints are fixed. Unfinished work returns to the backlog and is re-planned; it doesn\'t count toward velocity.' },
+        { q: 'Which XP practice has two developers working at one computer?', o: ['Refactoring', 'Pair programming', 'Planning game', 'Spike'], a: 1, why: 'One drives (types), the other navigates (reviews and thinks ahead).' }
+    ]
+},
+{
+    id: 8, title: 'Monitoring, change, and closing', minutes: 7,
+    goal: 'Measure performance with earned value, control changes, and close the project.',
+    read: `
+        <h3>Integrated change control</h3>
+        <p>When anyone asks for a change:</p>
+        <ol>
+            <li><strong>Evaluate the impact</strong> on scope, schedule, cost, quality, and risk.</li>
+            <li>Submit a formal <strong>change request</strong>.</li>
+            <li>The <strong>change control board</strong> (or sponsor) approves or rejects it.</li>
+            <li>If approved, update the plan and baselines, then tell stakeholders.</li>
+        </ol>
+        <p class="callout">Changes that skip this process are <strong>scope creep</strong>. In agile, change goes through the Product Owner reordering the backlog instead.</p>
+        <h3>Earned value management (EVM)</h3>
+        <ul>
+            <li><strong>PV</strong> (planned value): value of work planned so far. <strong>EV</strong> (earned value): value of work actually done. <strong>AC</strong> (actual cost): money spent.</li>
+            <li><strong>CPI = EV ÷ AC</strong>. Below 1 means over budget.</li>
+            <li><strong>SPI = EV ÷ PV</strong>. Below 1 means behind schedule.</li>
+            <li><strong>CV = EV − AC</strong> and <strong>SV = EV − PV</strong>. Negative is bad.</li>
+            <li>Forecast: <strong>EAC = BAC ÷ CPI</strong> (if current performance continues).</li>
+        </ul>
+        <h3>Closing</h3>
+        <p>Get formal acceptance, hand the product to operations, close contracts, release the team, and archive <strong>lessons learned</strong>. Even cancelled projects go through Closing.</p>`,
+    tryIt: { icon: '🎮', href: 'project-simulator.html', label: 'Open the project simulator', steps: ['Play one full scenario.', 'After each decision, note how time, budget, scope, and quality changed, and why.'] },
+    check: [
+        { q: 'A stakeholder asks for a new feature. What should the project manager do first?', o: ['Build it right away', 'Reject it', 'Evaluate its impact', 'Ask the team to work overtime'], a: 2, why: 'Always analyze the impact first, then raise a change request.' },
+        { q: 'EV = $50,000 and AC = $40,000. What is the CPI?', o: ['0.8: over budget', '1.25: under budget', '1.25: behind schedule', '0.8: ahead of schedule'], a: 1, why: 'CPI = EV ÷ AC = 50,000 ÷ 40,000 = 1.25. Above 1 means you\'re getting more value than you\'re spending.' },
+        { q: 'SPI is 0.8. What does it mean?', o: ['Ahead of schedule', 'Behind schedule', 'Over budget', 'Under budget'], a: 1, why: 'SPI = EV ÷ PV. Below 1 means less work is done than planned.' }
+    ]
+}
+];
+
+// ════════════════════════════════════════════════════════════════════
+//  Rendering
+// ════════════════════════════════════════════════════════════════════
+const C = window.PMPCourse;
+let answers = {}; // per-render answers for the current module's check
+
+// The hash is either a module (#m3) or a step inside it (#try-3); remember the module across both
+let activeId = null;
+function currentId() {
+    const m = /^#(?:m|read-|try-|check-)(\d+)$/.exec(location.hash);
+    if (m && MODULES.some(x => x.id === Number(m[1]))) activeId = Number(m[1]);
+    if (activeId == null) activeId = C.next()?.id || 1;
+    return activeId;
+}
+
+function renderOutline(activeId) {
+    const p = C.load();
+    const done = MODULES.filter(m => C.isDone(p, m.id)).length;
+    document.getElementById('overallText').textContent = `${done} of ${MODULES.length} modules complete`;
+    document.getElementById('overallBar').style.width = `${done / MODULES.length * 100}%`;
+    document.getElementById('outline').innerHTML = MODULES.map(m => {
+        const steps = [p.read[m.id], p.tried[m.id], (p.check[m.id] || 0) >= 2].filter(Boolean).length;
+        const cls = C.isDone(p, m.id) ? 'done' : steps ? 'part' : '';
+        return `<li><a href="#m${m.id}" ${m.id === activeId ? 'aria-current="step"' : ''}>
+            <span class="num ${cls}">${C.isDone(p, m.id) ? '✓' : m.id}</span>
+            <span>${m.title}<span class="pips">${steps}/3 steps · ${m.minutes} min</span></span></a></li>`;
+    }).join('');
+}
+
+function renderModule(id) {
+    const m = MODULES.find(x => x.id === id);
+    const p = C.load();
+    answers = {};
+    const checkScore = p.check[id] || 0;
+    const prev = MODULES.find(x => x.id === id - 1), next = MODULES.find(x => x.id === id + 1);
+    const t = m.tryIt;
+    const tryHref = `${t.href.split('#')[0]}?m=${id}${t.href.includes('#') ? '#' + t.href.split('#')[1] : ''}`;
+    const withM = href => `${href.split('#')[0]}?m=${id}${href.includes('#') ? '#' + href.split('#')[1] : ''}`;
+
+    document.getElementById('module').innerHTML = `
+        <header class="mod-head">
+            <span class="eyebrow">Module ${m.id} of ${MODULES.length} · about ${m.minutes} minutes</span>
+            <h1>${m.title}</h1>
+            <p class="goal">${m.goal}</p>
+        </header>
+        <nav class="steps" aria-label="Module steps">
+            <a class="step-chip ${p.read[id] ? 'done' : ''}" href="#read-${id}"><span class="tick">${p.read[id] ? '✓' : '1'}</span>Read</a>
+            <a class="step-chip ${p.tried[id] ? 'done' : ''}" href="#try-${id}"><span class="tick">${p.tried[id] ? '✓' : '2'}</span>Try it</a>
+            <a class="step-chip ${checkScore >= 2 ? 'done' : ''}" href="#check-${id}"><span class="tick">${checkScore >= 2 ? '✓' : '3'}</span>Check${checkScore ? ` · ${checkScore}/3` : ''}</a>
+        </nav>
+
+        <section class="part" id="read-${id}">
+            <h2><span class="n">1</span>Read</h2>
+            <div class="reading">${m.read}</div>
+            <div class="btn-row" style="margin-top: 1.2rem;">
+                ${p.read[id] ? '<span class="readonly-note" style="font-size: 0.85em; color: var(--ok);">✓ Marked as read</span>' : `<button class="btn btn-primary" data-read="${id}">I've read this →</button>`}
+            </div>
+        </section>
+
+        <section class="part" id="try-${id}">
+            <h2><span class="n">2</span>Try it</h2>
+            <div class="try-card">
+                <span class="icon">${t.icon}</span>
+                <div style="flex: 1; min-width: 220px;">
+                    <strong>What to do:</strong>
+                    <ol>${t.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+                    <div class="btn-row" style="margin-top: 0.9rem;">
+                        <a class="btn btn-primary" href="${tryHref}" style="text-decoration: none;">${t.label} →</a>
+                        ${p.tried[id] ? '<span style="font-size: 0.85em; color: var(--ok); font-weight: 600;">✓ Done</span>' : ''}
+                    </div>
+                    ${t.also ? `<p class="also">Want more practice? ${t.also.map(([h, l]) => `<a href="${withM(h)}">${l}</a>`).join(' · ')}</p>` : ''}
+                </div>
+            </div>
+        </section>
+
+        <section class="part" id="check-${id}">
+            <h2><span class="n">3</span>Check your understanding</h2>
+            ${m.check.map((q, qi) => `<div class="q"><h4>${qi + 1}. ${q.q}</h4><div class="opts">${q.o.map((o, oi) => `<button class="opt" data-q="${qi}" data-o="${oi}">${o}</button>`).join('')}</div><div class="qfb" id="qfb-${qi}"></div></div>`).join('')}
+            <div class="check-result" id="checkResult">${checkScore ? `<div class="feedback ${checkScore >= 2 ? 'success' : 'partial'}">Best score so far: ${checkScore}/3. ${checkScore >= 2 ? 'Check step complete.' : 'You need 2 of 3 to complete this step.'}</div>` : ''}</div>
+        </section>
+
+        <div class="mod-nav">
+            ${prev ? `<a class="btn btn-ghost" href="#m${prev.id}">← ${prev.title}</a>` : '<span></span>'}
+            ${next ? `<a class="btn btn-primary" href="#m${next.id}">Next: ${next.title} →</a>` : '<a class="btn btn-primary" href="exam.html">Go to exam prep →</a>'}
+        </div>`;
+}
+
+function render() {
+    const id = currentId();
+    renderOutline(id);
+    renderModule(id);
+}
+
+document.addEventListener('click', e => {
+    const r = e.target.closest('[data-read]');
+    if (r) {
+        C.mark('read', Number(r.dataset.read));
+        render();
+        document.getElementById(`try-${r.dataset.read}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+    }
+    const o = e.target.closest('.opt');
+    if (o && !o.disabled) {
+        const id = currentId();
+        const m = MODULES.find(x => x.id === id);
+        const qi = Number(o.dataset.q), oi = Number(o.dataset.o);
+        const q = m.check[qi];
+        const right = oi === q.a;
+        answers[qi] = right;
+        o.parentElement.querySelectorAll('.opt').forEach((b, bi) => {
+            b.disabled = true;
+            if (bi === q.a) b.classList.add('right');
+            else if (bi === oi) b.classList.add('wrong');
+        });
+        document.getElementById(`qfb-${qi}`).innerHTML = `<div class="feedback ${right ? 'success' : 'error'}" style="margin-top: 0.5rem;">${right ? '✓ Correct.' : '✗ Not quite.'} ${q.why}</div>`;
+        if (Object.keys(answers).length === m.check.length) {
+            const score = Object.values(answers).filter(Boolean).length;
+            C.mark('check', id, score);
+            const p = C.load();
+            renderOutline(id);
+            const chip = document.querySelector(`.step-chip[href="#check-${id}"]`);
+            if ((p.check[id] || 0) >= 2) { chip.classList.add('done'); chip.querySelector('.tick').textContent = '✓'; }
+            const complete = C.isDone(p, id);
+            const missing = [!p.read[id] && 'read the lesson', !p.tried[id] && 'do the "Try it" activity'].filter(Boolean);
+            document.getElementById('checkResult').innerHTML = `<div class="feedback ${score >= 2 ? 'success' : 'partial'}">
+                You scored ${score}/3. ${score >= 2 ? (complete ? '🎉 Module complete!' : `Check step done. To finish the module, ${missing.join(' and ')}.`) : 'Re-read the lesson and try again: you need 2 of 3.'}
+                <div class="btn-row" style="margin-top: 0.6rem;"><button class="btn btn-ghost" data-retry>Try the questions again</button></div></div>`;
+        }
+        return;
+    }
+    if (e.target.closest('[data-retry]')) {
+        renderModule(currentId());
+        document.getElementById(`check-${currentId()}`).scrollIntoView({ block: 'start' });
+    }
+});
+
+window.addEventListener('hashchange', () => {
+    const h = location.hash;
+    if (/^#m\d+$/.test(h)) { render(); window.scrollTo(0, 0); }
+});
+
+render();
+// The module is built after load, so scroll to a deep-linked step (#try-3) ourselves
+if (/^#(read|try|check)-\d+$/.test(location.hash)) document.querySelector(location.hash)?.scrollIntoView();
+</script>
+</body>
+</html>
