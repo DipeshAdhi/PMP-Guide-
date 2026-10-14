@@ -28,6 +28,27 @@ Every method is reduced to five area choices. Hybrids pick each area separately.
 
 Switching methodology in **Settings** keeps all data; only screens and rules change.
 
+## Extra tools (any methodology)
+
+Settings → **Tools** (and "Add more tools" in the wizard) lets a project manager switch on any tool, whatever the methodology. Tools the methodology includes are locked on; the rest can be added or removed, and hiding a tool keeps its data.
+
+| Tool | What it adds |
+|---|---|
+| 🌳 WBS | Deliverables with WBS codes, a tree view (Backlog / WBS toggle on agile projects), and RACI |
+| 🔁 Sprints / iterations | Sprint planning (several sprints ahead), goal, burndown, velocity |
+| 🗓️ Timeline | Sprints, milestones, and deliverables/epics on the calendar |
+| 📊 Gantt & critical path | Durations, dependencies, forecast finish, critical path |
+| 🏁 Milestones | Target dates, reached when linked work is done |
+| 📝 Change requests | Propose, assess, approve or reject changes |
+| 🎯 MoSCoW | Must/Should/Could/Won't with the 60% Must check |
+| 🚦 WIP limit | Cap on items in progress |
+
+Switching a tool on fills in what it needs (e.g. Gantt gives items a duration; Sprints gives them a point estimate).
+
+## Sprints on the timeline
+
+The **Timeline** view lays out every sprint (done, active, planned) on the calendar, with milestones and a bar for each deliverable/epic spanning the sprints that hold its work ("+N unplanned" shows what isn't in a sprint yet). **Plan 3 sprints ahead** creates consecutive sprints; each can be planned in advance, but they start in order.
+
 ## Code layout
 
 ```
@@ -42,6 +63,7 @@ js/ui.js            Small UI helpers (escape, toast, avatars, download)
 js/app.js           Core: load/save, routing, event delegation, item editor
 js/views-work.js    Overview, Work (WBS/backlog), Board
 js/views-plan.js    Iterations, Schedule, Milestones, Team, Changes, Risks, Settings
+js/views-timeline.js Timeline (sprints, milestones, deliverables on the calendar)
 ```
 
 Plain HTML/CSS/JS, no build step. Scripts are classic (not ES modules) so pages also open from the file system.
@@ -54,7 +76,7 @@ One document per project:
 Project {
   id, version, name, description, startDate /* YYYY-MM-DD */, template,
   method: { mode: 'single', key } | { mode: 'hybrid', preset, caps: { planning, delivery, prioritisation, change, tracking } },
-  settings: { iterationDays, wipLimit },
+  settings: { iterationDays, wipLimit, tools: { wbs, iterations, timeline, schedule, milestones, changes, moscow, wip } /* extra tools */ },
   members:    [{ id, name, role }],
   items:      [{ id, kind: 'group' | 'item', title, description, type, parentId, order, rank,
                  status: 'backlog'|'todo'|'doing'|'review'|'done', assigneeId,

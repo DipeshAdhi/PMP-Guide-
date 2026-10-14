@@ -76,20 +76,27 @@
         }
     ];
 
+    // Jira-style project key from the name: "School system rollout" → "SSR", "Website" → "WEB"
+    function projectKey(name) {
+        const words = String(name || '').toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+        const key = words.length > 1 ? words.slice(0, 4).map(w => w[0]).join('') : (words[0] || 'PRJ').slice(0, 3);
+        return key.length >= 2 ? key : (key + 'X').slice(0, 2);
+    }
+
     const pointsFor = days => days <= 1 ? 1 : days <= 2 ? 2 : days <= 3 ? 3 : days <= 5 ? 5 : days <= 8 ? 8 : 13;
 
     /**
      * members: [{ name, role, ti }] where ti = index in the template's member list (or null for added people)
      */
-    function createProject({ name, description, startDate, templateId, method, members }) {
+    function createProject({ name, description, startDate, templateId, method, members, tools = {} }) {
         const t = TEMPLATES.find(x => x.id === templateId) || TEMPLATES[0];
-        const f = PMT.features(method);
+        const f = PMT.features(method, tools);
         const now = new Date().toISOString();
         const uid = PMT.uid;
         const p = {
-            id: uid('p_'), version: 1, name, description: description || '',
+            id: uid('p_'), version: 1, name, description: description || '', key: projectKey(name), nextNumber: 1,
             startDate: PMT.dates.nextWorkday(startDate), template: t.id, method,
-            settings: { iterationDays: f.defaultIterationDays, wipLimit: 3 },
+            settings: { iterationDays: f.defaultIterationDays, wipLimit: 3, tools: { ...tools } },
             members: [], items: [], milestones: [], iterations: [], changes: [], risks: [], activity: [],
             createdAt: now, updatedAt: now
         };
@@ -116,6 +123,10 @@
             });
         });
 
+        // Number items in backlog order (KEY-1, KEY-2, ...) and give them real dates
+        p.items.filter(i => i.kind !== 'group').sort((a, b) => a.rank - b.rank).forEach(i => { i.number = p.nextNumber++; });
+        PMT.schedule.fillDates(p);
+
         // Milestone target dates are the baseline forecast at creation
         const sched = PMT.schedule.buildSchedule(p);
         t.milestones.forEach(([msName, keys]) => {
@@ -133,4 +144,5 @@
     PMT.TEMPLATES = TEMPLATES;
     PMT.createProject = createProject;
     PMT.pointsFor = pointsFor;
+    PMT.projectKey = projectKey;
 })();

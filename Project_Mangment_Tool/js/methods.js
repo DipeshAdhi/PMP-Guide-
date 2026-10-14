@@ -67,33 +67,80 @@
         return method.mode === 'single' ? METHODS[method.key].icon : '🧬';
     }
 
-    function features(method) {
+    /* Tools a project manager can switch on for any project.
+       `base` says whether the methodology already includes the tool; those are locked on. */
+    const TOOLS = {
+        wbs: { icon: '🌳', label: 'Work breakdown structure (WBS)', desc: 'Group work into deliverables with WBS codes, a tree view, and a RACI matrix.', base: c => c.planning === 'upfront' },
+        iterations: { icon: '🔁', label: 'Sprints / iterations', desc: 'Fixed-length iterations with planning, a goal, burndown, and velocity.', base: c => c.delivery === 'iterations' },
+        timeline: { icon: '🗓️', label: 'Timeline', desc: 'Sprints, milestones, and deliverables laid out on the calendar.', base: c => c.delivery === 'iterations' },
+        schedule: { icon: '📊', label: 'Gantt chart & critical path', desc: 'Durations and dependencies, a forecast finish date, and the critical path.', base: c => c.planning === 'upfront' || c.tracking === 'schedule' },
+        milestones: { icon: '🏁', label: 'Milestones', desc: 'Checkpoints with target dates, reached when their linked work is done.', base: c => c.planning === 'upfront' || c.tracking === 'schedule' },
+        changes: { icon: '📝', label: 'Change requests', desc: 'Log, assess, and approve changes before they enter the plan.', base: c => c.change === 'formal' },
+        moscow: { icon: '🎯', label: 'MoSCoW priorities', desc: 'Must / Should / Could / Won\'t on every item, with the 60% Must check.', base: c => c.prioritisation === 'moscow' },
+        wip: { icon: '🚦', label: 'Work-in-progress limit', desc: 'Cap how many items can be in progress at once.', base: c => c.delivery === 'flow' }
+    };
+
+    // method + the project's extra tools ({ wbs: true, ... }) → what the app shows
+    function features(method, extraTools = {}) {
         const c = capsOf(method);
         const single = method.mode === 'single' ? METHODS[method.key] : null;
+        const locked = {}, tools = {};
+        Object.entries(TOOLS).forEach(([k, t]) => {
+            locked[k] = t.base(c);
+            tools[k] = locked[k] || extraTools[k] === true;
+        });
         const f = {
-            caps: c,
-            hierarchy: c.planning === 'upfront',
-            iterations: c.delivery === 'iterations',
-            flow: c.delivery === 'flow',
-            schedule: c.planning === 'upfront' || c.tracking === 'schedule',
-            milestones: c.planning === 'upfront' || c.tracking === 'schedule',
-            formalChange: c.change === 'formal',
-            moscow: c.prioritisation === 'moscow',
+            caps: c, locked, tools,
+            hierarchy: c.planning === 'upfront',   // the main work view is the WBS tree
+            wbs: tools.wbs,                         // WBS codes/tree available (main view or add-on)
+            iterations: tools.iterations,
+            timeline: tools.timeline,
+            flow: tools.wip,
+            schedule: tools.schedule,
+            milestones: tools.milestones,
+            formalChange: tools.changes,
+            moscow: tools.moscow,
             ranked: c.prioritisation === 'ordered',
-            points: c.delivery === 'iterations' || c.tracking === 'burndown',
-            flowMetrics: c.delivery === 'flow' || c.tracking === 'flow',
+            points: tools.iterations || c.tracking === 'burndown',
+            flowMetrics: c.delivery === 'flow' || c.tracking === 'flow' || tools.wip,
             iterName: single?.iterationName || 'Sprint',
             defaultIterationDays: single?.iterationDays || 10
         };
         f.workLabel = f.hierarchy ? 'Work breakdown' : f.moscow ? 'Requirements' : 'Backlog';
         f.views = ['overview', 'work', 'board']
             .concat(f.iterations ? ['iterations'] : [])
+            .concat(f.timeline ? ['timeline'] : [])
             .concat(f.schedule ? ['schedule'] : [])
             .concat(f.milestones ? ['milestones'] : [])
             .concat(['team'])
             .concat(f.formalChange ? ['changes'] : [])
             .concat(['risks', 'settings']);
         return f;
+    }
+
+    // Checklist of tools: methodology ones locked on, the rest toggleable
+    function renderToolPicker(el, method, initial, onChange) {
+        const value = { ...(initial || {}) };
+        function draw() {
+            const f = features(method, value);
+            el.innerHTML = `<div class="tool-list">${Object.entries(TOOLS).map(([k, t]) => `
+                <label class="tool-row ${f.locked[k] ? 'locked' : ''}">
+                    <span class="tool-ico" aria-hidden="true">${t.icon}</span>
+                    <span class="tool-text"><strong>${t.label}</strong><small>${t.desc}</small></span>
+                    ${f.locked[k] ? `<span class="pill">Included with ${methodName(method).replace(/^Hybrid: /, '')}</span>` : ''}
+                    <input type="checkbox" class="switch" data-tool="${k}" ${f.tools[k] ? 'checked' : ''} ${f.locked[k] ? 'disabled' : ''} aria-label="${t.label}">
+                </label>`).join('')}</div>`;
+            el.querySelectorAll('[data-tool]').forEach(cb => cb.addEventListener('change', () => {
+                value[cb.dataset.tool] = cb.checked;
+                // Sprints are much more useful on a timeline, so switch it on alongside
+                if (cb.dataset.tool === 'iterations' && cb.checked && value.timeline === undefined) value.timeline = true;
+                draw();
+                el.querySelector(`[data-tool="${cb.dataset.tool}"]`).focus();
+                onChange && onChange({ ...value });
+            }));
+        }
+        draw();
+        return { get: () => ({ ...value }) };
     }
 
     // One line per area, for summaries
@@ -103,7 +150,7 @@
     }
 
     // ─── Picker UI (used by the new-project wizard and settings) ───
-    const VIEW_LABELS = { overview: 'Overview', work: 'Work', board: 'Board', iterations: 'Iterations', schedule: 'Gantt & critical path', milestones: 'Milestones', team: 'Team', changes: 'Change requests', risks: 'Risks', settings: 'Settings' };
+    const VIEW_LABELS = { overview: 'Overview', work: 'Work', board: 'Board', iterations: 'Iterations', timeline: 'Timeline', schedule: 'Gantt & critical path', milestones: 'Milestones', team: 'Team', changes: 'Change requests', risks: 'Risks', settings: 'Settings' };
 
     function renderMethodPicker(el, initial, onChange) {
         let value = JSON.parse(JSON.stringify(initial || { mode: 'single', key: 'scrum' }));
@@ -174,4 +221,6 @@
     PMT.features = features;
     PMT.describeMethod = describe;
     PMT.renderMethodPicker = renderMethodPicker;
+    PMT.TOOLS = TOOLS;
+    PMT.renderToolPicker = renderToolPicker;
 })();

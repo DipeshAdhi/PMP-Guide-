@@ -71,7 +71,8 @@
                 <div class="grid grid-2">
                     <div class="card"><h3>How this project runs</h3>
                         <p class="muted small" style="margin-bottom: 0.5rem;">${PMT.methodIcon(P.method)} ${esc(PMT.methodName(P.method))}. Change it in <a href="#settings">Settings</a>.</p>
-                        <table class="tbl"><tbody>${PMT.describeMethod(P.method).map(d => `<tr><td><strong>${d.area}</strong></td><td>${d.choice}<div class="muted small">${d.hint}</div></td></tr>`).join('')}</tbody></table></div>
+                        <table class="tbl"><tbody>${PMT.describeMethod(P.method).map(d => `<tr><td><strong>${d.area}</strong></td><td>${d.choice}<div class="muted small">${d.hint}</div></td></tr>`).join('')}</tbody></table>
+                        ${(() => { const extra = Object.keys(PMT.TOOLS).filter(k => F.tools[k] && !F.locked[k]); return `<p class="small" style="margin-top: 0.6rem;"><strong>Extra tools:</strong> ${extra.length ? extra.map(k => `${PMT.TOOLS[k].icon} ${PMT.TOOLS[k].label}`).join(', ') : '<span class="muted">none</span>'} · <a href="#settings">Add tools</a></p>`; })()}</div>
                     <div class="card"><h3>Workload</h3>
                         ${P.members.length ? `<table class="tbl"><thead><tr><th>Person</th><th>Open</th><th>In progress</th>${F.points || F.schedule ? '<th>Size</th>' : ''}</tr></thead><tbody>
                         ${workload.map(w => `<tr><td style="display: flex; gap: 0.5rem; align-items: center;">${avatar(w.m)}<span>${esc(w.m.name)}<div class="muted small">${esc(w.m.role)}</div></span></td><td>${w.open}</td><td>${w.doing}</td>${F.points || F.schedule ? `<td class="mono">${w.size}</td>` : ''}</tr>`).join('')}</tbody></table>` : '<p class="muted">No team members yet.</p>'}
@@ -102,8 +103,8 @@
         const F = A.F, m = A.member(i.assigneeId), iter = F.iterations && i.iterationId ? A.P.iterations.find(x => x.id === i.iterationId) : null;
         return `<tr class="clickable ${i.status === 'done' ? 'is-done' : ''}" data-act="openItem" data-id="${i.id}">
             ${opts.rankCell || ''}
-            <td>${F.hierarchy ? `<span class="mono muted small" style="margin-right: 0.4rem;">${A.code(i)}</span>` : ''}<span class="t">${esc(i.title)}</span>
-                <div class="muted small">${[!F.hierarchy && i.parentId ? `📁 ${esc(A.groupName(i))}` : '', i.type === 'bug' ? '🐞 Bug' : i.type === 'story' ? 'Story' : '', (i.deps || []).length && F.schedule ? `after ${i.deps.length} item${i.deps.length > 1 ? 's' : ''}` : '', iter ? `🔁 ${esc(iter.name)}` : ''].filter(Boolean).join(' · ')}</div></td>
+            <td>${opts.tree ? `<span class="mono muted small" style="margin-right: 0.4rem;">${A.code(i)}</span>` : ''}<span class="t">${esc(i.title)}</span>
+                <div class="muted small">${[!opts.tree && i.parentId ? `📁 ${esc(A.groupName(i))}` : '', i.type === 'bug' ? '🐞 Bug' : i.type === 'story' ? 'Story' : '', (i.deps || []).length && F.schedule ? `after ${i.deps.length} item${i.deps.length > 1 ? 's' : ''}` : '', iter ? `🔁 ${esc(iter.name)}` : ''].filter(Boolean).join(' · ')}</div></td>
             ${F.moscow ? `<td><span class="pill ${i.moscow || 'S'}">${MOSCOW[i.moscow || 'S']}</span></td>` : ''}
             <td class="mono small">${sizeOf(i) || '<span class="muted">—</span>'}</td>
             <td><span style="display: inline-flex; align-items: center; gap: 0.4rem;">${avatar(m)}<span class="small">${m ? esc(m.name) : '<span class="muted">Unassigned</span>'}</span></span></td>
@@ -131,19 +132,24 @@
         </div>`;
     }
 
+    A.state.workMode = 'backlog';
     A.register('work', {
         render() {
             const F = A.F;
+            const tree = F.hierarchy || (F.wbs && A.state.workMode === 'wbs');
             const toolbar = `<div class="view-head">
                 <div class="toolbar">
                     <input class="input" type="search" id="workSearch" placeholder="Search items" value="${esc(A.state.search)}" aria-label="Search items">
                     <select class="select" data-change="filterWho" aria-label="Filter by person">${whoOptions()}</select>
                     <label class="small" style="display: flex; gap: 0.35rem; align-items: center;"><input type="checkbox" data-change="toggleDone" ${A.state.showDone ? 'checked' : ''}> Show done</label>
                 </div>
-                <div class="toolbar"><button class="btn btn-ghost" data-act="newGroup">＋ ${F.hierarchy ? 'Deliverable' : 'Epic'}</button></div>
+                <div class="toolbar">${!F.hierarchy && F.wbs ? `<div class="seg small" role="radiogroup" aria-label="Work view">
+                    <button role="radio" aria-checked="${!tree}" data-act="workMode" data-v="backlog">${esc(F.workLabel)}</button>
+                    <button role="radio" aria-checked="${tree}" data-act="workMode" data-v="wbs">WBS tree</button></div>` : ''}
+                    <button class="btn btn-ghost" data-act="newGroup">＋ ${F.wbs ? 'Deliverable' : 'Epic'}</button></div>
             </div>`;
 
-            if (F.hierarchy) {
+            if (tree) {
                 const groups = A.groups();
                 const loose = A.work().filter(i => !i.parentId || !A.item(i.parentId)).filter(matches);
                 const body = groups.map((g, gi) => {
@@ -154,10 +160,10 @@
                             <span class="mono" style="margin-right: 0.4rem;">${A.code(g)}</span><button class="icon-btn" style="font-weight: 700; color: var(--ink);" data-act="openItem" data-id="${g.id}">${esc(g.title)}</button>
                             <span class="muted small" style="margin-left: 0.4rem;">${doneN}/${kids.length} done${F.schedule ? ` · ${days(kids)}d` : ''}${F.points ? ` · ${pts(kids)} pt` : ''}</span></td>
                         <td style="text-align: right; white-space: nowrap;">${move('moveGroup', g.id, -1, gi === 0, 'Move deliverable up')}${move('moveGroup', g.id, 1, gi === groups.length - 1, 'Move deliverable down')}<button class="icon-btn" data-act="newItem" data-parent-id="${g.id}" aria-label="Add item to ${esc(g.title)}">＋</button></td></tr>
-                        ${shown.map((i, ii) => itemRow(i, { endCell: `<td style="text-align: right; white-space: nowrap;">${move('moveChild', i.id, -1, kids.indexOf(i) === 0, 'Move up')}${move('moveChild', i.id, 1, kids.indexOf(i) === kids.length - 1, 'Move down')}</td>` })).join('')}
+                        ${shown.map((i, ii) => itemRow(i, { tree: true, endCell: `<td style="text-align: right; white-space: nowrap;">${move('moveChild', i.id, -1, kids.indexOf(i) === 0, 'Move up')}${move('moveChild', i.id, 1, kids.indexOf(i) === kids.length - 1, 'Move down')}</td>` })).join('')}
                         ${!kids.length ? `<tr><td colspan="${F.moscow ? 6 : 5}" class="muted small" style="padding-left: 2rem;">No work packages yet. <button class="icon-btn" data-act="newItem" data-parent-id="${g.id}">＋ Add one</button></td></tr>` : ''}`;
                 }).join('');
-                const looseRows = loose.length ? `<tr class="group-row"><td colspan="${F.moscow ? 6 : 5}">Not in a deliverable</td></tr>${loose.map(i => itemRow(i, { endCell: '<td></td>' })).join('')}` : '';
+                const looseRows = loose.length ? `<tr class="group-row"><td colspan="${F.moscow ? 6 : 5}">Not in a deliverable</td></tr>${loose.map(i => itemRow(i, { tree: true, endCell: '<td></td>' })).join('')}` : '';
                 return {
                     sub: 'Work breakdown structure: deliverables broken into work packages',
                     html: toolbar + (F.moscow ? moscowSummary() : '') + (groups.length || loose.length
@@ -196,6 +202,7 @@
     });
 
     A.action('filterWho', el => { A.state.who = el.value; A.render(); });
+    A.action('workMode', el => { A.state.workMode = el.dataset.v; A.render(); });
     A.action('toggleDone', el => { A.state.showDone = el.checked; A.render(); });
     A.action('moveRank', el => {
         const list = A.ranked().filter(i => i.status !== 'done');
@@ -247,7 +254,7 @@
                 const g = A.item(i.parentId);
                 const ci = cols.indexOf(i.status);
                 return `<div class="kcard" draggable="true" data-id="${i.id}" style="--g:${g ? PMT.ui.colorFor(g.id) : 'var(--line)'}">
-                    <div class="k-top"><span>${F.hierarchy && A.code(i) ? `<span class="mono">${A.code(i)}</span> ` : ''}${g ? esc(g.title) : ''}</span><span>${i.type === 'bug' ? '🐞' : ''}</span></div>
+                    <div class="k-top"><span>${A.code(i) ? `<span class="mono">${A.code(i)}</span> ` : ''}${g ? esc(g.title) : ''}</span><span>${i.type === 'bug' ? '🐞' : ''}</span></div>
                     <button class="k-title" data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>
                     <div class="k-foot">
                         ${F.moscow ? `<span class="pill ${i.moscow || 'S'}">${(i.moscow || 'S')}</span>` : ''}

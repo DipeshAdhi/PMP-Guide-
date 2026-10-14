@@ -82,25 +82,69 @@
         return { byId, order, end, cycle };
     }
 
-    // Schedule every work item that has a duration, from the project start date
+    const addDays = (iso, n) => toISO(new Date(toDate(iso).getTime() + n * DAY));
+    const daysBetween = (a, b) => Math.round((toDate(b) - toDate(a)) / DAY);
+    // Working days an item spans (at least 1)
+    const spanDays = (start, due) => Math.max(1, workdaysInRange(start, due).length);
+
+    /**
+     * Schedule for every work item that has dates or a duration.
+     * Dates set by the user (startDate + dueDate) win. Items without dates are
+     * placed by the critical path method from the project start and their dependencies.
+     * Critical path and float come from durations + dependencies.
+     */
     function buildSchedule(project) {
-        const items = project.items.filter(i => i.kind !== 'group' && Number(i.duration) > 0);
-        const ids = new Set(items.map(i => i.id));
-        const r = cpm(items.map(i => ({ id: i.id, duration: Math.max(1, Math.round(Number(i.duration))), preds: (i.deps || []).filter(d => ids.has(d)) })));
         const start = nextWorkday(project.startDate);
-        Object.values(r.byId).forEach(t => {
-            t.startDate = addWorkdays(start, t.es);
-            t.endDate = addWorkdays(start, t.ef - 1);
+        const items = project.items.filter(i => i.kind !== 'group' && ((i.startDate && i.dueDate) || Number(i.duration) > 0));
+        const ids = new Set(items.map(i => i.id));
+        const durationOf = i => (i.startDate && i.dueDate) ? spanDays(i.startDate, i.dueDate) : Math.max(1, Math.round(Number(i.duration)));
+        const r = cpm(items.map(i => ({ id: i.id, duration: durationOf(i), preds: (i.deps || []).filter(d => ids.has(d)) })));
+        items.forEach(i => {
+            const t = r.byId[i.id];
+            if (i.startDate && i.dueDate) { t.startDate = i.startDate; t.endDate = i.dueDate; t.fixed = true; }
+            else { t.startDate = addWorkdays(start, t.es); t.endDate = addWorkdays(start, t.ef - 1); }
         });
+        const all = Object.values(r.byId);
         r.start = start;
-        r.finishDate = r.end ? addWorkdays(start, r.end - 1) : start;
+        r.finishDate = all.length ? all.map(t => t.endDate).sort().pop() : start;
+        // Finish-to-start dependencies that the dates break
+        r.conflicts = [];
+        all.forEach(t => t.preds.forEach(p => { if (t.startDate <= r.byId[p].endDate) r.conflicts.push({ from: p, to: t.id }); }));
         return r;
     }
 
+    // A milestone is forecast to be reached when its last linked item ends
     function milestoneForecast(project, milestone, sched) {
-        const ids = (milestone.itemIds || []).filter(id => sched.byId[id]);
-        if (!ids.length) return null;
-        return addWorkdays(sched.start, Math.max(...ids.map(id => sched.byId[id].ef)) - 1);
+        const ends = (milestone.itemIds || []).filter(id => sched.byId[id]).map(id => sched.byId[id].endDate);
+        return ends.length ? ends.sort().pop() : null;
+    }
+
+    // Give every scheduled item explicit dates (used when creating projects and switching the Gantt on)
+    function fillDates(project) {
+        const s = buildSchedule(project);
+        project.items.forEach(i => {
+            const t = s.byId[i.id];
+            if (t && !(i.startDate && i.dueDate)) { i.startDate = t.startDate; i.dueDate = t.endDate; }
+        });
+    }
+
+    // Move items so every dependency is respected (successor starts the next working day), keeping their length
+    function resolveConflicts(project) {
+        const byId = Object.fromEntries(project.items.map(i => [i.id, i]));
+        let moved = 0;
+        for (let pass = 0; pass < 50; pass++) {
+            const s = buildSchedule(project);
+            if (!s.conflicts.length) break;
+            const order = s.order;
+            const c = s.conflicts.sort((a, b) => order.indexOf(a.to) - order.indexOf(b.to))[0];
+            const it = byId[c.to];
+            const len = s.byId[c.to].duration;
+            const latestPred = s.byId[c.to].preds.map(p => s.byId[p].endDate).sort().pop();
+            it.startDate = addWorkdays(latestPred, 1);
+            it.dueDate = addWorkdays(it.startDate, len - 1);
+            moved++;
+        }
+        return moved;
     }
 
     // Would making `itemId` depend on `depId` create a loop?
@@ -117,6 +161,6 @@
         return false;
     }
 
-    PMT.dates = { toDate, toISO, todayISO, nextWorkday, addWorkdays, workdayIndex, workdaysInRange, fmt };
-    PMT.schedule = { cpm, buildSchedule, milestoneForecast, wouldCycle };
+    PMT.dates = { toDate, toISO, todayISO, nextWorkday, addWorkdays, addDays, daysBetween, spanDays, workdayIndex, workdaysInRange, fmt };
+    PMT.schedule = { cpm, buildSchedule, milestoneForecast, fillDates, resolveConflicts, wouldCycle };
 })();

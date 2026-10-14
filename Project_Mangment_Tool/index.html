@@ -107,7 +107,7 @@ const STEPS = ['Name', 'Template', 'Methodology', 'Team'];
 let step = 0;
 let picker = null;
 const today = PMT.dates.todayISO();
-const draft = { name: '', description: '', startDate: PMT.dates.nextWorkday(today), templateId: 'blank', method: { mode: 'single', key: 'scrum' }, members: [] };
+const draft = { name: '', description: '', startDate: PMT.dates.nextWorkday(today), templateId: 'blank', method: { mode: 'single', key: 'scrum' }, tools: {}, members: [] };
 const membersFromTemplate = id => (PMT.TEMPLATES.find(t => t.id === id) || PMT.TEMPLATES[0]).members.map(([name, role], ti) => ({ name, role, ti }));
 draft.members = membersFromTemplate('blank');
 
@@ -150,15 +150,22 @@ function renderStep() {
     } else if (step === 2) {
         body.innerHTML = `<h2>How will you run it?</h2>
             <p class="muted">Follow one methodology, or build a hybrid. This decides which screens and rules your project gets.</p>
-            <div id="picker" style="margin-top: 1rem;"></div>`;
-        picker = PMT.renderMethodPicker(document.getElementById('picker'), draft.method, v => { draft.method = v; });
+            <div id="picker" style="margin-top: 1rem;"></div>
+            <details style="margin-top: 1.4rem;" ${Object.values(draft.tools).some(Boolean) ? 'open' : ''}>
+                <summary style="cursor: pointer; font-weight: 700; color: var(--ink);">＋ Add more tools (optional)</summary>
+                <p class="muted small" style="margin: 0.5rem 0 0.8rem;">Want a WBS in a Scrum project, or a Gantt chart with Kanban? Switch on any extra tool. You can change this later in Settings → Tools.</p>
+                <div id="toolPicker"></div>
+            </details>`;
+        const drawTools = () => PMT.renderToolPicker(document.getElementById('toolPicker'), draft.method, draft.tools, t => { draft.tools = t; });
+        picker = PMT.renderMethodPicker(document.getElementById('picker'), draft.method, v => { draft.method = v; drawTools(); });
+        drawTools();
     } else {
         const tpl = PMT.TEMPLATES.find(t => t.id === draft.templateId);
         body.innerHTML = `<h2>Who's on the team?</h2>
             <p class="muted" style="margin-bottom: 1rem;">${tpl.id === 'blank' ? 'Add the people who will work on this project.' : 'These roles come from the template. Replace the names with your real team.'} Work can be assigned to anyone here.</p>
             <div id="members"></div>
             <button type="button" class="btn btn-ghost btn-sm" id="addMember">＋ Add person</button>
-            <div class="note" style="margin-top: 1.2rem;"><strong>Summary:</strong> "${esc(draft.name)}" · ${tpl.icon} ${esc(tpl.name)} · ${PMT.methodIcon(draft.method)} ${esc(PMT.methodName(draft.method))} · starts ${PMT.dates.fmt(draft.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</div>`;
+            <div class="note" style="margin-top: 1.2rem;"><strong>Summary:</strong> "${esc(draft.name)}" · ${tpl.icon} ${esc(tpl.name)} · ${PMT.methodIcon(draft.method)} ${esc(PMT.methodName(draft.method))}${(() => { const f = PMT.features(draft.method, draft.tools); const extra = Object.keys(PMT.TOOLS).filter(k => f.tools[k] && !f.locked[k]); return extra.length ? ` + ${extra.map(k => PMT.TOOLS[k].label).join(', ')}` : ''; })()} · starts ${PMT.dates.fmt(draft.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</div>`;
         drawMembers();
         document.getElementById('addMember').addEventListener('click', () => {
             draft.members.push({ name: '', role: '', ti: null });

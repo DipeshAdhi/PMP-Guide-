@@ -21,9 +21,27 @@
     A.childrenOf = gid => A.work().filter(i => i.parentId === gid).sort((a, b) => a.order - b.order);
     A.ranked = () => A.work().sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
     A.activeIteration = () => A.P.iterations.find(i => i.status === 'active') || null;
-    A.plannedIteration = () => A.P.iterations.find(i => i.status === 'planned') || null;
+    // Several sprints can be planned ahead; the planning screen works on the selected one
+    A.plannedIterations = () => A.P.iterations.filter(i => i.status === 'planned').sort((a, b) => a.start.localeCompare(b.start));
+    A.plannedIteration = () => {
+        const list = A.plannedIterations();
+        return list.find(i => i.id === A.state.planIterId) || list[0] || null;
+    };
+    A.refreshFeatures = () => { A.F = PMT.features(A.P.method, A.P.settings.tools || {}); };
+    // When a tool is switched on, give existing items the fields it needs
+    A.fillForFeatures = () => {
+        const P = A.P, F = A.F;
+        if (F.iterations && !P.settings.iterationDays) P.settings.iterationDays = F.defaultIterationDays;
+        if (F.flow && !P.settings.wipLimit) P.settings.wipLimit = 3;
+        A.work().forEach(i => {
+            if (F.moscow && !i.moscow) i.moscow = 'S';
+            if (F.points && (i.estimate == null || i.estimate === '') && i.duration) i.estimate = PMT.pointsFor(Number(i.duration));
+            if (F.schedule && !i.duration) i.duration = i.estimate ? Math.max(1, Math.round(Number(i.estimate))) : 1;
+        });
+    };
+    A.groupWord = () => A.F.wbs ? (A.F.hierarchy ? 'Deliverable (WBS)' : 'Deliverable / epic') : 'Epic';
     A.code = item => {
-        if (!A.F.hierarchy) return '';
+        if (!A.F.wbs) return '';
         const gs = A.groups();
         if (item.kind === 'group') return String(gs.indexOf(item) + 1);
         const g = A.item(item.parentId);
@@ -72,7 +90,7 @@
     function focusKey(el) {
         if (!el || el === document.body) return null;
         if (el.id) return `#${CSS.escape(el.id)}`;
-        const attrs = ['data-act', 'data-change', 'data-id', 'data-dir', 'data-col', 'data-m', 'data-v', 'data-to'];
+        const attrs = ['data-act', 'data-change', 'data-id', 'data-dir', 'data-col', 'data-m', 'data-v', 'data-to', 'data-tool'];
         const parts = attrs.filter(a => el.hasAttribute(a)).map(a => `[${a}="${CSS.escape(el.getAttribute(a))}"]`);
         return parts.length ? el.tagName.toLowerCase() + parts.join('') : null;
     }
@@ -86,7 +104,7 @@
     };
 
     // ─── Shell ───
-    const ICONS = { overview: '🏠', work: '📋', board: '🗂️', iterations: '🔁', schedule: '📊', milestones: '🏁', team: '👥', changes: '📝', risks: '⚠️', settings: '⚙️' };
+    const ICONS = { overview: '🏠', work: '📋', board: '🗂️', iterations: '🔁', timeline: '🗓️', schedule: '📊', milestones: '🏁', team: '👥', changes: '📝', risks: '⚠️', settings: '⚙️' };
     A.viewLabel = key => key === 'work' ? A.F.workLabel : key === 'iterations' ? `${A.F.iterName}s` : PMT.VIEW_LABELS[key];
 
     function renderShell() {
@@ -148,16 +166,16 @@
         const F = A.F, P = A.P;
         const it = id ? A.item(id) : null;
         const isGroup = it ? it.kind === 'group' : defaults.kind === 'group';
-        const groupWord = F.hierarchy ? 'Deliverable (WBS)' : 'Epic';
+        const groupWord = A.groupWord();
         const v = it || { title: '', description: '', type: 'task', status: defaults.status || 'backlog', parentId: defaults.parentId || null, assigneeId: null, estimate: '', duration: F.schedule ? 3 : '', moscow: F.moscow ? 'S' : null, deps: [], iterationId: defaults.iterationId || null };
         const others = A.work().filter(x => !it || x.id !== it.id);
         const iterOptions = P.iterations.filter(i => i.status !== 'closed');
         const linkedMs = it ? P.milestones.filter(m => m.itemIds.includes(it.id)).map(m => m.id) : (defaults.milestoneId ? [defaults.milestoneId] : []);
 
-        document.getElementById('dlgTitle').textContent = isGroup ? (it ? `Edit ${groupWord.toLowerCase()}` : `New ${groupWord.toLowerCase()}`) : (it ? `Edit ${F.hierarchy && A.code(it) ? A.code(it) + ' · ' : ''}work item` : 'New work item');
+        document.getElementById('dlgTitle').textContent = isGroup ? (it ? `Edit ${groupWord.toLowerCase()}` : `New ${groupWord.toLowerCase()}`) : (it ? `Edit ${A.code(it) ? A.code(it) + ' · ' : ''}work item` : 'New work item');
         document.getElementById('dlgBody').innerHTML = isGroup ? `
             <div class="field"><label for="fTitle">${groupWord} name</label><input class="input" id="fTitle" name="title" required maxlength="100" value="${esc(v.title)}"></div>
-            <p class="muted small">${F.hierarchy ? 'Deliverables group work packages in the work breakdown structure.' : 'Epics group related backlog items.'}</p>` : `
+            <p class="muted small">${F.wbs ? 'Deliverables group work packages in the work breakdown structure.' : 'Epics group related backlog items.'}</p>` : `
             <div class="field"><label for="fTitle">Title</label><input class="input" id="fTitle" name="title" required maxlength="140" value="${esc(v.title)}" placeholder="${F.hierarchy ? 'Name the deliverable, e.g. Login page' : 'e.g. As a teacher, I can mark attendance'}"></div>
             <div class="field"><label for="fDesc">Description / acceptance criteria</label><textarea class="textarea" id="fDesc" name="description" maxlength="2000">${esc(v.description)}</textarea></div>
             <div class="row">
@@ -166,7 +184,7 @@
                 <div class="field"><label for="fType">Type</label><select class="select" id="fType" name="type">${[['task', 'Task'], ['story', 'User story'], ['bug', 'Bug']].map(([k, l]) => `<option value="${k}" ${v.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
             </div>
             <div class="row">
-                <div class="field"><label for="fParent">${groupWord}</label><select class="select" id="fParent" name="parentId"><option value="">None</option>${A.groups().map(g => `<option value="${g.id}" ${v.parentId === g.id ? 'selected' : ''}>${F.hierarchy ? A.code(g) + ' ' : ''}${esc(g.title)}</option>`).join('')}</select></div>
+                <div class="field"><label for="fParent">${groupWord}</label><select class="select" id="fParent" name="parentId"><option value="">None</option>${A.groups().map(g => `<option value="${g.id}" ${v.parentId === g.id ? 'selected' : ''}>${F.wbs ? A.code(g) + ' ' : ''}${esc(g.title)}</option>`).join('')}</select></div>
                 ${F.points ? `<div class="field"><label for="fEst">Estimate (points)</label><input class="input" type="number" min="0" max="100" step="1" id="fEst" name="estimate" value="${v.estimate ?? ''}"></div>` : ''}
                 ${F.schedule ? `<div class="field"><label for="fDur">Duration (working days)</label><input class="input" type="number" min="0" max="365" step="1" id="fDur" name="duration" value="${v.duration ?? ''}"></div>` : ''}
                 ${F.moscow ? `<div class="field"><label for="fMos">Priority</label><select class="select" id="fMos" name="moscow">${Object.entries(MOSCOW).map(([k, l]) => `<option value="${k}" ${v.moscow === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` : ''}
@@ -194,10 +212,10 @@
         const P = A.P, F = A.F, now = new Date().toISOString();
 
         if (kind === 'group') {
-            if (id) { A.item(id).title = title; A.log(`Renamed ${F.hierarchy ? 'deliverable' : 'epic'} to "${title}"`); }
+            if (id) { A.item(id).title = title; A.log(`Renamed ${A.groupWord().toLowerCase()} to "${title}"`); }
             else {
                 P.items.push({ id: PMT.uid('g_'), kind: 'group', title, order: A.groups().length, raci: {} });
-                A.log(`Added ${F.hierarchy ? 'deliverable' : 'epic'} "${title}"`);
+                A.log(`Added ${A.groupWord().toLowerCase()} "${title}"`);
             }
             dlg().close();
             A.commit(null, id ? 'Saved' : `Added "${title}"`, 'good');
@@ -271,7 +289,8 @@
             return;
         }
         A.P = P;
-        A.F = PMT.features(P.method);
+        P.settings.tools = P.settings.tools || {};
+        A.refreshFeatures();
         document.title = `${P.name} - PM Ready Project Tool`;
         document.getElementById('dlgForm').addEventListener('submit', saveDialog);
         document.getElementById('dlgCancel').addEventListener('click', () => dlg().close());
@@ -286,7 +305,8 @@
             if (!fresh) { toast('This project was deleted in another tab.', 'bad'); return; }
             if (fresh.updatedAt !== A.P.updatedAt) {
                 A.P = fresh;
-                A.F = PMT.features(fresh.method);
+                fresh.settings.tools = fresh.settings.tools || {};
+                A.refreshFeatures();
                 render();
                 toast('Updated with changes from another tab.');
             }

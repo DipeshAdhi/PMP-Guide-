@@ -65,9 +65,17 @@
                 const planPts = pts(inIt);
                 const cap = v;
                 const over = cap != null && planPts > cap;
+                const plannedList = A.plannedIterations();
+                const isNext = plannedList[0].id === planned.id;
+                const startBlock = active ? `Complete ${active.name} first` : !isNext ? `Start ${plannedList[0].name} first` : !inIt.length ? 'Add items first' : '';
                 planHtml = `<div class="card" style="margin-bottom: 1rem;">
+                    <div class="toolbar" style="margin-bottom: 0.9rem;" role="group" aria-label="Planned ${name.toLowerCase()}s">
+                        ${plannedList.map(p => `<button class="btn btn-sm ${p.id === planned.id ? 'btn-primary' : 'btn-ghost'}" data-act="selectPlan" data-id="${p.id}" aria-pressed="${p.id === planned.id}">${esc(p.name)} · ${D.fmt(p.start)}</button>`).join('')}
+                        <button class="btn btn-ghost btn-sm" data-act="planIteration">＋ Plan another ${name.toLowerCase()}</button>
+                        ${F.timeline ? '<a class="btn btn-ghost btn-sm" href="#timeline">🗓️ See them on the timeline</a>' : ''}
+                    </div>
                     <div class="view-head" style="margin-bottom: 0.6rem;"><div><h3 style="margin: 0;">🗓️ Planning ${esc(planned.name)}</h3><div class="muted small">${D.fmt(planned.start)} – ${D.fmt(planned.end)} · ${len} working days</div></div>
-                        <div class="toolbar"><button class="btn btn-ghost btn-sm" data-act="cancelIteration">Discard plan</button><button class="btn btn-primary" data-act="startIteration" ${active || !inIt.length ? 'disabled' : ''} title="${active ? `Complete ${active.name} first` : !inIt.length ? 'Add items first' : ''}">▶ Start ${esc(planned.name)}</button></div></div>
+                        <div class="toolbar"><button class="btn btn-ghost btn-sm" data-act="cancelIteration">Discard plan</button><button class="btn btn-primary" data-act="startIteration" ${startBlock ? 'disabled' : ''} title="${startBlock}">▶ Start ${esc(planned.name)}</button></div></div>
                     <form data-form="iterGoal" class="row" style="grid-template-columns: 1fr 180px auto; align-items: end; margin-bottom: 1rem;">
                         <div class="field" style="margin: 0;"><label for="itGoal">${name} goal: why is this ${name.toLowerCase()} worth doing?</label><input class="input" id="itGoal" name="goal" maxlength="160" value="${esc(planned.goal || '')}" placeholder="e.g. Parents can log in and see attendance"></div>
                         <div class="field" style="margin: 0;"><label for="itStart">Start date</label><input class="input" type="date" id="itStart" name="start" value="${planned.start}"></div>
@@ -100,21 +108,29 @@
         }
     });
 
-    A.action('planIteration', () => {
+    // New sprint straight after the latest one (or from today / the project start)
+    A.createIteration = () => {
         const P = A.P, F = A.F;
         const len = Number(P.settings.iterationDays) || F.defaultIterationDays;
-        const last = P.iterations[P.iterations.length - 1];
+        const last = P.iterations.slice().sort((x, y) => x.end.localeCompare(y.end)).pop();
         const today = D.nextWorkday(D.todayISO() > P.startDate ? D.todayISO() : P.startDate);
         const start = last ? D.addWorkdays(last.end, 1) : today;
         const it = { id: PMT.uid('it_'), name: `${F.iterName} ${P.iterations.length + 1}`, goal: '', start, end: D.addWorkdays(start, len - 1), status: 'planned' };
         P.iterations.push(it);
+        return it;
+    };
+    A.action('planIteration', () => {
+        const it = A.createIteration();
+        A.state.planIterId = it.id;
         A.commit(`Started planning ${it.name}`);
     });
+    A.action('selectPlan', el => { A.state.planIterId = el.dataset.id; A.render(); });
     A.action('cancelIteration', () => {
         const it = A.plannedIteration();
         if (!it || !confirm(`Discard the plan for ${it.name}? Its items go back to the ${A.F.workLabel.toLowerCase()}.`)) return;
         A.work().filter(i => i.iterationId === it.id).forEach(i => { i.iterationId = null; });
         A.P.iterations = A.P.iterations.filter(x => x.id !== it.id);
+        A.state.planIterId = null;
         A.commit(`Discarded the plan for ${it.name}`);
     });
     A.action('planAdd', el => { const i = A.item(el.dataset.id); i.iterationId = A.plannedIteration().id; A.commit(`Planned "${i.title}" into ${A.plannedIteration().name}`); });
@@ -128,6 +144,7 @@
     A.action('startIteration', () => {
         const it = A.plannedIteration();
         if (A.activeIteration()) return toast('Complete the active one first.', 'warn');
+        if (A.plannedIterations()[0].id !== it.id) return toast(`Start ${A.plannedIterations()[0].name} first.`, 'warn');
         const items = A.work().filter(i => i.iterationId === it.id);
         if (!it.goal && !confirm('Start without a goal? A goal keeps the team focused.')) return;
         items.forEach(i => { if (i.status === 'backlog') i.status = 'todo'; });
@@ -178,7 +195,7 @@
             const row = (label, inner, cls = '') => `<div class="g-row ${cls}"><div class="g-label">${label}</div><div class="g-track" style="width:${trackW}px; background-size:${W}px 100%">${inner}${todayX != null ? `<span class="g-today" style="left:${todayX}px"></span>` : ''}</div></div>`;
 
             let rows = '';
-            if (F.hierarchy) {
+            if (F.wbs) {
                 A.groups().forEach(g => {
                     const kids = A.childrenOf(g.id).filter(i => s.byId[i.id]);
                     if (!kids.length) return;
@@ -291,7 +308,7 @@
             const P = A.P, F = A.F;
             const groups = A.groups();
             let raciHtml = '';
-            if (F.hierarchy && groups.length && P.members.length) {
+            if (F.wbs && groups.length && P.members.length) {
                 const warnings = [];
                 groups.forEach(g => {
                     const vals = Object.values(g.raci || {});
@@ -459,7 +476,7 @@
             const P = A.P, F = A.F;
             pendingMethod = null;
             return {
-                sub: 'Project details, working rules, and methodology',
+                sub: 'Project details, tools, working rules, and methodology',
                 html: `<div class="grid grid-2" style="align-items: start;">
                     <form class="card" data-form="settingsSave"><h3>Project details</h3>
                         <div class="field"><label for="sName">Name</label><input class="input" id="sName" name="name" required maxlength="80" value="${esc(P.name)}"></div>
@@ -473,6 +490,9 @@
                     <div class="card"><h3>Data</h3>
                         <p class="small muted" style="margin-bottom: 0.8rem;">This project is saved in this browser only. Export it to back it up or open it on another device (Import on the projects page).</p>
                         <div class="toolbar"><button class="btn btn-ghost" data-act="exportProject">⬇ Export (.json)</button><button class="btn btn-danger" data-act="deleteProject">Delete project</button></div></div>
+                    <div class="card" style="grid-column: 1 / -1;"><h3>Tools</h3>
+                        <p class="small muted" style="margin-bottom: 0.8rem;">Add any project management tool to this project, whatever the methodology. Tools that come with <strong>${esc(PMT.methodName(P.method))}</strong> are always on. Switching a tool off hides it; its data is kept.</p>
+                        <div id="toolPicker"></div></div>
                     <div class="card" style="grid-column: 1 / -1;"><h3>Methodology</h3>
                         <p class="small muted" style="margin-bottom: 0.8rem;">Currently: <strong>${PMT.methodIcon(P.method)} ${esc(PMT.methodName(P.method))}</strong>. You can switch at any time; all work items, people, milestones, and history are kept. Only the screens and rules change.</p>
                         <div id="methodPicker"></div>
@@ -481,6 +501,17 @@
             };
         },
         mount() {
+            PMT.renderToolPicker(document.getElementById('toolPicker'), A.P.method, A.P.settings.tools, tools => {
+                const before = A.F.tools;
+                A.P.settings.tools = tools;
+                A.refreshFeatures();
+                A.fillForFeatures();
+                const added = Object.keys(PMT.TOOLS).filter(k => A.F.tools[k] && !before[k]);
+                const removed = Object.keys(PMT.TOOLS).filter(k => !A.F.tools[k] && before[k]);
+                const names = ks => ks.map(k => PMT.TOOLS[k].label).join(', ');
+                A.commit(added.length ? `Added ${names(added)}` : removed.length ? `Removed ${names(removed)}` : null,
+                    added.length ? `Added ${names(added)}. Find it in the sidebar.` : removed.length ? `Hid ${names(removed)}` : null, added.length ? 'good' : '');
+            });
             PMT.renderMethodPicker(document.getElementById('methodPicker'), A.P.method, v => {
                 pendingMethod = v;
                 const changed = JSON.stringify(v) !== JSON.stringify(A.P.method);
@@ -506,11 +537,8 @@
         if (!confirm(`Switch from ${from} to ${to}? Your data is kept; the screens and rules change.`)) return;
         const P = A.P;
         P.method = pendingMethod;
-        A.F = PMT.features(P.method);
-        if (A.F.iterations && !P.settings.iterationDays) P.settings.iterationDays = A.F.defaultIterationDays;
-        if (A.F.moscow) A.work().forEach(i => { if (!i.moscow) i.moscow = 'S'; });
-        if (A.F.points) A.work().forEach(i => { if ((i.estimate == null || i.estimate === '') && i.duration) i.estimate = PMT.pointsFor(Number(i.duration)); });
-        if (A.F.schedule) A.work().forEach(i => { if (!i.duration && i.estimate) i.duration = Math.max(1, Math.round(Number(i.estimate))); });
+        A.refreshFeatures();
+        A.fillForFeatures();
         A.commit(`Methodology changed from ${from} to ${to}`, `Now using ${to}`, 'good');
     });
     A.action('exportProject', () => {
