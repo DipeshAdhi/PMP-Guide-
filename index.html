@@ -39,6 +39,7 @@
         .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
         .chips a { text-decoration: none; color: var(--indigo); background: var(--white); border: 1.5px solid var(--line); border-radius: 20px; padding: 0.35rem 0.8rem; font-size: 0.88em; font-weight: 600; }
         .chips a:hover { border-color: var(--teal); color: var(--teal); }
+        .chip-static { color: var(--indigo); background: var(--white); border: 1.5px solid var(--line); border-radius: 20px; padding: 0.3rem 0.75rem; font-size: 0.85em; font-weight: 600; }
         .soon { font-size: 0.84em; background: #E8F7F6; color: #13807A; border-radius: 8px; padding: 0.6rem 0.8rem; }
 
         .map-wrap { border-top: 1px solid var(--line); padding: 2.5rem 0 3rem; }
@@ -66,7 +67,7 @@
     <header class="home-hero">
         <div class="container">
             <h1>Get <span>project-management ready</span>.</h1>
-            <p>Learn how projects work step by step, or go straight to the tools and manage a project. Choose your side.</p>
+            <p>Learn how projects work step by step, or open the Project Tool and run a real project. Choose your side.</p>
         </div>
     </header>
 
@@ -81,20 +82,23 @@
                 <div class="links">
                     <a href="learn/index.html"><span class="i">🧭</span><span><strong>Course</strong><small>Eight modules, from what a project is to agile and change control</small></span></a>
                     <a href="learn/practice.html"><span class="i">🎯</span><span><strong>Practice & readiness</strong><small>Readiness score, quiz, real-world scenarios, simulator, formula sheet</small></span></a>
+                    <a href="workspace/index.html"><span class="i">🧩</span><span><strong>Interactive tools</strong><small>Hands-on WBS, RACI, CPM, Gantt, milestones, Scrum, DSDM, and XP</small></span></a>
                 </div>
             </section>
 
             <section class="side" style="--c: var(--teal);" aria-labelledby="wsTitle">
-                <span class="who">I want to manage a project</span>
-                <h2 id="wsTitle">🛠️ Workspace</h2>
-                <p>Just the tools, no lessons. Plan the scope, assign the team, build the schedule, and deliver with agile boards.</p>
-                <a class="primary" href="workspace/index.html"><span><small>Tools only</small><strong>Open the workspace</strong></span><span class="arrow">→</span></a>
-                <div class="tool-groups">
-                    <div class="tool-group"><h3>Plan</h3><div class="chips"><a href="workspace/task-board.html">🗂️ Task board & WBS</a><a href="workspace/raci.html">👥 RACI</a></div></div>
-                    <div class="tool-group"><h3>Schedule & track</h3><div class="chips"><a href="workspace/cpm.html">🛤️ Critical path</a><a href="workspace/gantt.html">📊 Gantt</a><a href="workspace/milestones.html">🏁 Milestones</a></div></div>
-                    <div class="tool-group"><h3>Deliver with agile</h3><div class="chips"><a href="workspace/scrum.html">🔄 Scrum</a><a href="workspace/dsdm.html">🧭 DSDM</a><a href="workspace/xp.html">⚡ XP</a></div></div>
+                <span class="who">I want to manage a real project</span>
+                <h2 id="wsTitle">🛠️ Project Tool</h2>
+                <p>Not a lesson: a working tool. Create a project, choose how you'll run it, then assign, plan, and track the work.</p>
+                <a class="primary" href="Project_Mangment_Tool/index.html"><span><small>Your projects</small><strong>Open the Project Tool</strong></span><span class="arrow">→</span></a>
+                <div class="links">
+                    <a href="Project_Mangment_Tool/index.html#new"><span class="i">＋</span><span><strong>Start a new project</strong><small>Name it → use a template or start blank → choose a methodology</small></span></a>
                 </div>
-                <p class="soon"><strong>Coming next:</strong> one connected project where you pick a methodology (predictive, agile, or hybrid) and the tools work together.</p>
+                <div class="tool-groups">
+                    <div class="tool-group"><h3>Run it your way</h3><div class="chips"><span class="chip-static">🌊 Predictive</span><span class="chip-static">🔄 Scrum</span><span class="chip-static">🗂️ Kanban</span><span class="chip-static">⚡ XP</span><span class="chip-static">🧭 DSDM</span><span class="chip-static">🧬 Hybrid</span></div></div>
+                    <div class="tool-group"><h3>What you can do</h3><div class="chips"><span class="chip-static">Assign work</span><span class="chip-static">WBS or backlog</span><span class="chip-static">Sprints & burndown</span><span class="chip-static">Gantt & critical path</span><span class="chip-static">Milestones</span><span class="chip-static">Change requests</span><span class="chip-static">Risks</span></div></div>
+                </div>
+                <p class="soon">Projects are saved in your browser for now. Export and import let you move them between devices.</p>
             </section>
         </div>
     </main>
@@ -107,7 +111,7 @@
     </section>
 
     <footer>
-        <p>PM Ready · <a href="learn/index.html">Learn</a> · <a href="learn/practice.html">Practice</a> · <a href="workspace/index.html">Workspace</a></p>
+        <p>PM Ready · <a href="learn/index.html">Learn</a> · <a href="learn/practice.html">Practice</a> · <a href="Project_Mangment_Tool/index.html">Project Tool</a></p>
     </footer>
 
 <script>

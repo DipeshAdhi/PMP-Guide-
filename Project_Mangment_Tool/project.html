@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project - PM Ready Project Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar" id="sidebar"></aside>
+        <div class="main">
+            <header class="topbar">
+                <div>
+                    <h1 id="viewTitle">Overview</h1>
+                    <div class="sub" id="viewSub"></div>
+                </div>
+                <span class="spacer"></span>
+                <span class="saved" id="saved" aria-live="polite"></span>
+                <button class="btn btn-primary" id="addItemTop">＋ Add work</button>
+            </header>
+            <main class="view" id="view" tabindex="-1"></main>
+        </div>
+    </div>
+
+    <dialog id="itemDialog" aria-labelledby="dlgTitle">
+        <form id="dlgForm" novalidate>
+            <div class="dlg-head"><h2 id="dlgTitle">Work item</h2><button type="button" class="icon-btn" id="dlgClose" aria-label="Close">✕</button></div>
+            <div class="dlg-body" id="dlgBody"></div>
+            <div class="dlg-foot">
+                <button type="button" class="btn btn-danger" id="dlgDelete">Delete</button>
+                <span class="toolbar"><button type="button" class="btn btn-ghost" id="dlgCancel">Cancel</button><button type="submit" class="btn btn-primary">Save</button></span>
+            </div>
+        </form>
+    </dialog>
+
+<script src="js/store.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/methods.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+<script src="js/views-work.js"></script>
+<script src="js/views-plan.js"></script>
+<script>PMT.app.boot();</script>
+</body>
+</html>

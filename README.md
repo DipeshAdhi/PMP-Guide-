@@ -1,6 +1,6 @@
 # PM Ready
 
-A free, static website for getting **project-management ready**: learn how projects work step by step, or go straight to the tools and manage a project.
+A free, static website for getting **project-management ready**: learn how projects work step by step, or open the Project Tool and run a real project.
 
 No backend, no build step. Everything runs in the browser, and progress and boards are saved in the visitor's own browser (`localStorage`).
 
@@ -9,9 +9,9 @@ No backend, no build step. Everything runs in the browser, and progress and boar
 | Side | For | Start at |
 |---|---|---|
 | **Learn & practise** | People learning project management | `learn/index.html` |
-| **Workspace** | People who just want the tools | `workspace/index.html` |
+| **Project Tool** | People running a real project | `Project_Mangment_Tool/index.html` |
 
-The home page (`index.html`) lets visitors choose a side.
+The home page (`index.html`) lets visitors choose a side. The Project Tool is a separate app with its own README: [Project_Mangment_Tool/README.md](Project_Mangment_Tool/README.md).
 
 ### Learn
 An 8-module course. Every module follows the same steps: **Read** a short lesson → **Try it** in an interactive tool → **Check** with 3 questions.
@@ -27,8 +27,8 @@ An 8-module course. Every module follows the same steps: **Read** a short lesson
 
 **Practice** (`learn/practice.html`) shows a readiness score from the module checks and links to the quiz, scenarios, simulator, and a formula sheet.
 
-### Workspace
-Tools that share the Scholar Academy example project:
+### Interactive tools (part of Learn)
+Hands-on demos that share the Scholar Academy example project:
 
 - Task board with WBS tree and milestones · RACI matrix
 - Critical path (CPM) with PERT · Gantt chart · Milestone chart
@@ -37,7 +37,7 @@ Tools that share the Scholar Academy example project:
 ## Folder structure
 
 ```
-index.html            Home: choose Learn or Workspace
+index.html            Home: choose Learn or the Project Tool
 learn/                Course, practice, and the learning tools
   index.html            8-module course
   practice.html         Readiness, quiz links, formula sheet
@@ -45,8 +45,8 @@ learn/                Course, practice, and the learning tools
   triple-constraint.html Module 2 tool
   practice-lab.html     Process groups, order challenge, quiz, scenarios
   simulator.html        Project decision simulator
-workspace/            Project tools
-  index.html            Workspace hub
+workspace/            Interactive learning tools
+  index.html            Tools hub
   task-board.html  raci.html  milestones.html  gantt.html  cpm.html
   scrum.html  dsdm.html  xp.html
 assets/
@@ -55,6 +55,7 @@ assets/
   js/site-nav.js        Shared navigation + course progress (every page loads it)
   js/schedule.js        Example schedule + critical path calculation
   js/agile.js           Agile Manifesto values/principles + helpers
+Project_Mangment_Tool/ The Project Tool app (see its README)
 docs/                 Older design notes (historical)
 ```
 
@@ -82,11 +83,12 @@ Pushing to `main` deploys the whole repository to GitHub Pages (`.github/workflo
 
 ## Roadmap
 
-1. ✅ Clear study flow (Learn · Practice · Workspace)
-2. Shared project data so all workspace tools edit one project
-3. Methodology presets (predictive, Scrum, Kanban, DSDM, XP) that change how the tools work
-4. Hybrid tailoring: choose an approach per area
-5. Role-based access control (later; requires a backend)
+1. ✅ Clear study flow (Learn · Practice · Interactive tools)
+2. ✅ Project Tool: one project shared by all its screens
+3. ✅ Methodology presets (Predictive, Scrum, Kanban, XP, DSDM) that change how the tool works
+4. ✅ Hybrid: presets or a custom choice per area
+5. Backend: accounts, shared projects, real-time updates
+6. Role-based access control (with the backend)
 
 ## Note
 

@@ -5,8 +5,9 @@
    The script inserts the nav in its place.
 
    The site has two sides:
-     Learn      – the course (learn/index.html) and practice (learn/practice.html)
-     Workspace  – tools for managing a project (workspace/)
+     Learn         – the course (learn/), practice, and interactive learning tools (workspace/)
+     Project Tool  – a separate app for running real projects (Project_Mangment_Tool/),
+                     which has its own navigation and does not load this script
    When a page is opened from a course module (?m=4), a bar links back
    to that module and the module's "Try" step is marked as done.
    =================================================================== */
@@ -36,21 +37,23 @@
         'triple-constraint': { side: 'learn', section: 'course', title: 'Triple constraint tool' },
         'practice-lab': { side: 'learn', section: 'practice', title: 'Practice lab' },
         simulator: { side: 'learn', section: 'practice', title: 'Project simulator' },
-        workspace: { side: 'workspace', section: 'workspace' },
-        'task-board': { side: 'workspace', section: 'workspace', title: 'Task board (WBS + milestones)' },
-        raci: { side: 'workspace', section: 'workspace', title: 'RACI matrix' },
-        milestones: { side: 'workspace', section: 'workspace', title: 'Milestones' },
-        gantt: { side: 'workspace', section: 'workspace', title: 'Gantt chart' },
-        cpm: { side: 'workspace', section: 'workspace', title: 'Critical path (CPM)' },
-        scrum: { side: 'workspace', section: 'workspace', title: 'Scrum board' },
-        dsdm: { side: 'workspace', section: 'workspace', title: 'DSDM' },
-        xp: { side: 'workspace', section: 'workspace', title: 'Extreme Programming' }
+        // The interactive learning tools (workspace/) belong to the Learn side
+        workspace: { side: 'learn', section: 'tools' },
+        'task-board': { side: 'learn', section: 'tools', title: 'Task board (WBS + milestones)' },
+        raci: { side: 'learn', section: 'tools', title: 'RACI matrix' },
+        milestones: { side: 'learn', section: 'tools', title: 'Milestones' },
+        gantt: { side: 'learn', section: 'tools', title: 'Gantt chart' },
+        cpm: { side: 'learn', section: 'tools', title: 'Critical path (CPM)' },
+        scrum: { side: 'learn', section: 'tools', title: 'Scrum board' },
+        dsdm: { side: 'learn', section: 'tools', title: 'DSDM' },
+        xp: { side: 'learn', section: 'tools', title: 'Extreme Programming' }
     };
     const SECTIONS = {
         course: { label: 'Course', href: 'learn/index.html' },
         practice: { label: 'Practice', href: 'learn/practice.html' },
-        workspace: { label: 'Workspace', href: 'workspace/index.html' }
+        tools: { label: 'Tools', href: 'workspace/index.html' }
     };
+    const PM_TOOL = 'Project_Mangment_Tool/index.html';
 
     // ─── Progress (per browser) ───
     const KEY = 'pmpCourse_v1'; // storage key kept so existing progress isn't lost
@@ -121,21 +124,18 @@
 
     const link = key => `<li><a class="sn-link" href="${url(SECTIONS[key].href)}"${page.section === key ? ' aria-current="page"' : ''}>${SECTIONS[key].label}</a></li>`;
     let items, right, side = '';
-    if (page.side === 'workspace') {
-        items = link('workspace');
-        right = `<a class="sn-switch" href="${url('learn/index.html')}">Switch to Learn →</a>`;
-    } else if (page.side === 'learn') {
+    if (page.side === 'learn') {
         side = '<span class="sn-side">Learn</span>';
-        items = link('course') + link('practice');
+        items = link('course') + link('practice') + link('tools');
         right = `<a class="sn-progress" href="${url('learn/index.html')}" title="Course progress">Course: <strong>${window.PMCourse.completed()}/${COURSE.length}</strong></a>
-                 <a class="sn-switch" href="${url('workspace/index.html')}">Switch to Workspace →</a>`;
+                 <a class="sn-switch" href="${url(PM_TOOL)}">Open the Project Tool →</a>`;
     } else {
-        items = `<li><a class="sn-link" href="${url('learn/index.html')}">Learn</a></li><li><a class="sn-link" href="${url('workspace/index.html')}">Workspace</a></li>`;
+        items = `<li><a class="sn-link" href="${url('learn/index.html')}">Learn</a></li><li><a class="sn-link" href="${url(PM_TOOL)}">Project Tool</a></li>`;
         right = '';
     }
 
     let html = `<style>${css}</style>
-    <div class="sn-bar ${page.side === 'workspace' ? 'ws' : ''}" role="navigation" aria-label="Main">
+    <div class="sn-bar" role="navigation" aria-label="Main">
         <div class="sn-inner">
             <a class="sn-logo" href="${url('index.html')}">PM Ready</a>
             ${side}

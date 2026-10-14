@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - PM Ready Project Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <header class="top">
+        <div class="in">
+            <a class="brand" href="index.html">PM Ready<span>Project Tool</span></a>
+            <a class="back" href="../index.html">← PM Ready home</a>
+        </div>
+    </header>
+
+    <!-- Projects list -->
+    <main class="page" id="listView">
+        <div class="page-head">
+            <div>
+                <h1>Your projects</h1>
+                <p class="muted">Create a project, choose how you'll run it, then plan, assign, and track the work.</p>
+            </div>
+            <div class="toolbar">
+                <label class="btn btn-ghost" for="importFile">Import</label>
+                <input type="file" id="importFile" accept="application/json,.json" hidden>
+                <a class="btn btn-primary" href="#new">＋ New project</a>
+            </div>
+        </div>
+        <div id="projects"></div>
+        <p class="muted small" style="margin-top: 1.5rem;">Projects are saved in this browser. Use Settings → Export in a project to back it up or move it to another device.</p>
+    </main>
+
+    <!-- New project wizard -->
+    <main class="page" id="wizardView" hidden>
+        <div class="wizard">
+            <div class="steps" id="steps"></div>
+            <form class="card" id="wizardForm" novalidate>
+                <div id="stepBody"></div>
+                <div class="wizard-foot">
+                    <button type="button" class="btn btn-ghost" id="backBtn">← Back</button>
+                    <button type="submit" class="btn btn-primary" id="nextBtn">Next →</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+<script src="js/store.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/methods.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/ui.js"></script>
+<script>
+const { esc, toast } = PMT.ui;
+
+// ─── Projects list ───
+async function renderList() {
+    const list = await PMT.store.list();
+    const el = document.getElementById('projects');
+    if (!list.length) {
+        el.innerHTML = `<div class="card empty"><div class="big">📁</div><h3 style="margin: 0.4rem 0;">No projects yet</h3>
+            <p>Start from a template or a blank project. It takes about a minute.</p>
+            <p style="margin-top: 1rem;"><a class="btn btn-primary" href="#new">＋ Create your first project</a></p></div>`;
+        return;
+    }
+    el.innerHTML = `<div class="projects">${list.map(p => {
+        const pct = p.total ? Math.round(p.done / p.total * 100) : 0;
+        const tpl = PMT.TEMPLATES.find(t => t.id === p.template);
+        return `<a class="project-card" href="project.html?id=${encodeURIComponent(p.id)}">
+            <span class="pill">${PMT.methodIcon(p.method)} ${esc(PMT.methodName(p.method))}</span>
+            <h3>${esc(p.name)}</h3>
+            ${p.description ? `<p class="muted small">${esc(p.description)}</p>` : ''}
+            <div class="bar" aria-label="${pct}% done"><div style="width:${pct}%"></div></div>
+            <div class="meta"><span>${p.done}/${p.total} items done</span><span>${p.members} people</span><span>${tpl ? tpl.icon + ' ' + esc(tpl.name) : ''}</span></div>
+            <div class="meta"><span>Updated ${new Date(p.updatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span></div>
+        </a>`;
+    }).join('')}</div>`;
+}
+
+document.getElementById('importFile').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+        const p = JSON.parse(await file.text());
+        const ok = p && typeof p.name === 'string' && p.method && Array.isArray(p.items) && Array.isArray(p.members);
+        if (!ok) throw new Error('This file is not a PM Ready project export.');
+        ['milestones', 'iterations', 'changes', 'risks', 'activity'].forEach(k => { if (!Array.isArray(p[k])) p[k] = []; });
+        p.settings = Object.assign({ iterationDays: 10, wipLimit: 3 }, p.settings);
+        const existing = await PMT.store.get(p.id);
+        if (!p.id || existing) {
+            p.id = PMT.uid('p_');
+            if (existing) p.name += ' (imported)';
+        }
+        p.activity.push({ at: new Date().toISOString(), text: `Imported from ${file.name}` });
+        await PMT.store.save(p);
+        toast(`Imported "${p.name}"`, 'good');
+        renderList();
+    } catch (err) {
+        toast(err instanceof SyntaxError ? 'That file is not valid JSON.' : err.message, 'bad');
+    }
+});
+
+// ─── Wizard ───
+const STEPS = ['Name', 'Template', 'Methodology', 'Team'];
+let step = 0;
+let picker = null;
+const today = PMT.dates.todayISO();
+const draft = { name: '', description: '', startDate: PMT.dates.nextWorkday(today), templateId: 'blank', method: { mode: 'single', key: 'scrum' }, members: [] };
+const membersFromTemplate = id => (PMT.TEMPLATES.find(t => t.id === id) || PMT.TEMPLATES[0]).members.map(([name, role], ti) => ({ name, role, ti }));
+draft.members = membersFromTemplate('blank');
+
+function renderSteps() {
+    document.getElementById('steps').innerHTML = STEPS.map((s, i) =>
+        `<span class="${i === step ? 'on' : i < step ? 'done' : ''}"><b>${i < step ? '✓' : i + 1}</b>${s}</span>`).join('');
+    document.getElementById('backBtn').textContent = step === 0 ? 'Cancel' : '← Back';
+    document.getElementById('nextBtn').textContent = step === STEPS.length - 1 ? 'Create project' : 'Next →';
+}
+
+function renderStep() {
+    renderSteps();
+    const body = document.getElementById('stepBody');
+    picker = null;
+    if (step === 0) {
+        body.innerHTML = `
+            <h2>Name your project</h2>
+            <p class="muted" style="margin-bottom: 1.2rem;">You can change all of this later in Settings.</p>
+            <div class="field"><label for="pName">Project name</label><input class="input" id="pName" required maxlength="80" value="${esc(draft.name)}" placeholder="e.g. Customer portal 2.0"><span class="hint" id="nameErr" role="alert"></span></div>
+            <div class="field"><label for="pDesc">Description <span class="muted">(optional)</span></label><textarea class="textarea" id="pDesc" maxlength="300" placeholder="What is this project for?">${esc(draft.description)}</textarea></div>
+            <div class="field" style="max-width: 240px;"><label for="pStart">Start date</label><input class="input" type="date" id="pStart" value="${draft.startDate}"><span class="hint">Weekends are skipped when scheduling.</span></div>`;
+        document.getElementById('pName').focus();
+    } else if (step === 1) {
+        body.innerHTML = `
+            <h2>Start from a template?</h2>
+            <p class="muted">Templates come with work items, dependencies, a team, milestones, and risks. Pick blank to start empty.</p>
+            <div class="tpl-grid" role="radiogroup" aria-label="Template">
+                ${PMT.TEMPLATES.map(t => {
+                    const items = t.groups.reduce((n, g) => n + g[1].length, 0);
+                    return `<button type="button" class="choice" role="radio" aria-checked="${draft.templateId === t.id}" data-tpl="${t.id}">
+                        <span class="choice-icon">${t.icon}</span><strong>${t.name}</strong><small>${t.desc}</small>
+                        <small>${t.id === 'blank' ? 'Nothing pre-filled' : `${items} work items · ${t.members.length} people · ${t.milestones.length} milestones`}</small></button>`;
+                }).join('')}
+            </div>`;
+        body.querySelectorAll('[data-tpl]').forEach(b => b.addEventListener('click', () => {
+            if (draft.templateId !== b.dataset.tpl) draft.members = membersFromTemplate(b.dataset.tpl);
+            draft.templateId = b.dataset.tpl;
+            body.querySelectorAll('[data-tpl]').forEach(x => x.setAttribute('aria-checked', x === b));
+        }));
+    } else if (step === 2) {
+        body.innerHTML = `<h2>How will you run it?</h2>
+            <p class="muted">Follow one methodology, or build a hybrid. This decides which screens and rules your project gets.</p>
+            <div id="picker" style="margin-top: 1rem;"></div>`;
+        picker = PMT.renderMethodPicker(document.getElementById('picker'), draft.method, v => { draft.method = v; });
+    } else {
+        const tpl = PMT.TEMPLATES.find(t => t.id === draft.templateId);
+        body.innerHTML = `<h2>Who's on the team?</h2>
+            <p class="muted" style="margin-bottom: 1rem;">${tpl.id === 'blank' ? 'Add the people who will work on this project.' : 'These roles come from the template. Replace the names with your real team.'} Work can be assigned to anyone here.</p>
+            <div id="members"></div>
+            <button type="button" class="btn btn-ghost btn-sm" id="addMember">＋ Add person</button>
+            <div class="note" style="margin-top: 1.2rem;"><strong>Summary:</strong> "${esc(draft.name)}" · ${tpl.icon} ${esc(tpl.name)} · ${PMT.methodIcon(draft.method)} ${esc(PMT.methodName(draft.method))} · starts ${PMT.dates.fmt(draft.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</div>`;
+        drawMembers();
+        document.getElementById('addMember').addEventListener('click', () => {
+            draft.members.push({ name: '', role: '', ti: null });
+            drawMembers();
+            document.querySelector('#members .member-row:last-child input').focus();
+        });
+    }
+}
+
+function drawMembers() {
+    const el = document.getElementById('members');
+    el.innerHTML = draft.members.map((m, i) => `
+        <div class="member-row">
+            <input class="input" aria-label="Name" placeholder="Name" maxlength="40" value="${esc(m.name)}" data-m="${i}" data-f="name">
+            <input class="input" aria-label="Role" placeholder="Role" maxlength="40" value="${esc(m.role)}" data-m="${i}" data-f="role">
+            <button type="button" class="btn btn-ghost btn-sm" data-remove="${i}" aria-label="Remove ${esc(m.name || 'person')}" ${draft.members.length === 1 ? 'disabled' : ''}>✕</button>
+        </div>`).join('');
+    el.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { draft.members[inp.dataset.m][inp.dataset.f] = inp.value; }));
+    el.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => { draft.members.splice(Number(b.dataset.remove), 1); drawMembers(); }));
+}
+
+function collect() {
+    if (step === 0) {
+        draft.name = document.getElementById('pName').value.trim();
+        draft.description = document.getElementById('pDesc').value.trim();
+        draft.startDate = document.getElementById('pStart').value || draft.startDate;
+        if (!draft.name) {
+            document.getElementById('nameErr').textContent = 'Give the project a name to continue.';
+            document.getElementById('pName').focus();
+            return false;
+        }
+    }
+    if (step === 2 && picker) draft.method = picker.get();
+    return true;
+}
+
+document.getElementById('wizardForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!collect()) return;
+    if (step < STEPS.length - 1) { step++; renderStep(); window.scrollTo(0, 0); return; }
+    const members = draft.members.map(m => ({ ...m, name: m.name.trim(), role: m.role.trim() || 'Team member' })).filter(m => m.name);
+    if (!members.length) { toast('Add at least one person.', 'warn'); return; }
+    const project = PMT.createProject({ ...draft, members });
+    try {
+        await PMT.store.save(project);
+        location.href = `project.html?id=${encodeURIComponent(project.id)}`;
+    } catch (err) {
+        toast('Could not save: browser storage is full or blocked.', 'bad');
+    }
+});
+document.getElementById('backBtn').addEventListener('click', () => {
+    if (step === 0) { location.hash = ''; return; }
+    collect();
+    step--;
+    renderStep();
+});
+
+// ─── Routing between list and wizard ───
+function route() {
+    const wizard = location.hash === '#new';
+    document.getElementById('listView').hidden = wizard;
+    document.getElementById('wizardView').hidden = !wizard;
+    if (wizard) { step = 0; renderStep(); } else renderList();
+}
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

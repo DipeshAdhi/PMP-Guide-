@@ -1,0 +1,526 @@
+/* Views: Iterations, Schedule, Milestones, Team, Change requests, Risks, Settings */
+(function () {
+    const A = PMT.app;
+    const { esc, toast, avatar, STATUS, MOSCOW } = PMT.ui;
+    const D = PMT.dates;
+    const pts = items => items.reduce((s, i) => s + (Number(i.estimate) || 0), 0);
+    const statusPill = s => `<span class="pill ${s}">${STATUS[s]}</span>`;
+    const memberOptions = (sel, none = 'Unassigned') => `<option value="">${none}</option>${A.P.members.map(m => `<option value="${m.id}" ${sel === m.id ? 'selected' : ''}>${esc(m.name)}</option>`).join('')}`;
+
+    // ══════════════════════════ Iterations ══════════════════════════
+    function velocity() {
+        const v = A.P.iterations.filter(i => i.status === 'closed').slice(-3).map(i => i.velocity || 0);
+        return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
+    }
+    function burndownSvg(it) {
+        const items = A.work().filter(i => i.iterationId === it.id);
+        const total = pts(items);
+        const dayList = D.workdaysInRange(it.start, it.end);
+        if (!dayList.length || !total) return '<p class="muted small">The burndown appears once the iteration has estimated items.</p>';
+        const today = D.todayISO();
+        const remaining = dayList.map(d => d > today ? null : total - pts(items.filter(i => i.status === 'done' && i.doneAt && i.doneAt.slice(0, 10) <= d)));
+        const W = 520, H = 200, L = 34, R = 10, T = 12, B = 26, n = dayList.length;
+        const x = k => L + (n === 1 ? 0 : k / (n - 1)) * (W - L - R);
+        const y = v => T + (1 - v / total) * (H - T - B);
+        const pts2 = remaining.map((v, k) => v == null ? null : `${x(k)},${y(v)}`).filter(Boolean);
+        return `<svg viewBox="0 0 ${W} ${H}" style="width: 100%; height: auto;" role="img" aria-label="Burndown: ${remaining.filter(v => v != null).slice(-1)[0] ?? total} of ${total} points remaining">
+            ${[0, 0.5, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${y(total * f)}" y2="${y(total * f)}" stroke="#E2E5E9"/><text x="${L - 6}" y="${y(total * f) + 4}" font-size="10" text-anchor="end" fill="#6B7280">${Math.round(total * f)}</text>`).join('')}
+            ${dayList.map((d, k) => (k === 0 || k === n - 1 || k % 5 === 0) ? `<text x="${x(k)}" y="${H - 8}" font-size="10" text-anchor="middle" fill="#6B7280">${D.fmt(d)}</text>` : '').join('')}
+            <line x1="${x(0)}" y1="${y(total)}" x2="${x(n - 1)}" y2="${y(0)}" stroke="#9CA3AF" stroke-dasharray="5 4" stroke-width="2"/>
+            ${pts2.length ? `<polyline fill="none" stroke="#168C86" stroke-width="3" points="${pts2.join(' ')}"/>${pts2.map(p => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="3" fill="#168C86"/>`).join('')}` : ''}
+        </svg>
+        <div class="small muted" style="display: flex; gap: 1rem;"><span>━ Actual</span><span>┅ Ideal</span></div>`;
+    }
+
+    A.register('iterations', {
+        render() {
+            const F = A.F, P = A.P, name = F.iterName;
+            const active = A.activeIteration(), planned = A.plannedIteration();
+            const closed = P.iterations.filter(i => i.status === 'closed');
+            const v = velocity();
+            const len = Number(P.settings.iterationDays) || F.defaultIterationDays;
+
+            let activeHtml = '';
+            if (active) {
+                const items = A.work().filter(i => i.iterationId === active.id);
+                const done = pts(items.filter(i => i.status === 'done')), total = pts(items);
+                const left = D.workdaysInRange(D.todayISO(), active.end).length;
+                activeHtml = `<div class="card" style="border-top: 4px solid var(--teal-d); margin-bottom: 1rem;">
+                    <div class="view-head" style="margin-bottom: 0.4rem;"><div><h3 style="margin: 0;">▶ ${esc(active.name)} <span class="pill doing">Active</span></h3>
+                        <div class="muted small">${D.fmt(active.start)} – ${D.fmt(active.end)} · ${left > 0 ? `${left} working day${left === 1 ? '' : 's'} left` : 'timebox over'}${active.goal ? ` · Goal: ${esc(active.goal)}` : ''}</div></div>
+                        <div class="toolbar"><a class="btn btn-ghost" href="#board">Open board</a><button class="btn btn-primary" data-act="completeIteration">Complete ${esc(name.toLowerCase())}</button></div></div>
+                    <div class="grid grid-2">
+                        <div>${burndownSvg(active)}</div>
+                        <div><div class="kpi"><div class="n">${done}/${total}</div><div class="l">points done</div></div>
+                            <div class="bar" style="margin: 0.5rem 0 0.8rem;"><div style="width:${total ? done / total * 100 : 0}%"></div></div>
+                            ${items.map(i => `<div style="display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--line-2); font-size: 0.86rem;"><button class="icon-btn" style="color: var(--ink); text-align: left;" data-act="openItem" data-id="${i.id}">${esc(i.title)}</button><span style="white-space: nowrap;">${i.estimate ?? '?'} pt ${statusPill(i.status)}</span></div>`).join('') || '<p class="muted small">No items in this iteration.</p>'}
+                        </div>
+                    </div></div>`;
+            }
+
+            let planHtml;
+            if (planned) {
+                const inIt = A.ranked().filter(i => i.iterationId === planned.id);
+                const candidates = A.ranked().filter(i => i.status !== 'done' && (!i.iterationId || P.iterations.find(x => x.id === i.iterationId)?.status === 'closed'));
+                const planPts = pts(inIt);
+                const cap = v;
+                const over = cap != null && planPts > cap;
+                planHtml = `<div class="card" style="margin-bottom: 1rem;">
+                    <div class="view-head" style="margin-bottom: 0.6rem;"><div><h3 style="margin: 0;">🗓️ Planning ${esc(planned.name)}</h3><div class="muted small">${D.fmt(planned.start)} – ${D.fmt(planned.end)} · ${len} working days</div></div>
+                        <div class="toolbar"><button class="btn btn-ghost btn-sm" data-act="cancelIteration">Discard plan</button><button class="btn btn-primary" data-act="startIteration" ${active || !inIt.length ? 'disabled' : ''} title="${active ? `Complete ${active.name} first` : !inIt.length ? 'Add items first' : ''}">▶ Start ${esc(planned.name)}</button></div></div>
+                    <form data-form="iterGoal" class="row" style="grid-template-columns: 1fr 180px auto; align-items: end; margin-bottom: 1rem;">
+                        <div class="field" style="margin: 0;"><label for="itGoal">${name} goal: why is this ${name.toLowerCase()} worth doing?</label><input class="input" id="itGoal" name="goal" maxlength="160" value="${esc(planned.goal || '')}" placeholder="e.g. Parents can log in and see attendance"></div>
+                        <div class="field" style="margin: 0;"><label for="itStart">Start date</label><input class="input" type="date" id="itStart" name="start" value="${planned.start}"></div>
+                        <button class="btn btn-ghost" type="submit">Save</button>
+                    </form>
+                    <div class="grid grid-2">
+                        <div><strong class="small">Ready to plan (top of the ${F.workLabel.toLowerCase()})</strong>
+                            <div style="margin-top: 0.4rem;">${candidates.slice(0, 15).map(i => `<div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; background: #F8FAFB; border-radius: 8px; padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; font-size: 0.86rem;">
+                                <span>${F.moscow ? `<span class="pill ${i.moscow || 'S'}">${i.moscow || 'S'}</span> ` : ''}${esc(i.title)} <span class="muted">· ${i.estimate == null || i.estimate === '' ? '<span style="color: var(--warn);">needs estimate</span>' : i.estimate + ' pt'}</span></span>
+                                <button class="btn btn-ghost btn-sm" data-act="planAdd" data-id="${i.id}" ${i.estimate == null || i.estimate === '' ? 'disabled title="Estimate it first"' : ''}>Add →</button></div>`).join('') || '<p class="muted small">Nothing left to plan.</p>'}</div></div>
+                        <div><strong class="small">${esc(planned.name)}: ${planPts} points${cap != null ? ` of ~${cap} (average velocity)` : ''}</strong>
+                            ${cap != null ? `<div class="bar" style="margin: 0.4rem 0;"><div style="width:${Math.min(100, planPts / cap * 100)}%; background:${over ? 'var(--crit)' : 'var(--teal)'}"></div></div>` : '<p class="muted small" style="margin: 0.3rem 0;">No velocity yet: plan what the team believes it can finish.</p>'}
+                            ${over ? '<div class="note warn" style="margin-bottom: 0.5rem;">More than the team usually finishes. Overloading leads to unfinished work.</div>' : ''}
+                            ${inIt.map(i => `<div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; background: var(--teal-bg); border-radius: 8px; padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; font-size: 0.86rem;">
+                                <span>${esc(i.title)} <span class="muted">· ${i.estimate} pt</span></span><button class="btn btn-ghost btn-sm" data-act="planRemove" data-id="${i.id}">← Remove</button></div>`).join('') || '<p class="muted small">Add items from the left.</p>'}
+                        </div>
+                    </div></div>`;
+            } else {
+                planHtml = `<div class="card" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                    <div><h3 style="margin: 0;">Plan the next ${name.toLowerCase()}</h3><p class="muted small">Every ${name.toLowerCase()} is ${len} working days. Pick the items, set a goal, then start it.</p></div>
+                    <button class="btn btn-primary" data-act="planIteration">＋ Plan ${name} ${P.iterations.length + 1}</button></div>`;
+            }
+
+            const historyHtml = closed.length ? `<div class="card"><h3>Completed ${name.toLowerCase()}s</h3>
+                <div class="table-wrap"><table class="tbl"><thead><tr><th>${name}</th><th>Dates</th><th>Goal</th><th>Committed</th><th>Done (velocity)</th></tr></thead><tbody>
+                ${closed.slice().reverse().map(i => `<tr><td><strong>${esc(i.name)}</strong></td><td class="small">${D.fmt(i.start)} – ${D.fmt(i.end)}</td><td class="small">${esc(i.goal || '—')}</td><td class="mono">${i.committed ?? 0} pt</td><td class="mono"><strong>${i.velocity ?? 0} pt</strong></td></tr>`).join('')}
+                </tbody></table></div>${v != null ? `<p class="muted small" style="margin-top: 0.5rem;">Average velocity (last 3): <strong>${v} points</strong>.</p>` : ''}</div>` : '';
+
+            return { sub: `Fixed ${len}-day ${name.toLowerCase()}s: plan, run, then review what was done`, html: activeHtml + planHtml + historyHtml };
+        }
+    });
+
+    A.action('planIteration', () => {
+        const P = A.P, F = A.F;
+        const len = Number(P.settings.iterationDays) || F.defaultIterationDays;
+        const last = P.iterations[P.iterations.length - 1];
+        const today = D.nextWorkday(D.todayISO() > P.startDate ? D.todayISO() : P.startDate);
+        const start = last ? D.addWorkdays(last.end, 1) : today;
+        const it = { id: PMT.uid('it_'), name: `${F.iterName} ${P.iterations.length + 1}`, goal: '', start, end: D.addWorkdays(start, len - 1), status: 'planned' };
+        P.iterations.push(it);
+        A.commit(`Started planning ${it.name}`);
+    });
+    A.action('cancelIteration', () => {
+        const it = A.plannedIteration();
+        if (!it || !confirm(`Discard the plan for ${it.name}? Its items go back to the ${A.F.workLabel.toLowerCase()}.`)) return;
+        A.work().filter(i => i.iterationId === it.id).forEach(i => { i.iterationId = null; });
+        A.P.iterations = A.P.iterations.filter(x => x.id !== it.id);
+        A.commit(`Discarded the plan for ${it.name}`);
+    });
+    A.action('planAdd', el => { const i = A.item(el.dataset.id); i.iterationId = A.plannedIteration().id; A.commit(`Planned "${i.title}" into ${A.plannedIteration().name}`); });
+    A.action('planRemove', el => { const i = A.item(el.dataset.id); i.iterationId = null; A.commit(`Removed "${i.title}" from the plan`); });
+    A.action('iterGoal', (form, v) => {
+        const it = A.plannedIteration();
+        it.goal = v.goal.trim();
+        if (v.start) { it.start = D.nextWorkday(v.start); it.end = D.addWorkdays(it.start, (Number(A.P.settings.iterationDays) || A.F.defaultIterationDays) - 1); }
+        A.commit(null, 'Plan saved', 'good');
+    });
+    A.action('startIteration', () => {
+        const it = A.plannedIteration();
+        if (A.activeIteration()) return toast('Complete the active one first.', 'warn');
+        const items = A.work().filter(i => i.iterationId === it.id);
+        if (!it.goal && !confirm('Start without a goal? A goal keeps the team focused.')) return;
+        items.forEach(i => { if (i.status === 'backlog') i.status = 'todo'; });
+        it.status = 'active';
+        it.committed = pts(items);
+        A.state.boardScope = 'iteration';
+        A.commit(`Started ${it.name} with ${items.length} items (${it.committed} points)`, `${it.name} started`, 'good');
+    });
+    A.action('completeIteration', () => {
+        const it = A.activeIteration();
+        const items = A.work().filter(i => i.iterationId === it.id);
+        const unfinished = items.filter(i => i.status !== 'done');
+        if (!confirm(`Complete ${it.name}? ${unfinished.length ? `${unfinished.length} unfinished item(s) go back to the ${A.F.workLabel.toLowerCase()}.` : 'Everything is done.'}`)) return;
+        it.velocity = pts(items.filter(i => i.status === 'done'));
+        it.status = 'closed';
+        it.closedAt = new Date().toISOString();
+        unfinished.forEach(i => { i.iterationId = null; if (i.status === 'review' || i.status === 'doing') i.status = 'todo'; });
+        A.state.boardScope = null;
+        A.commit(`Completed ${it.name}: ${it.velocity} points done, ${unfinished.length} returned`, `${it.name} completed · velocity ${it.velocity}`, 'good');
+    });
+
+    // ══════════════════════════ Schedule (Gantt + critical path) ══════════════════════════
+    A.state.showCritical = true;
+    A.register('schedule', {
+        render() {
+            const P = A.P, F = A.F;
+            const s = PMT.schedule.buildSchedule(P);
+            const scheduled = A.work().filter(i => s.byId[i.id]);
+            if (!scheduled.length) {
+                return { sub: 'Give work items a duration and dependencies to build the schedule', html: `<div class="card empty"><div class="big">📊</div><h3>No schedule yet</h3><p>Add work items with a duration (working days). Set dependencies so the schedule knows what must finish first.</p><p style="margin-top: 0.8rem;"><button class="btn btn-primary" data-act="newItem">＋ Work item</button></p></div>` };
+            }
+            const today = D.todayISO();
+            const targets = P.milestones.map(m => m.targetDate).filter(Boolean);
+            const lastDate = [s.finishDate, ...targets].sort().slice(-1)[0];
+            const nDays = D.workdayIndex(s.start, lastDate) + 4;
+            const W = 22, trackW = nDays * W;
+            const x = iso => D.workdayIndex(s.start, iso) * W;
+            const dayList = D.workdaysInRange(s.start, D.addWorkdays(s.start, nDays - 1));
+            const ticks = dayList.map((d, k) => (D.toDate(d).getUTCDay() === 1 || k === 0) ? `<span class="g-tick" style="left:${k * W}px">${D.fmt(d)}</span>` : '').join('');
+            const todayX = today >= s.start && today <= dayList[dayList.length - 1] ? x(today) + W / 2 : null;
+            const critical = scheduled.filter(i => s.byId[i.id].critical).sort((a, b) => s.byId[a.id].es - s.byId[b.id].es);
+
+            const bar = i => {
+                const t = s.byId[i.id];
+                const cls = i.status === 'done' ? 'done' : A.state.showCritical && t.critical ? 'crit' : '';
+                return `<button class="g-bar ${cls}" style="left:${t.es * W}px; width:${Math.max(t.duration * W - 2, 6)}px" data-act="openItem" data-id="${i.id}" title="${esc(i.title)}: ${D.fmt(t.startDate)} – ${D.fmt(t.endDate)}${t.float ? ` · ${t.float}d float` : ' · critical'}">${t.duration >= 3 ? `${t.duration}d` : ''}</button>`;
+            };
+            const row = (label, inner, cls = '') => `<div class="g-row ${cls}"><div class="g-label">${label}</div><div class="g-track" style="width:${trackW}px; background-size:${W}px 100%">${inner}${todayX != null ? `<span class="g-today" style="left:${todayX}px"></span>` : ''}</div></div>`;
+
+            let rows = '';
+            if (F.hierarchy) {
+                A.groups().forEach(g => {
+                    const kids = A.childrenOf(g.id).filter(i => s.byId[i.id]);
+                    if (!kids.length) return;
+                    const es = Math.min(...kids.map(k => s.byId[k.id].es)), ef = Math.max(...kids.map(k => s.byId[k.id].ef));
+                    rows += row(`<span class="mono">${A.code(g)}</span><button data-act="openItem" data-id="${g.id}">${esc(g.title)}</button>`, `<span class="g-group-bar" style="left:${es * W}px; width:${(ef - es) * W}px"></span>`, 'g-group');
+                    kids.forEach(i => { rows += row(`<span class="mono muted">${A.code(i)}</span><button data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>`, bar(i)); });
+                });
+                scheduled.filter(i => !i.parentId || !A.item(i.parentId)).forEach(i => { rows += row(`<button data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>`, bar(i)); });
+            } else {
+                scheduled.sort((a, b) => s.byId[a.id].es - s.byId[b.id].es).forEach(i => { rows += row(`<button data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>`, bar(i)); });
+            }
+            if (P.milestones.length) {
+                rows = row('<strong>◆ Milestones</strong>', P.milestones.map(m => {
+                    const f = PMT.schedule.milestoneForecast(P, m, s);
+                    if (!f) return '';
+                    const items = m.itemIds.map(A.item).filter(Boolean);
+                    const reached = items.length && items.every(i => i.status === 'done');
+                    const late = m.targetDate && f > m.targetDate;
+                    return `<span class="g-ms ${reached ? 'reached' : late ? 'late' : ''}" style="left:${x(f) + W}px" title="${esc(m.name)}: forecast ${D.fmt(f)}${m.targetDate ? `, target ${D.fmt(m.targetDate)}` : ''}"></span>`;
+                }).join(''), 'g-group') + rows;
+            }
+
+            const lateMs = P.milestones.filter(m => { const f = PMT.schedule.milestoneForecast(P, m, s); return f && m.targetDate && f > m.targetDate; });
+            return {
+                sub: `${D.fmt(s.start, { day: 'numeric', month: 'short', year: 'numeric' })} → forecast finish ${D.fmt(s.finishDate, { day: 'numeric', month: 'short', year: 'numeric' })} · ${s.end} working days`,
+                html: `<div class="view-head"><div class="toolbar">
+                        <label class="small" style="display: flex; gap: 0.35rem; align-items: center;"><input type="checkbox" data-change="toggleCritical" ${A.state.showCritical ? 'checked' : ''}> Highlight critical path</label>
+                        <span class="small muted">Click a bar to change its duration or dependencies.</span></div></div>
+                    ${s.cycle ? '<div class="note bad" style="margin-bottom: 0.8rem;">Some dependencies form a loop, so part of the schedule ignores them. Check the dependencies of recently edited items.</div>' : ''}
+                    ${lateMs.length ? `<div class="note warn" style="margin-bottom: 0.8rem;">${lateMs.length} milestone${lateMs.length > 1 ? 's are' : ' is'} forecast after the target: ${lateMs.map(m => esc(m.name)).join(', ')}. Shorten critical items, or re-baseline in Milestones.</div>` : ''}
+                    <div class="gantt-wrap"><div class="gantt" style="width: calc(240px + ${trackW}px)">
+                        ${row('Work item', ticks, 'g-head')}${rows}
+                    </div></div>
+                    <div class="grid grid-2" style="margin-top: 1rem;">
+                        <div class="card"><h3>Critical path</h3><p class="small">${critical.map(i => esc(i.title)).join(' → ')}</p><p class="muted small" style="margin-top: 0.4rem;">These items have zero float: any delay moves the finish date. To finish sooner, shorten them (add people) or overlap them (fast-track).</p></div>
+                        <div class="card"><h3>Legend</h3><p class="small"><span class="pill crit">Critical</span> <span class="pill" style="background: var(--teal); color: #fff;">Has float</span> <span class="pill done">Done</span> ◆ Milestone (red = late) · <span style="color: var(--coral); font-weight: 700;">|</span> Today. Weekends are skipped.</p></div>
+                    </div>`
+            };
+        }
+    });
+    A.action('toggleCritical', el => { A.state.showCritical = el.checked; A.render(); });
+
+    // ══════════════════════════ Milestones ══════════════════════════
+    A.register('milestones', {
+        render() {
+            const P = A.P, F = A.F;
+            const s = F.schedule ? PMT.schedule.buildSchedule(P) : null;
+            const rows = P.milestones.map(m => {
+                const items = m.itemIds.map(A.item).filter(Boolean);
+                const done = items.filter(i => i.status === 'done').length;
+                const f = s ? PMT.schedule.milestoneForecast(P, m, s) : null;
+                const reached = items.length && done === items.length;
+                const state = reached ? ['done', 'Reached'] : !items.length ? ['backlog', 'No items linked'] : f && m.targetDate && f > m.targetDate ? ['crit', 'Late'] : ['todo', 'On track'];
+                return `<tr>
+                    <td><strong>◆ ${esc(m.name)}</strong><div class="muted small">${items.length ? items.slice(0, 4).map(i => esc(i.title)).join(', ') + (items.length > 4 ? ` +${items.length - 4} more` : '') : 'Link items from the item editor'}</div></td>
+                    <td><div class="bar" style="width: 90px;"><div style="width:${items.length ? done / items.length * 100 : 0}%"></div></div><span class="small muted">${done}/${items.length}</span></td>
+                    <td><input class="input" type="date" style="width: 150px;" value="${m.targetDate || ''}" data-change="msTarget" data-id="${m.id}" aria-label="Target date for ${esc(m.name)}"></td>
+                    ${s ? `<td class="small">${f ? D.fmt(f, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}</td>` : ''}
+                    <td><span class="pill ${state[0]}">${state[1]}</span></td>
+                    <td style="white-space: nowrap;"><button class="icon-btn" data-act="msRename" data-id="${m.id}">Rename</button><button class="icon-btn" data-act="msDelete" data-id="${m.id}" aria-label="Delete ${esc(m.name)}">✕</button></td>
+                </tr>`;
+            }).join('');
+            return {
+                sub: 'Checkpoints with a target date. A milestone is reached when all its linked items are done.',
+                html: `<div class="grid" style="grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); align-items: start;">
+                    <div>${P.milestones.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Milestone</th><th>Progress</th><th>Target</th>${s ? '<th>Forecast</th>' : ''}<th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+                        ${s ? '<div class="toolbar" style="margin-top: 0.8rem;"><button class="btn btn-ghost btn-sm" data-act="msRebaseline">Re-baseline: set every target to its forecast</button><span class="muted small">Do this only after an approved change.</span></div>' : ''}`
+                        : '<div class="card empty"><div class="big">🏁</div><h3>No milestones yet</h3><p>Add the key checkpoints your sponsor cares about.</p></div>'}</div>
+                    <form class="card" data-form="msAdd"><h3>Add a milestone</h3>
+                        <div class="field"><label for="msName">Name</label><input class="input" id="msName" name="name" required maxlength="80" placeholder="e.g. Design approved"></div>
+                        <div class="field"><label for="msDate">Target date</label><input class="input" type="date" id="msDate" name="target"></div>
+                        <div class="field"><span class="label">Reached when these are done</span><div class="check-list">${A.work().map(i => `<label><input type="checkbox" name="item" value="${i.id}"> ${A.code(i) ? `<span class="mono muted">${A.code(i)}</span>` : ''} ${esc(i.title)}</label>`).join('') || '<span class="muted small">Add work items first.</span>'}</div></div>
+                        <button class="btn btn-primary" type="submit">Add milestone</button>
+                    </form></div>`
+            };
+        }
+    });
+    A.action('msAdd', (form, v) => {
+        const name = v.name.trim();
+        if (!name) return;
+        const itemIds = new FormData(form).getAll('item');
+        const m = { id: PMT.uid('ms_'), name, itemIds, targetDate: v.target || null };
+        if (!m.targetDate && A.F.schedule) m.targetDate = PMT.schedule.milestoneForecast(A.P, m, PMT.schedule.buildSchedule(A.P));
+        A.P.milestones.push(m);
+        A.commit(`Added milestone "${name}"`, `Added ◆ ${name}`, 'good');
+    });
+    A.action('msTarget', el => { const m = A.P.milestones.find(x => x.id === el.dataset.id); m.targetDate = el.value || null; A.commit(`Set target of "${m.name}" to ${el.value || 'none'}`); });
+    A.action('msRename', el => {
+        const m = A.P.milestones.find(x => x.id === el.dataset.id);
+        const n = prompt('Milestone name', m.name);
+        if (n && n.trim()) { m.name = n.trim(); A.commit(`Renamed milestone to "${m.name}"`); }
+    });
+    A.action('msDelete', el => {
+        const m = A.P.milestones.find(x => x.id === el.dataset.id);
+        if (!confirm(`Delete milestone "${m.name}"?`)) return;
+        A.P.milestones = A.P.milestones.filter(x => x !== m);
+        A.commit(`Deleted milestone "${m.name}"`);
+    });
+    A.action('msRebaseline', () => {
+        if (!confirm('Set every milestone target to its current forecast? Use this after a change has been approved.')) return;
+        const s = PMT.schedule.buildSchedule(A.P);
+        A.P.milestones.forEach(m => { const f = PMT.schedule.milestoneForecast(A.P, m, s); if (f) m.targetDate = f; });
+        A.commit('Re-baselined milestone targets', 'Milestones re-baselined', 'good');
+    });
+
+    // ══════════════════════════ Team (+ RACI) ══════════════════════════
+    const RACI = ['', 'R', 'A', 'C', 'I'];
+    A.register('team', {
+        render() {
+            const P = A.P, F = A.F;
+            const groups = A.groups();
+            let raciHtml = '';
+            if (F.hierarchy && groups.length && P.members.length) {
+                const warnings = [];
+                groups.forEach(g => {
+                    const vals = Object.values(g.raci || {});
+                    const aN = vals.filter(x => x === 'A').length;
+                    if (aN === 0) warnings.push(`<strong>${esc(g.title)}</strong>: no one is Accountable.`);
+                    if (aN > 1) warnings.push(`<strong>${esc(g.title)}</strong>: ${aN} people are Accountable; keep exactly one.`);
+                    if (!vals.includes('R')) warnings.push(`<strong>${esc(g.title)}</strong>: no one is Responsible.`);
+                });
+                raciHtml = `<div class="card" style="margin-top: 1rem;"><h3>Responsibility (RACI) by deliverable</h3>
+                    <p class="muted small" style="margin-bottom: 0.6rem;">Click a cell to cycle R (does the work) → A (owns the result, exactly one) → C (consulted) → I (informed) → blank.</p>
+                    <div class="table-wrap"><table class="tbl"><thead><tr><th>Deliverable</th>${P.members.map(m => `<th style="text-align: center;">${esc(m.name)}</th>`).join('')}</tr></thead><tbody>
+                    ${groups.map(g => `<tr><td><span class="mono muted">${A.code(g)}</span> ${esc(g.title)}</td>${P.members.map(m => {
+                        const v = (g.raci || {})[m.id] || '';
+                        return `<td style="text-align: center;"><button class="raci-cell" data-act="raci" data-id="${g.id}" data-m="${m.id}" data-v="${v}" aria-label="${esc(g.title)}, ${esc(m.name)}: ${v || 'none'}">${v}</button></td>`;
+                    }).join('')}</tr>`).join('')}</tbody></table></div>
+                    ${warnings.length ? `<div class="note warn" style="margin-top: 0.6rem;"><ul style="margin-left: 1rem;">${warnings.map(w => `<li>${w}</li>`).join('')}</ul></div>` : '<div class="note" style="margin-top: 0.6rem;">✓ Every deliverable has one Accountable owner and someone Responsible.</div>'}</div>`;
+            }
+            return {
+                sub: `${P.members.length} people · assign work from any item`,
+                html: `<div class="grid" style="grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); align-items: start;">
+                    <div class="table-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Open items</th><th>Done</th><th></th></tr></thead><tbody>
+                    ${P.members.map(m => {
+                        const mine = A.work().filter(i => i.assigneeId === m.id);
+                        return `<tr><td style="display: flex; gap: 0.5rem; align-items: center;">${avatar(m)}<input class="input" style="max-width: 180px;" value="${esc(m.name)}" data-change="memberName" data-id="${m.id}" aria-label="Name"></td>
+                            <td><input class="input" style="max-width: 200px;" value="${esc(m.role)}" data-change="memberRole" data-id="${m.id}" aria-label="Role for ${esc(m.name)}"></td>
+                            <td>${mine.filter(i => i.status !== 'done').length}</td><td>${mine.filter(i => i.status === 'done').length}</td>
+                            <td><button class="icon-btn" data-act="memberRemove" data-id="${m.id}" aria-label="Remove ${esc(m.name)}">✕</button></td></tr>`;
+                    }).join('')}</tbody></table></div>
+                    <form class="card" data-form="memberAdd"><h3>Add a person</h3>
+                        <div class="field"><label for="mName">Name</label><input class="input" id="mName" name="name" required maxlength="40"></div>
+                        <div class="field"><label for="mRole">Role</label><input class="input" id="mRole" name="role" maxlength="40" placeholder="e.g. Developer"></div>
+                        <button class="btn btn-primary" type="submit">Add to team</button></form>
+                    </div>${raciHtml}`
+            };
+        }
+    });
+    A.action('memberAdd', (form, v) => {
+        const name = v.name.trim();
+        if (!name) return;
+        A.P.members.push({ id: PMT.uid('m_'), name, role: v.role.trim() || 'Team member' });
+        A.commit(`Added ${name} to the team`, `Added ${name}`, 'good');
+        document.getElementById('mName')?.focus();
+    });
+    A.action('memberName', el => { const m = A.member(el.dataset.id); if (el.value.trim()) { m.name = el.value.trim(); A.commit(); } });
+    A.action('memberRole', el => { const m = A.member(el.dataset.id); m.role = el.value.trim() || 'Team member'; A.commit(); });
+    A.action('memberRemove', el => {
+        const m = A.member(el.dataset.id);
+        const open = A.work().filter(i => i.assigneeId === m.id && i.status !== 'done').length;
+        if (!confirm(`Remove ${m.name} from the team?${open ? ` Their ${open} open item(s) become unassigned.` : ''}`)) return;
+        A.work().forEach(i => { if (i.assigneeId === m.id) i.assigneeId = null; });
+        A.groups().forEach(g => { if (g.raci) delete g.raci[m.id]; });
+        A.P.risks.forEach(r => { if (r.ownerId === m.id) r.ownerId = null; });
+        A.P.members = A.P.members.filter(x => x !== m);
+        A.commit(`Removed ${m.name} from the team`);
+    });
+    A.action('raci', el => {
+        const g = A.item(el.dataset.id);
+        g.raci = g.raci || {};
+        const next = RACI[(RACI.indexOf(g.raci[el.dataset.m] || '') + 1) % RACI.length];
+        if (next) g.raci[el.dataset.m] = next; else delete g.raci[el.dataset.m];
+        A.commit();
+    });
+
+    // ══════════════════════════ Change requests ══════════════════════════
+    const LEVELS = ['None', 'Low', 'Medium', 'High'];
+    A.register('changes', {
+        render() {
+            const P = A.P;
+            const order = { proposed: 0, approved: 1, rejected: 2 };
+            const list = P.changes.slice().sort((a, b) => order[a.status] - order[b.status] || b.createdAt.localeCompare(a.createdAt));
+            return {
+                sub: 'Every change to the agreed plan is assessed and approved before work starts',
+                html: `<div class="grid" style="grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); align-items: start;">
+                    <div>${list.length ? list.map(c => `<div class="card" style="margin-bottom: 0.7rem; border-left: 4px solid ${c.status === 'approved' ? 'var(--ok)' : c.status === 'rejected' ? 'var(--muted)' : 'var(--gold)'};">
+                        <div style="display: flex; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap;"><strong>${esc(c.title)}</strong><span class="pill ${c.status === 'approved' ? 'done' : c.status === 'rejected' ? '' : 'doing'}">${c.status[0].toUpperCase() + c.status.slice(1)}</span></div>
+                        ${c.reason ? `<p class="small" style="margin-top: 0.3rem;">${esc(c.reason)}</p>` : ''}
+                        <p class="small muted" style="margin-top: 0.3rem;">Impact: scope ${LEVELS[c.scope] || 'None'} · schedule ${LEVELS[c.schedule] || 'None'} · cost ${LEVELS[c.cost] || 'None'} · requested by ${esc(A.member(c.requestedBy)?.name || 'someone')} · ${new Date(c.createdAt).toLocaleDateString()}</p>
+                        ${c.decisionNote ? `<p class="small" style="margin-top: 0.3rem;"><strong>Decision:</strong> ${esc(c.decisionNote)}</p>` : ''}
+                        <div class="toolbar" style="margin-top: 0.6rem;">
+                            ${c.status === 'proposed' ? `<button class="btn btn-primary btn-sm" data-act="crDecide" data-id="${c.id}" data-to="approved">Approve</button><button class="btn btn-ghost btn-sm" data-act="crDecide" data-id="${c.id}" data-to="rejected">Reject</button>` : ''}
+                            ${c.status === 'approved' && !c.itemId ? `<button class="btn btn-ghost btn-sm" data-act="crToItem" data-id="${c.id}">＋ Create work item from this change</button>` : ''}
+                            ${c.itemId && A.item(c.itemId) ? `<button class="btn btn-ghost btn-sm" data-act="openItem" data-id="${c.itemId}">Open linked item</button>` : ''}
+                        </div></div>`).join('') : '<div class="card empty"><div class="big">📝</div><h3>No change requests</h3><p>When someone asks to change scope, dates, or budget, log it here so it can be assessed and decided.</p></div>'}</div>
+                    <form class="card" data-form="crAdd"><h3>Request a change</h3>
+                        <div class="field"><label for="crTitle">What should change?</label><input class="input" id="crTitle" name="title" required maxlength="120"></div>
+                        <div class="field"><label for="crReason">Why?</label><textarea class="textarea" id="crReason" name="reason" maxlength="600"></textarea></div>
+                        <div class="row">${['scope', 'schedule', 'cost'].map(k => `<div class="field"><label for="cr-${k}">Impact on ${k}</label><select class="select" id="cr-${k}" name="${k}">${LEVELS.map((l, n) => `<option value="${n}">${l}</option>`).join('')}</select></div>`).join('')}</div>
+                        <div class="field"><label for="crBy">Requested by</label><select class="select" id="crBy" name="requestedBy">${memberOptions('', 'Someone outside the team')}</select></div>
+                        <button class="btn btn-primary" type="submit">Submit for approval</button>
+                    </form></div>`
+            };
+        }
+    });
+    A.action('crAdd', (form, v) => {
+        if (!v.title.trim()) return;
+        A.P.changes.push({ id: PMT.uid('cr_'), title: v.title.trim(), reason: v.reason.trim(), scope: Number(v.scope), schedule: Number(v.schedule), cost: Number(v.cost), requestedBy: v.requestedBy || null, status: 'proposed', createdAt: new Date().toISOString() });
+        A.commit(`Change requested: "${v.title.trim()}"`, 'Change request submitted', 'good');
+    });
+    A.action('crDecide', el => {
+        const c = A.P.changes.find(x => x.id === el.dataset.id);
+        const note = prompt(el.dataset.to === 'approved' ? 'Approval note (optional)' : 'Why is it rejected? (shared with the requester)');
+        if (note === null) return;
+        c.status = el.dataset.to;
+        c.decisionNote = note.trim();
+        c.decidedAt = new Date().toISOString();
+        A.commit(`Change "${c.title}" ${c.status}`, c.status === 'approved' ? 'Approved. Create the work item and re-baseline milestones if dates moved.' : 'Rejected', c.status === 'approved' ? 'good' : '');
+    });
+    A.action('crToItem', el => {
+        const c = A.P.changes.find(x => x.id === el.dataset.id);
+        const it = { id: PMT.uid('i_'), kind: 'item', type: 'task', title: c.title, description: `From approved change request.${c.reason ? ' ' + c.reason : ''}`, status: 'backlog', rank: A.nextRank(), order: 0, deps: [], parentId: null, assigneeId: null, estimate: null, duration: A.F.schedule ? 1 : null, moscow: A.F.moscow ? 'S' : null, createdAt: new Date().toISOString() };
+        A.P.items.push(it);
+        c.itemId = it.id;
+        A.commit(`Created work item from change "${c.title}"`);
+        A.openItem(it.id);
+    });
+
+    // ══════════════════════════ Risks ══════════════════════════
+    const scoreClass = s => s >= 15 ? 'crit' : s >= 8 ? 'doing' : 'done';
+    A.register('risks', {
+        render() {
+            const P = A.P;
+            const open = P.risks.filter(r => r.status === 'open');
+            const list = P.risks.slice().sort((a, b) => (a.status === 'open' ? 0 : 1) - (b.status === 'open' ? 0 : 1) || b.probability * b.impact - a.probability * a.impact);
+            const heat = [5, 4, 3, 2, 1].map(pr => `<div class="ax">${pr}</div>` + [1, 2, 3, 4, 5].map(im => {
+                const n = open.filter(r => r.probability === pr && r.impact === im).length;
+                const s = pr * im;
+                return `<div style="background:${s >= 15 ? '#F8C9C9' : s >= 8 ? '#FBE3B4' : '#CFEFDF'}" title="Probability ${pr}, impact ${im}">${n || ''}</div>`;
+            }).join('')).join('') + `<div class="ax"></div>${[1, 2, 3, 4, 5].map(i => `<div class="ax">${i}</div>`).join('')}`;
+            return {
+                sub: `${open.length} open · score = probability × impact (1–25)`,
+                html: `<div class="grid" style="grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); align-items: start;">
+                    <div>${list.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Risk</th><th>Score</th><th>Owner</th><th>Status</th><th></th></tr></thead><tbody>
+                        ${list.map(r => `<tr style="${r.status === 'closed' ? 'opacity: 0.6;' : ''}"><td><strong>${esc(r.title)}</strong>${r.response ? `<div class="muted small">Response: ${esc(r.response)}</div>` : ''}</td>
+                            <td><span class="pill ${scoreClass(r.probability * r.impact)}" title="P${r.probability} × I${r.impact}">${r.probability * r.impact}</span></td>
+                            <td><select class="select" style="min-width: 130px;" data-change="riskOwner" data-id="${r.id}" aria-label="Owner of ${esc(r.title)}">${memberOptions(r.ownerId, 'No owner')}</select></td>
+                            <td><button class="btn btn-ghost btn-sm" data-act="riskToggle" data-id="${r.id}">${r.status === 'open' ? 'Close' : 'Reopen'}</button></td>
+                            <td><button class="icon-btn" data-act="riskDelete" data-id="${r.id}" aria-label="Delete ${esc(r.title)}">✕</button></td></tr>`).join('')}</tbody></table></div>`
+                        : '<div class="card empty"><div class="big">⚠️</div><h3>No risks logged</h3><p>What could go wrong, or unexpectedly well? Log it with an owner and a response.</p></div>'}</div>
+                    <div class="grid">
+                        <div class="card"><h3>Heat map (open risks)</h3><div class="heat" aria-label="Probability by impact">${heat}</div><p class="muted small" style="margin-top: 0.4rem;">Rows: probability · Columns: impact</p></div>
+                        <form class="card" data-form="riskAdd"><h3>Add a risk</h3>
+                            <div class="field"><label for="rTitle">Risk</label><input class="input" id="rTitle" name="title" required maxlength="140" placeholder="e.g. Supplier delivers late"></div>
+                            <div class="row"><div class="field"><label for="rP">Probability (1–5)</label><select class="select" id="rP" name="probability">${[1, 2, 3, 4, 5].map(n => `<option ${n === 3 ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+                                <div class="field"><label for="rI">Impact (1–5)</label><select class="select" id="rI" name="impact">${[1, 2, 3, 4, 5].map(n => `<option ${n === 3 ? 'selected' : ''}>${n}</option>`).join('')}</select></div></div>
+                            <div class="field"><label for="rOwner">Owner</label><select class="select" id="rOwner" name="ownerId">${memberOptions('', 'No owner')}</select></div>
+                            <div class="field"><label for="rResp">Response plan</label><input class="input" id="rResp" name="response" maxlength="200" placeholder="Avoid, reduce, transfer, or accept: how?"></div>
+                            <button class="btn btn-primary" type="submit">Add risk</button></form>
+                    </div></div>`
+            };
+        }
+    });
+    A.action('riskAdd', (form, v) => {
+        if (!v.title.trim()) return;
+        A.P.risks.push({ id: PMT.uid('r_'), title: v.title.trim(), probability: Number(v.probability), impact: Number(v.impact), ownerId: v.ownerId || null, response: v.response.trim(), status: 'open', createdAt: new Date().toISOString() });
+        A.commit(`Logged risk "${v.title.trim()}"`, 'Risk added', 'good');
+    });
+    A.action('riskOwner', el => { A.P.risks.find(r => r.id === el.dataset.id).ownerId = el.value || null; A.commit(); });
+    A.action('riskToggle', el => { const r = A.P.risks.find(x => x.id === el.dataset.id); r.status = r.status === 'open' ? 'closed' : 'open'; A.commit(`Risk "${r.title}" ${r.status}`); });
+    A.action('riskDelete', el => { const r = A.P.risks.find(x => x.id === el.dataset.id); if (!confirm(`Delete risk "${r.title}"?`)) return; A.P.risks = A.P.risks.filter(x => x !== r); A.commit(`Deleted risk "${r.title}"`); });
+
+    // ══════════════════════════ Settings ══════════════════════════
+    let pendingMethod = null;
+    A.register('settings', {
+        render() {
+            const P = A.P, F = A.F;
+            pendingMethod = null;
+            return {
+                sub: 'Project details, working rules, and methodology',
+                html: `<div class="grid grid-2" style="align-items: start;">
+                    <form class="card" data-form="settingsSave"><h3>Project details</h3>
+                        <div class="field"><label for="sName">Name</label><input class="input" id="sName" name="name" required maxlength="80" value="${esc(P.name)}"></div>
+                        <div class="field"><label for="sDesc">Description</label><textarea class="textarea" id="sDesc" name="description" maxlength="300">${esc(P.description)}</textarea></div>
+                        <div class="row">
+                            <div class="field"><label for="sStart">Start date</label><input class="input" type="date" id="sStart" name="startDate" value="${P.startDate}"></div>
+                            ${F.iterations ? `<div class="field"><label for="sLen">${F.iterName} length (working days)</label><input class="input" type="number" min="1" max="30" id="sLen" name="iterationDays" value="${P.settings.iterationDays}"><span class="hint">Applies to ${F.iterName.toLowerCase()}s planned from now on.</span></div>` : ''}
+                            ${F.flow ? `<div class="field"><label for="sWip">Work-in-progress limit</label><input class="input" type="number" min="1" max="50" id="sWip" name="wipLimit" value="${P.settings.wipLimit}"></div>` : ''}
+                        </div>
+                        <button class="btn btn-primary" type="submit">Save details</button></form>
+                    <div class="card"><h3>Data</h3>
+                        <p class="small muted" style="margin-bottom: 0.8rem;">This project is saved in this browser only. Export it to back it up or open it on another device (Import on the projects page).</p>
+                        <div class="toolbar"><button class="btn btn-ghost" data-act="exportProject">⬇ Export (.json)</button><button class="btn btn-danger" data-act="deleteProject">Delete project</button></div></div>
+                    <div class="card" style="grid-column: 1 / -1;"><h3>Methodology</h3>
+                        <p class="small muted" style="margin-bottom: 0.8rem;">Currently: <strong>${PMT.methodIcon(P.method)} ${esc(PMT.methodName(P.method))}</strong>. You can switch at any time; all work items, people, milestones, and history are kept. Only the screens and rules change.</p>
+                        <div id="methodPicker"></div>
+                        <div class="toolbar" style="margin-top: 1rem;"><button class="btn btn-primary" data-act="applyMethod" id="applyMethod" disabled>Apply methodology</button><span class="small muted" id="methodHint">Choose a different option to switch.</span></div></div>
+                </div>`
+            };
+        },
+        mount() {
+            PMT.renderMethodPicker(document.getElementById('methodPicker'), A.P.method, v => {
+                pendingMethod = v;
+                const changed = JSON.stringify(v) !== JSON.stringify(A.P.method);
+                document.getElementById('applyMethod').disabled = !changed;
+                document.getElementById('methodHint').textContent = changed ? `Switch to ${PMT.methodName(v)}.` : 'Choose a different option to switch.';
+            });
+        }
+    });
+    A.action('settingsSave', (form, v) => {
+        const P = A.P;
+        if (!v.name.trim()) return toast('The project needs a name.', 'warn');
+        P.name = v.name.trim();
+        P.description = v.description.trim();
+        if (v.startDate) P.startDate = D.nextWorkday(v.startDate);
+        if (v.iterationDays) P.settings.iterationDays = Math.max(1, Math.min(30, Number(v.iterationDays)));
+        if (v.wipLimit) P.settings.wipLimit = Math.max(1, Math.min(50, Number(v.wipLimit)));
+        document.title = `${P.name} - PM Ready Project Tool`;
+        A.commit('Updated project details', 'Saved', 'good');
+    });
+    A.action('applyMethod', () => {
+        if (!pendingMethod) return;
+        const from = PMT.methodName(A.P.method), to = PMT.methodName(pendingMethod);
+        if (!confirm(`Switch from ${from} to ${to}? Your data is kept; the screens and rules change.`)) return;
+        const P = A.P;
+        P.method = pendingMethod;
+        A.F = PMT.features(P.method);
+        if (A.F.iterations && !P.settings.iterationDays) P.settings.iterationDays = A.F.defaultIterationDays;
+        if (A.F.moscow) A.work().forEach(i => { if (!i.moscow) i.moscow = 'S'; });
+        if (A.F.points) A.work().forEach(i => { if ((i.estimate == null || i.estimate === '') && i.duration) i.estimate = PMT.pointsFor(Number(i.duration)); });
+        if (A.F.schedule) A.work().forEach(i => { if (!i.duration && i.estimate) i.duration = Math.max(1, Math.round(Number(i.estimate))); });
+        A.commit(`Methodology changed from ${from} to ${to}`, `Now using ${to}`, 'good');
+    });
+    A.action('exportProject', () => {
+        const safe = A.P.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'project';
+        PMT.ui.download(`${safe}.pmready.json`, JSON.stringify(A.P, null, 2));
+        toast('Exported', 'good');
+    });
+    A.action('deleteProject', async () => {
+        if (!confirm(`Delete "${A.P.name}" permanently? Export it first if you might need it.`)) return;
+        await PMT.store.remove(A.P.id);
+        location.href = 'index.html';
+    });
+})();
