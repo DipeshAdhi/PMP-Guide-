@@ -167,6 +167,32 @@
     });
 
     // ══════════════════════════ Milestones ══════════════════════════
+    // Milestone chart: one row per milestone, target ◇ vs forecast ◆ on a timeline
+    function milestoneChart() {
+        const d = A.msData();
+        if (!d.rows.length) return '';
+        const pct = iso => Math.max(0, Math.min(100, D.daysBetween(d.start, iso) / d.total * 100));
+        const months = [];
+        for (let k = 0; k <= d.total; k++) { const iso = D.addDays(d.start, k); if (D.toDate(iso).getUTCDate() === 1 || k === 0) months.push(iso); }
+        return `<div class="card ms-card" style="margin-bottom: 1rem;">
+            <div class="view-head" style="margin-bottom: 0.6rem;"><h3 style="margin: 0;">Milestone chart</h3>${PMT.exporter.menu('ms')}</div>
+            <div class="msc">
+                <div class="msc-axis"><span></span><div class="msc-track">${months.map(m => `<span style="left:${pct(m)}%">${D.toDate(m).toLocaleDateString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>`).join('')}</div><span></span></div>
+                ${d.rows.map(r => `<div class="msc-row">
+                    <div class="msc-name"><strong>◆ ${esc(r.m.name)}</strong><span class="${r.reached ? 'ok' : r.late ? 'bad' : ''}">${r.done}/${r.items.length} done · ${r.state}</span></div>
+                    <div class="msc-track">
+                        ${d.today >= d.start && d.today <= d.end ? `<i class="msc-today" style="left:${pct(d.today)}%"></i>` : ''}
+                        ${r.m.targetDate && r.forecast && r.forecast !== r.m.targetDate ? `<i class="msc-slip ${r.slip > 0 ? 'late' : 'early'}" style="left:${Math.min(pct(r.m.targetDate), pct(r.forecast))}%; width:${Math.abs(pct(r.forecast) - pct(r.m.targetDate))}%"></i>` : ''}
+                        ${r.m.targetDate ? `<i class="msc-dia target" style="left:${pct(r.m.targetDate)}%" title="Target ${D.fmt(r.m.targetDate)}"></i>` : ''}
+                        ${r.forecast ? `<i class="msc-dia forecast ${r.reached ? 'reached' : r.late ? 'late' : ''}" style="left:${pct(r.forecast)}%" title="Forecast ${D.fmt(r.forecast)}"></i>` : ''}
+                    </div>
+                    <div class="msc-dates small"><span>Target ${r.m.targetDate ? D.fmt(r.m.targetDate) : '—'}</span><span class="${r.slip > 0 ? 'bad' : 'muted'}">Forecast ${r.forecast ? D.fmt(r.forecast) : '—'}${r.slip > 0 ? ` (+${r.slip}d)` : ''}</span></div>
+                </div>`).join('')}
+            </div>
+            <div class="legend small muted" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.6rem;"><span>◇ Target</span><span style="color: var(--teal-d);">◆ Forecast</span><span style="color: var(--crit);">◆ Late</span><span style="color: var(--ok);">◆ Reached</span><span style="color: var(--coral);">| Today</span></div>
+        </div>`;
+    }
+
     A.register('milestones', {
         render() {
             const P = A.P, F = A.F;
@@ -188,7 +214,8 @@
             }).join('');
             return {
                 sub: 'Checkpoints with a target date. A milestone is reached when all its linked items are done.',
-                html: `<div class="grid" style="grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); align-items: start;">
+                html: `${milestoneChart()}
+                    <div class="grid" style="grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); align-items: start;">
                     <div>${P.milestones.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Milestone</th><th>Progress</th><th>Target</th>${s ? '<th>Forecast</th>' : ''}<th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
                         ${s ? '<div class="toolbar" style="margin-top: 0.8rem;"><button class="btn btn-ghost btn-sm" data-act="msRebaseline">Re-baseline: set every target to its forecast</button><span class="muted small">Do this only after an approved change.</span></div>' : ''}`
                         : '<div class="card empty"><div class="big">🏁</div><h3>No milestones yet</h3><p>Add the key checkpoints your sponsor cares about.</p></div>'}</div>

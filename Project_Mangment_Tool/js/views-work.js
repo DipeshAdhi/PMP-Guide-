@@ -192,6 +192,7 @@
                     <label class="small" style="display: flex; gap: 0.35rem; align-items: center;"><input type="checkbox" data-change="toggleDone" ${A.state.showDone ? 'checked' : ''}> Show done</label>
                 </div>
                 <div class="toolbar">${modes.length ? `<div class="seg small" role="radiogroup" aria-label="Work view">${modes.map(([k, l]) => `<button role="radio" aria-checked="${mode === k}" data-act="workMode" data-v="${k}">${l}</button>`).join('')}</div>` : ''}
+                    ${F.wbs && mode !== 'backlog' ? PMT.exporter.menu('wbs') : ''}
                     <button class="btn btn-ghost" data-act="newGroup">＋ ${F.wbs ? 'Deliverable' : 'Epic'}</button></div>
             </div>`;
 

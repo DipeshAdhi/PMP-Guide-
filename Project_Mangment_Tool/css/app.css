@@ -588,6 +588,37 @@ button.wn:hover { box-shadow: 0 4px 14px rgba(9,30,66,0.14); border-color: #C1C7
     .cw-day b { width: 30px; height: 30px; font-size: 1rem; }
 }
 
+/* Milestone chart */
+.msc { overflow-x: auto; }
+.msc-axis, .msc-row { display: grid; grid-template-columns: 230px minmax(320px, 1fr) 150px; gap: 0.8rem; align-items: center; min-width: 700px; }
+.msc-axis { font-size: 0.72rem; font-weight: 700; color: var(--muted); height: 22px; border-bottom: 1px solid var(--line); }
+.msc-axis .msc-track span { position: absolute; top: 3px; white-space: nowrap; padding-left: 4px; border-left: 1px solid var(--line); }
+.msc-row { min-height: 46px; border-bottom: 1px solid var(--line-2); }
+.msc-row:last-child { border-bottom: none; }
+.msc-name { display: flex; flex-direction: column; min-width: 0; }
+.msc-name strong { font-size: 0.88rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msc-name span { font-size: 0.75rem; color: var(--muted); }
+.msc-name .ok, .msc-dates .ok { color: var(--ok); } .msc-name .bad, .msc-dates .bad { color: var(--bad); }
+.msc-track { position: relative; height: 100%; min-height: 22px; }
+.msc-track i { position: absolute; display: block; }
+.msc-today { top: 0; bottom: 0; width: 2px; background: var(--coral); transform: translateX(-1px); }
+.msc-slip { top: 50%; height: 3px; transform: translateY(-50%); border-radius: 2px; }
+.msc-slip.late { background: var(--crit); } .msc-slip.early { background: var(--ok); }
+.msc-dia { top: 50%; width: 14px; height: 14px; transform: translate(-50%, -50%) rotate(45deg); }
+.msc-dia.target { background: var(--paper); border: 2px solid var(--ink); }
+.msc-dia.forecast { background: var(--teal); }
+.msc-dia.forecast.late { background: var(--crit); }
+.msc-dia.forecast.reached { background: var(--ok); }
+.msc-dates { display: flex; flex-direction: column; font-size: 0.76rem; }
+
+/* Download menu */
+.dl-menu { position: relative; }
+.dl-menu > summary { list-style: none; cursor: pointer; }
+.dl-menu > summary::-webkit-details-marker { display: none; }
+.dl-pop { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; min-width: 220px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 30px rgba(9,30,66,0.18); padding: 4px; display: flex; flex-direction: column; }
+.dl-pop button { border: none; background: none; text-align: left; padding: 0.55rem 0.7rem; border-radius: 6px; font-size: 0.88rem; color: var(--ink); }
+.dl-pop button:hover, .dl-pop button:focus-visible { background: var(--teal-bg); }
+
 @media (max-width: 900px) {
     .app { grid-template-columns: 1fr; }
     .sidebar { position: static; height: auto; }

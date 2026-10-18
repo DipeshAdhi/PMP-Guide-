@@ -66,6 +66,32 @@ Dates the user sets take priority. Items without dates are placed automatically 
 - **WBS list and WBS chart:** the Work view switches between the list and an org-chart style tree (project → deliverables → work packages → subtasks), coloured by status.
 - **Team:** name, role, and **email** per person. **Invite** is a placeholder that records "Invite pending" until accounts exist. Template teams get example.com addresses to replace.
 
+## Calendar (Google Calendar-style)
+
+Every project has a **Calendar** (Month and Week views, Today / ‹ ›):
+
+- **Events of any kind:** meeting, reminder, deadline, or other; all-day (optionally multi-day) or timed; repeat every weekday, week, or month; attendees from the team; location or meeting link; linked work item; notes.
+- **Project layers** (toggle like "My calendars"): work-item due dates (or start → due spans), milestones, sprints.
+- Click a day (month) or a time slot (week) to create an event; click anything to open it. A "Coming up" list shows the next two weeks.
+- **Export .ics** (RFC 5545) for Google Calendar, Outlook, or Apple Calendar, including repeat rules and attendee emails.
+- Template projects start with a kickoff meeting and a weekly status meeting.
+
+## Downloads (Gantt chart, WBS, milestones)
+
+The Gantt chart, the WBS (Work → WBS list or chart) and Milestones each have a **⬇ Download** menu with the same three formats:
+
+| | PNG image | PDF | CSV spreadsheet |
+|---|---|---|---|
+| **Gantt chart** | Table, bars by status, dependency arrows (red when broken), milestones, today line, legend | The same chart on one page | Every item: key, WBS code, type, deliverable/epic, parent, status, assignee and email, dates, working days, dependencies, milestones (plus estimate, priority, sprint when used) |
+| **WBS** | Org-chart tree: project → deliverables → work packages → subtasks, coloured by status, with codes and % done | The same chart on one page | WBS code, level, key, name, type, status, assignee, start, due, progress |
+| **Milestones** | Milestone chart: one row per milestone with target ◆, forecast ◆, slip line, linked-work progress, today line | The same chart on one page | Target, forecast, days late, status, items done/total, linked items |
+
+- Images are drawn on a canvas at 2× resolution.
+- PDFs are written directly by `js/export.js` (one page, 842 pt wide, height follows the chart, the chart embedded as JPEG): no library, no print dialog.
+- CSVs are UTF-8 with a BOM so Excel opens them correctly.
+
+The **Milestones** view also shows the milestone chart on screen above the list.
+
 ## Sprints on the timeline
 
 The **Timeline** view lays out every sprint (done, active, planned) on the calendar, with milestones and a bar for each deliverable/epic spanning the sprints that hold its work ("+N unplanned" shows what isn't in a sprint yet). **Plan 3 sprints ahead** creates consecutive sprints; each can be planned in advance, but they start in order.
@@ -85,7 +111,10 @@ js/app.js           Core: load/save, routing, event delegation, item editor
 js/views-work.js    Overview, Work (WBS/backlog), Board
 js/views-plan.js    Iterations, Schedule, Milestones, Team, Changes, Risks, Settings
 js/views-timeline.js Timeline (sprints, milestones, deliverables on the calendar)
-js/views-gantt.js   Gantt chart: Jira-style list + draggable bars, dependencies, subtasks
+js/views-gantt.js   Gantt chart: Jira-style list + draggable bars, dependencies, subtasks, PNG/CSV/PDF export
+js/views-calendar.js Calendar: month/week, events, project layers, .ics export
+js/export.js        Shared export helpers: canvas drawing, PNG, one-page PDF writer, CSV, ⬇ Download menu
+js/views-exports.js Milestone chart data + WBS and milestone PNG/PDF/CSV downloads
 ```
 
 Plain HTML/CSS/JS, no build step. Scripts are classic (not ES modules) so pages also open from the file system.
@@ -110,6 +139,8 @@ Project {
   iterations: [{ id, name, goal, start, end, status: 'planned'|'active'|'closed', committed, velocity, closedAt }],
   changes:    [{ id, title, reason, scope, schedule, cost /* 0–3 */, requestedBy, status: 'proposed'|'approved'|'rejected', decisionNote, decidedAt, itemId, createdAt }],
   risks:      [{ id, title, probability, impact /* 1–5 */, ownerId, response, status: 'open'|'closed', createdAt }],
+  events:     [{ id, title, kind: 'meeting'|'reminder'|'deadline'|'other', allDay, date, endDate, start, end /* HH:MM */,
+                 repeat: 'none'|'weekdays'|'weekly'|'monthly', attendees: [memberId], itemId, location, description, createdAt }],
   activity:   [{ at, text }],
   createdAt, updatedAt
 }
@@ -127,6 +158,8 @@ PMT.store = {
   remove(id)
 };
 ```
+
+The full plan for accounts, sign-in, roles, invitations and the backend is in [docs/auth-and-backend-plan.md](docs/auth-and-backend-plan.md).
 
 A server version can implement the same four methods with `fetch` (e.g. `GET /projects`, `GET /projects/:id`, `PUT /projects/:id`, `DELETE /projects/:id`) without changing any screen. Things to add with the backend:
 

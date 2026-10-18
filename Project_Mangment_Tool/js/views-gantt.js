@@ -227,6 +227,7 @@
                         <div class="toolbar">
                             ${conflicts ? `<button class="btn btn-danger btn-sm" data-act="jtFix" title="Move items so every dependency is respected">⚠ ${conflicts} broken dependenc${conflicts === 1 ? 'y' : 'ies'} · Fix</button>` : ''}
                             <label class="small" style="display: flex; gap: 0.35rem; align-items: center;"><input type="checkbox" data-change="jtCritical" ${A.state.showCritical ? 'checked' : ''}> Critical path</label>
+                            ${PMT.exporter.menu('gantt')}
                             <button class="btn btn-ghost btn-sm" data-act="newGroup">＋ ${esc(A.F.wbs ? 'Deliverable' : 'Epic')}</button>
                         </div>
                     </div>
@@ -418,6 +419,198 @@
         it.duration = len;
         A.commit(`Scheduled ${A.keyOf(it)} for ${D.fmt(it.startDate)} – ${D.fmt(it.dueDate)}`, `Scheduled ${A.keyOf(it)}. Drag the bar to adjust.`, 'good');
     }
+
+
+    // ════════════════ Download: PNG image, CSV spreadsheet, print / PDF ════════════════
+    const safeName = () => A.P.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'project';
+    const BAR = { backlog: '#8FA3BF', todo: '#8FA3BF', doing: '#2F6FD0', review: '#7A5CD6', done: '#36B37E' };
+
+    // Draw the chart on a canvas: table + timeline, independent of screen size
+    function ganttCanvas() {
+        const P = A.P, s = PMT.schedule.buildSchedule(P);
+        const rows = buildRows().filter(r => r.kind !== 'create');
+        const today = D.todayISO();
+        const dates = [P.startDate, ...Object.values(s.byId).flatMap(t => [t.startDate, t.endDate]), ...P.milestones.map(m => m.targetDate).filter(Boolean)].sort();
+        const start = mondayOf(D.addDays(dates[0], -3));
+        const end = D.addDays(dates[dates.length - 1], 7);
+        const total = D.daysBetween(start, end) + 1;
+        const dayW = Math.max(4, Math.min(22, Math.floor(2400 / total)));
+        const COLS = [['Key', 74], ['Summary', 300], ['Status', 92], ['Assignee', 110], ['Start', 86], ['Due', 86]];
+        const tableW = COLS.reduce((a, c) => a + c[1], 0);
+        const RH = 28, TOP = 70, HEAD = 42;
+        const msRow = P.milestones.some(m => m.targetDate);
+        const W = tableW + total * dayW + 2, H = TOP + HEAD + (msRow ? RH : 0) + rows.length * RH + 34;
+        const scale = Math.max(1, Math.min(2, 16000 / W, 16000 / H));
+        const cv = document.createElement('canvas');
+        cv.width = Math.ceil(W * scale); cv.height = Math.ceil(H * scale);
+        const g = cv.getContext('2d');
+        g.scale(scale, scale);
+        const font = (w, px) => `${w} ${px}px Inter, system-ui, -apple-system, Segoe UI, sans-serif`;
+        const fit = (text, max) => { text = String(text || ''); if (g.measureText(text).width <= max) return text; while (text && g.measureText(text + '…').width > max) text = text.slice(0, -1); return text + '…'; };
+        const x0 = tableW, x = iso => x0 + D.daysBetween(start, iso) * dayW;
+        const y0 = TOP + HEAD + (msRow ? RH : 0);
+
+        g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, W, H);
+        // Title block
+        g.fillStyle = '#1F2A37'; g.font = font(700, 20); g.fillText(fit(P.name, W - 40), 14, 30);
+        g.fillStyle = '#6B7280'; g.font = font(400, 12);
+        g.fillText(`Gantt chart · ${PMT.methodName(P.method)} · ${D.fmt(s.start, { day: 'numeric', month: 'short', year: 'numeric' })} → ${D.fmt(s.finishDate, { day: 'numeric', month: 'short', year: 'numeric' })} · exported ${D.fmt(today, { day: 'numeric', month: 'short', year: 'numeric' })}`, 14, 52);
+
+        // Weekend shading + month/week header
+        for (let k = 0; k < total; k++) {
+            const iso = D.addDays(start, k), dw = D.toDate(iso).getUTCDay();
+            if (dayW >= 8 && (dw === 0 || dw === 6)) { g.fillStyle = '#F4F6F8'; g.fillRect(x0 + k * dayW, TOP + HEAD, dayW, H - TOP - HEAD - 34); }
+        }
+        g.fillStyle = '#FAFBFC'; g.fillRect(0, TOP, W, HEAD);
+        g.strokeStyle = '#E2E5E9'; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(0, TOP + HEAD + 0.5); g.lineTo(W, TOP + HEAD + 0.5); g.stroke();
+        g.font = font(700, 11); g.fillStyle = '#6B7280';
+        let cx = 8;
+        COLS.forEach(([label, w]) => { g.fillText(label.toUpperCase(), cx, TOP + 26); cx += w; });
+        for (let k = 0; k < total; k++) {
+            const iso = D.addDays(start, k), d = D.toDate(iso);
+            if (d.getUTCDate() === 1 || k === 0) {
+                g.fillStyle = '#1F2A37'; g.font = font(700, 11);
+                g.fillText(d.toLocaleDateString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' }), x0 + k * dayW + 4, TOP + 16);
+                g.strokeStyle = '#D5D9DE'; g.beginPath(); g.moveTo(x0 + k * dayW + 0.5, TOP); g.lineTo(x0 + k * dayW + 0.5, TOP + HEAD); g.stroke();
+            }
+            if (d.getUTCDay() === 1) {
+                g.fillStyle = '#6B7280'; g.font = font(400, 10);
+                g.fillText(String(d.getUTCDate()), x0 + k * dayW + 3, TOP + 34);
+                g.strokeStyle = '#EEF0F2'; g.beginPath(); g.moveTo(x0 + k * dayW + 0.5, TOP + 22); g.lineTo(x0 + k * dayW + 0.5, H - 34); g.stroke();
+            }
+        }
+        g.strokeStyle = '#E2E5E9'; g.beginPath(); g.moveTo(x0 + 0.5, TOP); g.lineTo(x0 + 0.5, H - 34); g.stroke();
+
+        // Milestones row
+        if (msRow) {
+            const my = TOP + HEAD;
+            g.fillStyle = '#1F2A37'; g.font = font(700, 12); g.fillText('◆ Milestones', 8, my + 18);
+            P.milestones.filter(m => m.targetDate).forEach(m => {
+                const items = m.itemIds.map(A.item).filter(Boolean);
+                const reached = items.length && items.every(i => i.status === 'done');
+                const f = PMT.schedule.milestoneForecast(P, m, s);
+                const late = !reached && f && f > m.targetDate;
+                const mx = x(m.targetDate) + dayW / 2, myc = my + RH / 2;
+                g.fillStyle = reached ? '#1F9D6B' : late ? '#E5484D' : '#1F2A37';
+                g.beginPath(); g.moveTo(mx, myc - 7); g.lineTo(mx + 7, myc); g.lineTo(mx, myc + 7); g.lineTo(mx - 7, myc); g.closePath(); g.fill();
+                g.font = font(600, 10); g.fillStyle = '#1F2A37'; g.fillText(fit(m.name, 140), mx + 10, myc + 4);
+            });
+            g.strokeStyle = '#E2E5E9'; g.beginPath(); g.moveTo(0, y0 - 0.5); g.lineTo(W, y0 - 0.5); g.stroke();
+        }
+
+        // Rows: table cells + bars
+        const rowY = {};
+        rows.forEach((r, n) => {
+            const y = y0 + n * RH;
+            if (r.item) rowY[r.item.id] = y + RH / 2;
+            if (r.kind === 'group' || r.kind === 'label') { g.fillStyle = r.kind === 'group' ? '#FBFAFF' : '#F7F8FA'; g.fillRect(0, y, W, RH); }
+            g.strokeStyle = '#EEF0F2'; g.beginPath(); g.moveTo(0, y + RH - 0.5); g.lineTo(W, y + RH - 0.5); g.stroke();
+            if (r.kind === 'label') { g.fillStyle = '#6B7280'; g.font = font(400, 11); g.fillText(r.text, 8, y + 18); return; }
+            const i = r.item, indent = r.depth * 14;
+            if (r.kind === 'group') {
+                const all = descendants(i.id), done = all.filter(z => z.status === 'done').length;
+                const sp = all.map(z => s.byId[z.id]).filter(Boolean);
+                g.fillStyle = '#904EE2'; g.fillRect(8, y + 8, 12, 12);
+                g.fillStyle = '#1F2A37'; g.font = font(700, 12);
+                g.fillText(fit(`${A.code(i) ? A.code(i) + ' ' : ''}${i.title}`, COLS[0][1] + COLS[1][1] - 30), 26, y + 18);
+                g.font = font(400, 11); g.fillStyle = '#6B7280';
+                g.fillText(`${done}/${all.length} done`, COLS[0][1] + COLS[1][1] + 8, y + 18);
+                if (sp.length) {
+                    const gs = sp.map(t => t.startDate).sort()[0], ge = sp.map(t => t.endDate).sort().pop();
+                    g.fillText(`${D.fmt(gs)} – ${D.fmt(ge)}`, tableW - COLS[5][1] - COLS[4][1] + 8, y + 18);
+                    const bx = x(gs), bw = (D.daysBetween(gs, ge) + 1) * dayW - 2;
+                    g.fillStyle = '#D9C8F7'; g.fillRect(bx, y + 11, bw, 7);
+                    g.fillStyle = '#904EE2'; g.fillRect(bx, y + 11, bw * (all.length ? done / all.length : 0), 7);
+                }
+                return;
+            }
+            const t = s.byId[i.id], m = A.member(i.assigneeId);
+            let cx2 = 8;
+            g.font = font(600, 11); g.fillStyle = '#4B6584'; g.fillText(fit(A.keyOf(i), COLS[0][1] - 10), cx2, y + 18); cx2 += COLS[0][1];
+            g.font = font(400, 12); g.fillStyle = i.status === 'done' ? '#9AA0A6' : '#1F2A37';
+            g.fillText(fit(`${A.isSubtask(i) ? '↳ ' : ''}${i.title}`, COLS[1][1] - 12 - indent), cx2 + indent, y + 18); cx2 += COLS[1][1];
+            g.font = font(700, 10); g.fillStyle = BAR[i.status]; g.fillText(STATUS[i.status].toUpperCase(), cx2, y + 18); cx2 += COLS[2][1];
+            g.font = font(400, 11); g.fillStyle = '#2D3748'; g.fillText(fit(m ? m.name : '—', COLS[3][1] - 10), cx2, y + 18); cx2 += COLS[3][1];
+            g.fillText(t ? D.fmt(t.startDate) : '—', cx2, y + 18); cx2 += COLS[4][1];
+            g.fillText(t ? D.fmt(t.endDate) : '—', cx2, y + 18);
+            if (t) {
+                const bx = x(t.startDate), bw = Math.max(dayW - 2, (D.daysBetween(t.startDate, t.endDate) + 1) * dayW - 2);
+                g.fillStyle = BAR[i.status];
+                g.beginPath(); (g.roundRect ? g.roundRect(bx, y + 6, bw, 16, 3) : g.rect(bx, y + 6, bw, 16)); g.fill();
+                if (A.state.showCritical && t.critical && i.status !== 'done') { g.strokeStyle = '#E5484D'; g.lineWidth = 2; g.stroke(); g.lineWidth = 1; }
+                if (bw > 40) { g.fillStyle = '#FFFFFF'; g.font = font(700, 10); g.fillText(fit(`${i.status === 'done' ? '✓ ' : ''}${A.keyOf(i)}`, bw - 8), bx + 5, y + 18); }
+            }
+        });
+
+        // Dependency arrows
+        rows.forEach(r => {
+            if (!r.item || r.kind !== 'item') return;
+            const t = s.byId[r.item.id];
+            if (!t) return;
+            (r.item.deps || []).forEach(dep => {
+                const pt = s.byId[dep];
+                if (!pt || rowY[dep] == null) return;
+                const bad = s.conflicts.some(c => c.from === dep && c.to === r.item.id);
+                const x1 = x(pt.endDate) + dayW - 2, y1 = rowY[dep], x2 = x(t.startDate), y2 = rowY[r.item.id];
+                g.strokeStyle = bad ? '#E5484D' : '#6B7A90'; g.fillStyle = g.strokeStyle; g.lineWidth = bad ? 1.8 : 1.3;
+                g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 + 6, y1); g.lineTo(x1 + 6, y2); g.lineTo(x2 - 1, y2); g.stroke();
+                g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - 6, y2 - 4); g.lineTo(x2 - 6, y2 + 4); g.closePath(); g.fill();
+                g.lineWidth = 1;
+            });
+        });
+
+        // Today line + legend
+        if (today >= start && today <= end) { g.fillStyle = '#FF6B5B'; g.fillRect(x(today) + dayW / 2 - 1, TOP + HEAD, 2, H - TOP - HEAD - 34); }
+        let lx = 14; const ly = H - 14;
+        g.font = font(400, 11);
+        [['To do', BAR.todo], ['In progress', BAR.doing], ['Review', BAR.review], ['Done', BAR.done], ['Today', '#FF6B5B']].forEach(([label, c]) => {
+            g.fillStyle = c; g.fillRect(lx, ly - 9, 14, 10); g.fillStyle = '#2D3748'; g.fillText(label, lx + 19, ly); lx += g.measureText(label).width + 40;
+        });
+        g.fillStyle = '#9AA0A6'; g.fillText('Made with PM Ready', W - 120, ly);
+        return cv;
+    }
+
+    const closeMenu = () => PMT.exporter.closeMenus();
+
+    A.action('ganttPng', async () => {
+        closeMenu();
+        if (await PMT.exporter.png(ganttCanvas(), `${safeName()}-gantt.png`)) toast('Gantt chart downloaded as an image', 'good');
+        else toast('Could not create the image. Try collapsing some rows.', 'bad');
+    });
+    A.action('ganttPdf', async () => {
+        closeMenu();
+        if (await PMT.exporter.pdf(ganttCanvas(), `${safeName()}-gantt.pdf`, `${A.P.name} - Gantt chart`)) toast('Gantt chart downloaded as a PDF', 'good');
+        else toast('Could not create the PDF. Try collapsing some rows.', 'bad');
+    });
+
+    A.action('ganttCsv', () => {
+        closeMenu();
+        const s = PMT.schedule.buildSchedule(A.P);
+        const q = v => { const t = String(v ?? ''); return /[",\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+        const head = ['Key', 'WBS', 'Type', 'Summary', A.groupWord(), 'Parent', 'Status', 'Assignee', 'Assignee email', 'Start', 'Due', 'Working days', 'Depends on', 'Milestones'];
+        if (A.F.points) head.push('Estimate (points)');
+        if (A.F.moscow) head.push('Priority');
+        if (A.F.iterations) head.push(A.F.iterName);
+        const lines = [head.map(q).join(',')];
+        const ordered = [];
+        const walk = (i, depth) => { ordered.push(i); A.subtasksOf(i.id).forEach(c => walk(c, depth + 1)); };
+        A.groups().forEach(g => A.childrenOf(g.id).forEach(i => walk(i, 1)));
+        A.ranked().filter(i => !i.parentId || !A.item(i.parentId)).forEach(i => walk(i, 0));
+        ordered.forEach(i => {
+            const t = s.byId[i.id], m = A.member(i.assigneeId);
+            let grp = A.item(i.parentId); while (grp && grp.kind !== 'group') grp = A.item(grp.parentId);
+            const row = [A.keyOf(i), A.code(i), A.isSubtask(i) ? 'Subtask' : ({ task: 'Task', story: 'Story', bug: 'Bug' }[i.type] || 'Task'), i.title, grp ? grp.title : '', A.isSubtask(i) ? A.keyOf(A.item(i.parentId)) : '', STATUS[i.status], m ? m.name : '', m ? m.email || '' : '',
+                t ? t.startDate : '', t ? t.endDate : '', t ? t.duration : '', (i.deps || []).map(d => A.item(d)).filter(Boolean).map(A.keyOf).join(' '), A.P.milestones.filter(x => x.itemIds.includes(i.id)).map(x => x.name).join('; ')];
+            if (A.F.points) row.push(i.estimate ?? '');
+            if (A.F.moscow) row.push(i.moscow ? ({ M: 'Must', S: 'Should', C: 'Could', W: "Won't" })[i.moscow] : '');
+            if (A.F.iterations) row.push(A.P.iterations.find(x => x.id === i.iterationId)?.name || '');
+            lines.push(row.map(q).join(','));
+        });
+        // BOM so Excel opens UTF-8 correctly
+        PMT.ui.download(`${safeName()}-gantt.csv`, '﻿' + lines.join('\r\n'), 'text/csv;charset=utf-8');
+        toast(`Exported ${ordered.length} items as a spreadsheet`, 'good');
+    });
 
     // ─── List actions ───
     A.action('jtToggle', el => { A.state.collapsed[el.dataset.id] = !A.state.collapsed[el.dataset.id]; A.render(); document.querySelector(`[data-act="jtToggle"][data-id="${el.dataset.id}"]`)?.focus(); });
