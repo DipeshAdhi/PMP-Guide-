@@ -60,8 +60,8 @@
 
             let planHtml;
             if (planned) {
-                const inIt = A.ranked().filter(i => i.iterationId === planned.id);
-                const candidates = A.ranked().filter(i => i.status !== 'done' && (!i.iterationId || P.iterations.find(x => x.id === i.iterationId)?.status === 'closed'));
+                const inIt = A.topItems().filter(i => i.iterationId === planned.id);
+                const candidates = A.topItems().filter(i => i.status !== 'done' && (!i.iterationId || P.iterations.find(x => x.id === i.iterationId)?.status === 'closed'));
                 const planPts = pts(inIt);
                 const cap = v;
                 const over = cap != null && planPts > cap;
@@ -133,8 +133,8 @@
         A.state.planIterId = null;
         A.commit(`Discarded the plan for ${it.name}`);
     });
-    A.action('planAdd', el => { const i = A.item(el.dataset.id); i.iterationId = A.plannedIteration().id; A.commit(`Planned "${i.title}" into ${A.plannedIteration().name}`); });
-    A.action('planRemove', el => { const i = A.item(el.dataset.id); i.iterationId = null; A.commit(`Removed "${i.title}" from the plan`); });
+    A.action('planAdd', el => { const i = A.item(el.dataset.id); i.iterationId = A.plannedIteration().id; A.syncSubtasks(i); A.commit(`Planned "${i.title}" into ${A.plannedIteration().name}`); });
+    A.action('planRemove', el => { const i = A.item(el.dataset.id); i.iterationId = null; A.syncSubtasks(i); A.commit(`Removed "${i.title}" from the plan`); });
     A.action('iterGoal', (form, v) => {
         const it = A.plannedIteration();
         it.goal = v.goal.trim();
@@ -165,78 +165,6 @@
         A.state.boardScope = null;
         A.commit(`Completed ${it.name}: ${it.velocity} points done, ${unfinished.length} returned`, `${it.name} completed · velocity ${it.velocity}`, 'good');
     });
-
-    // ══════════════════════════ Schedule (Gantt + critical path) ══════════════════════════
-    A.state.showCritical = true;
-    A.register('schedule', {
-        render() {
-            const P = A.P, F = A.F;
-            const s = PMT.schedule.buildSchedule(P);
-            const scheduled = A.work().filter(i => s.byId[i.id]);
-            if (!scheduled.length) {
-                return { sub: 'Give work items a duration and dependencies to build the schedule', html: `<div class="card empty"><div class="big">📊</div><h3>No schedule yet</h3><p>Add work items with a duration (working days). Set dependencies so the schedule knows what must finish first.</p><p style="margin-top: 0.8rem;"><button class="btn btn-primary" data-act="newItem">＋ Work item</button></p></div>` };
-            }
-            const today = D.todayISO();
-            const targets = P.milestones.map(m => m.targetDate).filter(Boolean);
-            const lastDate = [s.finishDate, ...targets].sort().slice(-1)[0];
-            const nDays = D.workdayIndex(s.start, lastDate) + 4;
-            const W = 22, trackW = nDays * W;
-            const x = iso => D.workdayIndex(s.start, iso) * W;
-            const dayList = D.workdaysInRange(s.start, D.addWorkdays(s.start, nDays - 1));
-            const ticks = dayList.map((d, k) => (D.toDate(d).getUTCDay() === 1 || k === 0) ? `<span class="g-tick" style="left:${k * W}px">${D.fmt(d)}</span>` : '').join('');
-            const todayX = today >= s.start && today <= dayList[dayList.length - 1] ? x(today) + W / 2 : null;
-            const critical = scheduled.filter(i => s.byId[i.id].critical).sort((a, b) => s.byId[a.id].es - s.byId[b.id].es);
-
-            const bar = i => {
-                const t = s.byId[i.id];
-                const cls = i.status === 'done' ? 'done' : A.state.showCritical && t.critical ? 'crit' : '';
-                return `<button class="g-bar ${cls}" style="left:${t.es * W}px; width:${Math.max(t.duration * W - 2, 6)}px" data-act="openItem" data-id="${i.id}" title="${esc(i.title)}: ${D.fmt(t.startDate)} – ${D.fmt(t.endDate)}${t.float ? ` · ${t.float}d float` : ' · critical'}">${t.duration >= 3 ? `${t.duration}d` : ''}</button>`;
-            };
-            const row = (label, inner, cls = '') => `<div class="g-row ${cls}"><div class="g-label">${label}</div><div class="g-track" style="width:${trackW}px; background-size:${W}px 100%">${inner}${todayX != null ? `<span class="g-today" style="left:${todayX}px"></span>` : ''}</div></div>`;
-
-            let rows = '';
-            if (F.wbs) {
-                A.groups().forEach(g => {
-                    const kids = A.childrenOf(g.id).filter(i => s.byId[i.id]);
-                    if (!kids.length) return;
-                    const es = Math.min(...kids.map(k => s.byId[k.id].es)), ef = Math.max(...kids.map(k => s.byId[k.id].ef));
-                    rows += row(`<span class="mono">${A.code(g)}</span><button data-act="openItem" data-id="${g.id}">${esc(g.title)}</button>`, `<span class="g-group-bar" style="left:${es * W}px; width:${(ef - es) * W}px"></span>`, 'g-group');
-                    kids.forEach(i => { rows += row(`<span class="mono muted">${A.code(i)}</span><button data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>`, bar(i)); });
-                });
-                scheduled.filter(i => !i.parentId || !A.item(i.parentId)).forEach(i => { rows += row(`<button data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>`, bar(i)); });
-            } else {
-                scheduled.sort((a, b) => s.byId[a.id].es - s.byId[b.id].es).forEach(i => { rows += row(`<button data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>`, bar(i)); });
-            }
-            if (P.milestones.length) {
-                rows = row('<strong>◆ Milestones</strong>', P.milestones.map(m => {
-                    const f = PMT.schedule.milestoneForecast(P, m, s);
-                    if (!f) return '';
-                    const items = m.itemIds.map(A.item).filter(Boolean);
-                    const reached = items.length && items.every(i => i.status === 'done');
-                    const late = m.targetDate && f > m.targetDate;
-                    return `<span class="g-ms ${reached ? 'reached' : late ? 'late' : ''}" style="left:${x(f) + W}px" title="${esc(m.name)}: forecast ${D.fmt(f)}${m.targetDate ? `, target ${D.fmt(m.targetDate)}` : ''}"></span>`;
-                }).join(''), 'g-group') + rows;
-            }
-
-            const lateMs = P.milestones.filter(m => { const f = PMT.schedule.milestoneForecast(P, m, s); return f && m.targetDate && f > m.targetDate; });
-            return {
-                sub: `${D.fmt(s.start, { day: 'numeric', month: 'short', year: 'numeric' })} → forecast finish ${D.fmt(s.finishDate, { day: 'numeric', month: 'short', year: 'numeric' })} · ${s.end} working days`,
-                html: `<div class="view-head"><div class="toolbar">
-                        <label class="small" style="display: flex; gap: 0.35rem; align-items: center;"><input type="checkbox" data-change="toggleCritical" ${A.state.showCritical ? 'checked' : ''}> Highlight critical path</label>
-                        <span class="small muted">Click a bar to change its duration or dependencies.</span></div></div>
-                    ${s.cycle ? '<div class="note bad" style="margin-bottom: 0.8rem;">Some dependencies form a loop, so part of the schedule ignores them. Check the dependencies of recently edited items.</div>' : ''}
-                    ${lateMs.length ? `<div class="note warn" style="margin-bottom: 0.8rem;">${lateMs.length} milestone${lateMs.length > 1 ? 's are' : ' is'} forecast after the target: ${lateMs.map(m => esc(m.name)).join(', ')}. Shorten critical items, or re-baseline in Milestones.</div>` : ''}
-                    <div class="gantt-wrap"><div class="gantt" style="width: calc(240px + ${trackW}px)">
-                        ${row('Work item', ticks, 'g-head')}${rows}
-                    </div></div>
-                    <div class="grid grid-2" style="margin-top: 1rem;">
-                        <div class="card"><h3>Critical path</h3><p class="small">${critical.map(i => esc(i.title)).join(' → ')}</p><p class="muted small" style="margin-top: 0.4rem;">These items have zero float: any delay moves the finish date. To finish sooner, shorten them (add people) or overlap them (fast-track).</p></div>
-                        <div class="card"><h3>Legend</h3><p class="small"><span class="pill crit">Critical</span> <span class="pill" style="background: var(--teal); color: #fff;">Has float</span> <span class="pill done">Done</span> ◆ Milestone (red = late) · <span style="color: var(--coral); font-weight: 700;">|</span> Today. Weekends are skipped.</p></div>
-                    </div>`
-            };
-        }
-    });
-    A.action('toggleCritical', el => { A.state.showCritical = el.checked; A.render(); });
 
     // ══════════════════════════ Milestones ══════════════════════════
     A.register('milestones', {
@@ -303,6 +231,7 @@
 
     // ══════════════════════════ Team (+ RACI) ══════════════════════════
     const RACI = ['', 'R', 'A', 'C', 'I'];
+    const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     A.register('team', {
         render() {
             const P = A.P, F = A.F;
@@ -328,32 +257,53 @@
             }
             return {
                 sub: `${P.members.length} people · assign work from any item`,
-                html: `<div class="grid" style="grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); align-items: start;">
-                    <div class="table-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Role</th><th>Open items</th><th>Done</th><th></th></tr></thead><tbody>
+                html: `<form class="card team-add" data-form="memberAdd" style="margin-bottom: 1rem;">
+                        <div class="field"><label for="mName">Name</label><input class="input" id="mName" name="name" required maxlength="40" placeholder="Full name"></div>
+                        <div class="field"><label for="mRole">Role</label><input class="input" id="mRole" name="role" maxlength="40" placeholder="e.g. Developer"></div>
+                        <div class="field"><label for="mEmail">Email</label><input class="input" type="email" id="mEmail" name="email" maxlength="120" placeholder="name@company.com"></div>
+                        <button class="btn btn-primary" type="submit">＋ Add person</button>
+                    </form>
+                    <div class="table-wrap"><table class="tbl team-tbl"><thead><tr><th>Person</th><th>Role</th><th>Email</th><th>Work</th><th>Access</th><th></th></tr></thead><tbody>
                     ${P.members.map(m => {
                         const mine = A.work().filter(i => i.assigneeId === m.id);
-                        return `<tr><td style="display: flex; gap: 0.5rem; align-items: center;">${avatar(m)}<input class="input" style="max-width: 180px;" value="${esc(m.name)}" data-change="memberName" data-id="${m.id}" aria-label="Name"></td>
-                            <td><input class="input" style="max-width: 200px;" value="${esc(m.role)}" data-change="memberRole" data-id="${m.id}" aria-label="Role for ${esc(m.name)}"></td>
-                            <td>${mine.filter(i => i.status !== 'done').length}</td><td>${mine.filter(i => i.status === 'done').length}</td>
+                        const access = m.invite === 'pending' ? '<span class="pill doing">Invite pending</span>' : `<button class="btn btn-ghost btn-sm" data-act="memberInvite" data-id="${m.id}">✉ Invite</button>`;
+                        return `<tr><td><span style="display: flex; gap: 0.5rem; align-items: center;">${avatar(m)}<input class="input" value="${esc(m.name)}" data-change="memberName" data-id="${m.id}" aria-label="Name"></span></td>
+                            <td><input class="input" value="${esc(m.role)}" data-change="memberRole" data-id="${m.id}" aria-label="Role for ${esc(m.name)}"></td>
+                            <td><input class="input" type="email" value="${esc(m.email || '')}" placeholder="Add email" data-change="memberEmail" data-id="${m.id}" aria-label="Email for ${esc(m.name)}"></td>
+                            <td class="small" style="white-space: nowrap;">${mine.filter(i => i.status !== 'done').length} open · ${mine.filter(i => i.status === 'done').length} done</td>
+                            <td>${access}</td>
                             <td><button class="icon-btn" data-act="memberRemove" data-id="${m.id}" aria-label="Remove ${esc(m.name)}">✕</button></td></tr>`;
                     }).join('')}</tbody></table></div>
-                    <form class="card" data-form="memberAdd"><h3>Add a person</h3>
-                        <div class="field"><label for="mName">Name</label><input class="input" id="mName" name="name" required maxlength="40"></div>
-                        <div class="field"><label for="mRole">Role</label><input class="input" id="mRole" name="role" maxlength="40" placeholder="e.g. Developer"></div>
-                        <button class="btn btn-primary" type="submit">Add to team</button></form>
-                    </div>${raciHtml}`
+                    <p class="muted small" style="margin-top: 0.5rem;">Emails are stored with the project. Invitations and sign-in will work once accounts are added to the Project Tool.</p>
+                    ${raciHtml}`
             };
         }
     });
     A.action('memberAdd', (form, v) => {
         const name = v.name.trim();
         if (!name) return;
-        A.P.members.push({ id: PMT.uid('m_'), name, role: v.role.trim() || 'Team member' });
+        const email = (v.email || '').trim();
+        if (email && !EMAIL.test(email)) return toast('That email address doesn\'t look right.', 'warn');
+        A.P.members.push({ id: PMT.uid('m_'), name, role: v.role.trim() || 'Team member', email });
         A.commit(`Added ${name} to the team`, `Added ${name}`, 'good');
         document.getElementById('mName')?.focus();
     });
     A.action('memberName', el => { const m = A.member(el.dataset.id); if (el.value.trim()) { m.name = el.value.trim(); A.commit(); } });
     A.action('memberRole', el => { const m = A.member(el.dataset.id); m.role = el.value.trim() || 'Team member'; A.commit(); });
+    A.action('memberEmail', el => {
+        const m = A.member(el.dataset.id), email = el.value.trim();
+        if (email && !EMAIL.test(email)) { toast('That email address doesn\'t look right.', 'warn'); el.value = m.email || ''; return; }
+        m.email = email;
+        if (!email) delete m.invite;
+        A.commit(`Updated email for ${m.name}`);
+    });
+    // Placeholder until accounts exist: records the request so it can be sent later
+    A.action('memberInvite', el => {
+        const m = A.member(el.dataset.id);
+        if (!m.email) { toast(`Add an email for ${m.name} first.`, 'warn'); document.querySelector(`[data-change="memberEmail"][data-id="${m.id}"]`)?.focus(); return; }
+        m.invite = 'pending';
+        A.commit(`Invite requested for ${m.name} (${m.email})`, `Saved. Invites will be sent when accounts are set up.`, 'good');
+    });
     A.action('memberRemove', el => {
         const m = A.member(el.dataset.id);
         const open = A.work().filter(i => i.assigneeId === m.id && i.status !== 'done').length;
@@ -418,7 +368,7 @@
     });
     A.action('crToItem', el => {
         const c = A.P.changes.find(x => x.id === el.dataset.id);
-        const it = { id: PMT.uid('i_'), kind: 'item', type: 'task', title: c.title, description: `From approved change request.${c.reason ? ' ' + c.reason : ''}`, status: 'backlog', rank: A.nextRank(), order: 0, deps: [], parentId: null, assigneeId: null, estimate: null, duration: A.F.schedule ? 1 : null, moscow: A.F.moscow ? 'S' : null, createdAt: new Date().toISOString() };
+        const it = A.newItem({ title: c.title, description: `From approved change request.${c.reason ? ' ' + c.reason : ''}`, duration: A.F.schedule ? 1 : null });
         A.P.items.push(it);
         c.itemId = it.id;
         A.commit(`Created work item from change "${c.title}"`);

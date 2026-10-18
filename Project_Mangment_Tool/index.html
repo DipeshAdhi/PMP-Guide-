@@ -86,7 +86,7 @@ document.getElementById('importFile').addEventListener('change', async e => {
         const p = JSON.parse(await file.text());
         const ok = p && typeof p.name === 'string' && p.method && Array.isArray(p.items) && Array.isArray(p.members);
         if (!ok) throw new Error('This file is not a PM Ready project export.');
-        ['milestones', 'iterations', 'changes', 'risks', 'activity'].forEach(k => { if (!Array.isArray(p[k])) p[k] = []; });
+        ['milestones', 'iterations', 'changes', 'risks', 'events', 'activity'].forEach(k => { if (!Array.isArray(p[k])) p[k] = []; });
         p.settings = Object.assign({ iterationDays: 10, wipLimit: 3 }, p.settings);
         const existing = await PMT.store.get(p.id);
         if (!p.id || existing) {
@@ -108,7 +108,9 @@ let step = 0;
 let picker = null;
 const today = PMT.dates.todayISO();
 const draft = { name: '', description: '', startDate: PMT.dates.nextWorkday(today), templateId: 'blank', method: { mode: 'single', key: 'scrum' }, tools: {}, members: [] };
-const membersFromTemplate = id => (PMT.TEMPLATES.find(t => t.id === id) || PMT.TEMPLATES[0]).members.map(([name, role], ti) => ({ name, role, ti }));
+// Template people get a placeholder address at example.com (reserved for examples; never delivers mail)
+const dummyEmail = name => name === 'You' ? '' : `${name.split(/\s+/).pop().toLowerCase().replace(/[^a-z0-9]/g, '')}@example.com`;
+const membersFromTemplate = id => (PMT.TEMPLATES.find(t => t.id === id) || PMT.TEMPLATES[0]).members.map(([name, role], ti) => ({ name, role, email: dummyEmail(name), ti }));
 draft.members = membersFromTemplate('blank');
 
 function renderSteps() {
@@ -162,13 +164,13 @@ function renderStep() {
     } else {
         const tpl = PMT.TEMPLATES.find(t => t.id === draft.templateId);
         body.innerHTML = `<h2>Who's on the team?</h2>
-            <p class="muted" style="margin-bottom: 1rem;">${tpl.id === 'blank' ? 'Add the people who will work on this project.' : 'These roles come from the template. Replace the names with your real team.'} Work can be assigned to anyone here.</p>
+            <p class="muted" style="margin-bottom: 1rem;">${tpl.id === 'blank' ? 'Add the people who will work on this project.' : 'These roles come from the template. Replace the names (and example.com emails) with your real team.'} Work can be assigned to anyone here; emails will be used for invitations later.</p>
             <div id="members"></div>
             <button type="button" class="btn btn-ghost btn-sm" id="addMember">＋ Add person</button>
             <div class="note" style="margin-top: 1.2rem;"><strong>Summary:</strong> "${esc(draft.name)}" · ${tpl.icon} ${esc(tpl.name)} · ${PMT.methodIcon(draft.method)} ${esc(PMT.methodName(draft.method))}${(() => { const f = PMT.features(draft.method, draft.tools); const extra = Object.keys(PMT.TOOLS).filter(k => f.tools[k] && !f.locked[k]); return extra.length ? ` + ${extra.map(k => PMT.TOOLS[k].label).join(', ')}` : ''; })()} · starts ${PMT.dates.fmt(draft.startDate, { day: 'numeric', month: 'short', year: 'numeric' })}</div>`;
         drawMembers();
         document.getElementById('addMember').addEventListener('click', () => {
-            draft.members.push({ name: '', role: '', ti: null });
+            draft.members.push({ name: '', role: '', email: '', ti: null });
             drawMembers();
             document.querySelector('#members .member-row:last-child input').focus();
         });
@@ -181,6 +183,7 @@ function drawMembers() {
         <div class="member-row">
             <input class="input" aria-label="Name" placeholder="Name" maxlength="40" value="${esc(m.name)}" data-m="${i}" data-f="name">
             <input class="input" aria-label="Role" placeholder="Role" maxlength="40" value="${esc(m.role)}" data-m="${i}" data-f="role">
+            <input class="input" type="email" aria-label="Email" placeholder="Email (optional)" maxlength="120" value="${esc(m.email || '')}" data-m="${i}" data-f="email">
             <button type="button" class="btn btn-ghost btn-sm" data-remove="${i}" aria-label="Remove ${esc(m.name || 'person')}" ${draft.members.length === 1 ? 'disabled' : ''}>✕</button>
         </div>`).join('');
     el.querySelectorAll('input').forEach(inp => inp.addEventListener('input', () => { draft.members[inp.dataset.m][inp.dataset.f] = inp.value; }));
@@ -206,7 +209,9 @@ document.getElementById('wizardForm').addEventListener('submit', async e => {
     e.preventDefault();
     if (!collect()) return;
     if (step < STEPS.length - 1) { step++; renderStep(); window.scrollTo(0, 0); return; }
-    const members = draft.members.map(m => ({ ...m, name: m.name.trim(), role: m.role.trim() || 'Team member' })).filter(m => m.name);
+    const members = draft.members.map(m => ({ ...m, name: m.name.trim(), role: m.role.trim() || 'Team member', email: (m.email || '').trim() })).filter(m => m.name);
+    const badEmail = members.find(m => m.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m.email));
+    if (badEmail) { toast(`Check the email for ${badEmail.name}.`, 'warn'); return; }
     if (!members.length) { toast('Add at least one person.', 'warn'); return; }
     const project = PMT.createProject({ ...draft, members });
     try {

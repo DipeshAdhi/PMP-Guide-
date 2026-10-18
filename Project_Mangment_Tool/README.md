@@ -45,6 +45,27 @@ Settings → **Tools** (and "Add more tools" in the wizard) lets a project manag
 
 Switching a tool on fills in what it needs (e.g. Gantt gives items a duration; Sprints gives them a point estimate).
 
+## Gantt chart (Jira-style)
+
+A simple issue list on the left and bars on the right:
+
+- **List:** ▸ expand/collapse · issue key (e.g. `APP-12`) · summary · status · assignee · start · due · ✓ done tick. Parents show subtask progress ("2/3"); deliverables/epics show a progress bar and their date span.
+- **Bars:** drag to move, drag either end to change start/due, click an empty row to schedule an item, click a bar to open it.
+- **Dependencies:** drag the ● at a bar's end onto another bar ("that item waits for this one"). Arrows turn red when a date breaks a dependency; **Fix** moves later items so every dependency holds. Click an arrow to remove it.
+- **Subtasks:** ＋ on a row adds a subtask beneath it; "＋ Create" rows add items to any deliverable/epic.
+- **Layouts:** ☰ List (table only, full width) · ☰▦ List + chart · ▦ Chart (key + summary + bars).
+- **Resizable columns:** drag a column header's edge (Key, Summary, Status, Assignee, Start, Due) or use ← → on it; double-click resets. The handle on the table's right edge widens the whole table. Widths and layout are remembered in the browser. Wider date columns show the year.
+- Days / Weeks / Months zoom, Today, search, person filter, optional critical-path outline. On phones the table keeps every column and scrolls sideways.
+
+Dates the user sets take priority. Items without dates are placed automatically from the project start and their dependencies.
+
+## Work items, board, WBS, team
+
+- **Item editor (Jira-style):** title and description on the left with **subtasks** (tick off, add with Enter), **dependencies** (search to add "waits for" items as chips; loop-making items are left out; "blocks" lists what waits for this item) and **milestone chips**. Details on the right: status, assignee, type, parent, start/due, estimate, priority, sprint.
+- **Board quick filters:** search, people (click avatars, multi-select), deliverable/epic, type (incl. subtasks), priority (MoSCoW), due (overdue / next 7 days / no date), with "Showing X of Y" and Clear filters. Cards show due dates (red when overdue).
+- **WBS list and WBS chart:** the Work view switches between the list and an org-chart style tree (project → deliverables → work packages → subtasks), coloured by status.
+- **Team:** name, role, and **email** per person. **Invite** is a placeholder that records "Invite pending" until accounts exist. Template teams get example.com addresses to replace.
+
 ## Sprints on the timeline
 
 The **Timeline** view lays out every sprint (done, active, planned) on the calendar, with milestones and a bar for each deliverable/epic spanning the sprints that hold its work ("+N unplanned" shows what isn't in a sprint yet). **Plan 3 sprints ahead** creates consecutive sprints; each can be planned in advance, but they start in order.
@@ -64,6 +85,7 @@ js/app.js           Core: load/save, routing, event delegation, item editor
 js/views-work.js    Overview, Work (WBS/backlog), Board
 js/views-plan.js    Iterations, Schedule, Milestones, Team, Changes, Risks, Settings
 js/views-timeline.js Timeline (sprints, milestones, deliverables on the calendar)
+js/views-gantt.js   Gantt chart: Jira-style list + draggable bars, dependencies, subtasks
 ```
 
 Plain HTML/CSS/JS, no build step. Scripts are classic (not ES modules) so pages also open from the file system.
@@ -77,8 +99,10 @@ Project {
   id, version, name, description, startDate /* YYYY-MM-DD */, template,
   method: { mode: 'single', key } | { mode: 'hybrid', preset, caps: { planning, delivery, prioritisation, change, tracking } },
   settings: { iterationDays, wipLimit, tools: { wbs, iterations, timeline, schedule, milestones, changes, moscow, wip } /* extra tools */ },
-  members:    [{ id, name, role }],
-  items:      [{ id, kind: 'group' | 'item', title, description, type, parentId, order, rank,
+  members:    [{ id, name, role, email, invite /* 'pending' until accounts exist */ }],
+  key, nextNumber,                     /* issue keys: KEY-1, KEY-2, ... */
+  items:      [{ id, kind: 'group' | 'item', number, title, description, type,
+                 parentId /* group, or another item = subtask */, order, rank, startDate, dueDate,
                  status: 'backlog'|'todo'|'doing'|'review'|'done', assigneeId,
                  estimate /* points */, duration /* working days */, deps: [itemId], moscow,
                  iterationId, startedAt, doneAt, createdAt, raci /* groups: { memberId: 'R'|'A'|'C'|'I' } */ }],

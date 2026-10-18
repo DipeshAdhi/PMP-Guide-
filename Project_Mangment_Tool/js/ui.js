@@ -33,8 +33,9 @@
         return `<span class="avatar" style="background:${colorFor(member.id)}${size ? `;width:${size}px;height:${size}px` : ''}" title="${esc(member.name)} · ${esc(member.role)}">${esc(initials(member.name))}</span>`;
     }
 
-    function download(filename, text) {
-        const blob = new Blob([text], { type: 'application/json' });
+    // Save a file: text (with a MIME type) or a ready-made Blob
+    function download(filename, data, type = 'application/json') {
+        const blob = data instanceof Blob ? data : new Blob([data], { type });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = filename;

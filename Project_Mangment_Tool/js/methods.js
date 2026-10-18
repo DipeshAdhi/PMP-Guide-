@@ -107,7 +107,7 @@
             defaultIterationDays: single?.iterationDays || 10
         };
         f.workLabel = f.hierarchy ? 'Work breakdown' : f.moscow ? 'Requirements' : 'Backlog';
-        f.views = ['overview', 'work', 'board']
+        f.views = ['overview', 'work', 'board', 'calendar']
             .concat(f.iterations ? ['iterations'] : [])
             .concat(f.timeline ? ['timeline'] : [])
             .concat(f.schedule ? ['schedule'] : [])
@@ -150,7 +150,7 @@
     }
 
     // ─── Picker UI (used by the new-project wizard and settings) ───
-    const VIEW_LABELS = { overview: 'Overview', work: 'Work', board: 'Board', iterations: 'Iterations', timeline: 'Timeline', schedule: 'Gantt & critical path', milestones: 'Milestones', team: 'Team', changes: 'Change requests', risks: 'Risks', settings: 'Settings' };
+    const VIEW_LABELS = { overview: 'Overview', work: 'Work', board: 'Board', calendar: 'Calendar', iterations: 'Iterations', timeline: 'Timeline', schedule: 'Gantt chart', milestones: 'Milestones', team: 'Team', changes: 'Change requests', risks: 'Risks', settings: 'Settings' };
 
     function renderMethodPicker(el, initial, onChange) {
         let value = JSON.parse(JSON.stringify(initial || { mode: 'single', key: 'scrum' }));

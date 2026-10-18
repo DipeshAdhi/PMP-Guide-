@@ -97,13 +97,13 @@
             id: uid('p_'), version: 1, name, description: description || '', key: projectKey(name), nextNumber: 1,
             startDate: PMT.dates.nextWorkday(startDate), template: t.id, method,
             settings: { iterationDays: f.defaultIterationDays, wipLimit: 3, tools: { ...tools } },
-            members: [], items: [], milestones: [], iterations: [], changes: [], risks: [], activity: [],
+            members: [], items: [], milestones: [], iterations: [], changes: [], risks: [], events: [], activity: [],
             createdAt: now, updatedAt: now
         };
         const byTemplateIndex = {};
         members.forEach(m => {
             const id = uid('m_');
-            p.members.push({ id, name: m.name, role: m.role });
+            p.members.push({ id, name: m.name, role: m.role, email: (m.email || '').trim() });
             if (m.ti != null) byTemplateIndex[m.ti] = id;
         });
 
@@ -137,6 +137,14 @@
         t.risks.forEach(([title, probability, impact, owner, response]) => {
             p.risks.push({ id: uid('r_'), title, probability, impact, ownerId: byTemplateIndex[owner] || null, response, status: 'open', createdAt: now });
         });
+        // Example calendar entries for template projects: kickoff + weekly status meeting
+        if (t.id !== 'blank') {
+            const everyone = p.members.map(m => m.id);
+            p.events.push(
+                { id: uid('ev_'), title: 'Project kickoff', kind: 'meeting', allDay: false, date: p.startDate, endDate: '', start: '10:00', end: '11:00', repeat: 'none', attendees: everyone, itemId: '', location: '', description: 'Goals, roles, and how we will work.', createdAt: now },
+                { id: uid('ev_'), title: 'Weekly status meeting', kind: 'meeting', allDay: false, date: PMT.dates.addWorkdays(p.startDate, 4), endDate: '', start: '15:00', end: '15:30', repeat: 'weekly', attendees: everyone, itemId: '', location: '', description: 'Progress, blockers, next steps.', createdAt: now }
+            );
+        }
         p.activity.push({ at: now, text: `Project created from "${t.name}" using ${PMT.methodName(method)}` });
         return p;
     }

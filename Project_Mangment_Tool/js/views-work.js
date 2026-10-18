@@ -103,8 +103,8 @@
         const F = A.F, m = A.member(i.assigneeId), iter = F.iterations && i.iterationId ? A.P.iterations.find(x => x.id === i.iterationId) : null;
         return `<tr class="clickable ${i.status === 'done' ? 'is-done' : ''}" data-act="openItem" data-id="${i.id}">
             ${opts.rankCell || ''}
-            <td>${opts.tree ? `<span class="mono muted small" style="margin-right: 0.4rem;">${A.code(i)}</span>` : ''}<span class="t">${esc(i.title)}</span>
-                <div class="muted small">${[!opts.tree && i.parentId ? `📁 ${esc(A.groupName(i))}` : '', i.type === 'bug' ? '🐞 Bug' : i.type === 'story' ? 'Story' : '', (i.deps || []).length && F.schedule ? `after ${i.deps.length} item${i.deps.length > 1 ? 's' : ''}` : '', iter ? `🔁 ${esc(iter.name)}` : ''].filter(Boolean).join(' · ')}</div></td>
+            <td style="${opts.depth ? `padding-left: ${0.8 + opts.depth * 1.4}rem;` : ''}">${opts.depth ? '<span class="muted" aria-hidden="true">↳ </span>' : ''}${opts.tree && A.code(i) ? `<span class="mono muted small" style="margin-right: 0.4rem;">${A.code(i)}</span>` : ''}<span class="key">${A.keyOf(i)}</span> <span class="t">${esc(i.title)}</span>
+                <div class="muted small">${[!opts.tree && i.parentId && !A.isSubtask(i) ? `📁 ${esc(A.groupName(i))}` : '', !opts.tree && A.isSubtask(i) ? `Subtask of ${A.keyOf(A.item(i.parentId))}` : '', A.subtasksOf(i.id).length ? `☑ ${A.subtasksOf(i.id).filter(x => x.status === 'done').length}/${A.subtasksOf(i.id).length} subtasks` : '', i.type === 'bug' ? '🐞 Bug' : i.type === 'story' ? 'Story' : '', (i.deps || []).length && F.schedule ? `after ${i.deps.length} item${i.deps.length > 1 ? 's' : ''}` : '', iter ? `🔁 ${esc(iter.name)}` : ''].filter(Boolean).join(' · ')}</div></td>
             ${F.moscow ? `<td><span class="pill ${i.moscow || 'S'}">${MOSCOW[i.moscow || 'S']}</span></td>` : ''}
             <td class="mono small">${sizeOf(i) || '<span class="muted">—</span>'}</td>
             <td><span style="display: inline-flex; align-items: center; gap: 0.4rem;">${avatar(m)}<span class="small">${m ? esc(m.name) : '<span class="muted">Unassigned</span>'}</span></span></td>
@@ -132,26 +132,78 @@
         </div>`;
     }
 
+
+    // ─── WBS chart: project → deliverables → work packages → subtasks ───
+    function wbsChart() {
+        const P = A.P, work = A.work();
+        const done = work.filter(i => i.status === 'done').length;
+        const pct = work.length ? Math.round(done / work.length * 100) : 0;
+        const under = id => { const out = []; const walk = pid => A.work().filter(i => i.parentId === pid).forEach(c => { out.push(c); walk(c.id); }); walk(id); return out; };
+        const node = i => {
+            const subs = A.subtasksOf(i.id);
+            return `<li><button class="wn wn-item s-${i.status}" data-act="openItem" data-id="${i.id}" title="${esc(i.title)}">
+                    <span class="wn-top">${A.code(i) ? `<span class="mono">${A.code(i)}</span>` : ''}<span class="key">${A.keyOf(i)}</span>${i.status === 'done' ? '<span class="wn-done">✓</span>' : ''}</span>
+                    <span class="wn-title">${esc(i.title)}</span>
+                    <span class="wn-foot"><span class="pill ${i.status}">${STATUS[i.status]}</span>${i.dueDate ? `<span class="small muted">📅 ${D.fmt(i.dueDate)}</span>` : ''}${avatar(A.member(i.assigneeId), 20)}</span>
+                </button>${subs.length ? `<ul class="wn-kids">${subs.map(node).join('')}</ul>` : ''}</li>`;
+        };
+        const column = (g, kids, title, code) => {
+            const all = g ? under(g.id) : kids;
+            const d = all.filter(i => i.status === 'done').length;
+            return `<li class="wg">
+                ${g ? `<button class="wn wn-group" data-act="openItem" data-id="${g.id}">` : '<div class="wn wn-group wn-loose">'}
+                    <span class="wn-top"><span class="mono">${code}</span></span><strong class="wn-title">${esc(title)}</strong>
+                    <span class="wn-prog"><span class="jt-pbar"><span style="width:${all.length ? d / all.length * 100 : 0}%"></span></span>${d}/${all.length}</span>
+                ${g ? '</button>' : '</div>'}
+                ${kids.length ? `<ul class="wn-kids">${kids.map(node).join('')}</ul>` : ''}
+                ${g ? `<button class="wn-add" data-act="newItem" data-parent-id="${g.id}">＋ Work package</button>` : ''}
+            </li>`;
+        };
+        const loose = A.ranked().filter(i => !i.parentId || !A.item(i.parentId));
+        if (!A.groups().length && !loose.length) {
+            return `<div class="card empty"><div class="big">🌳</div><h3>Build your work breakdown</h3><p>Add the main deliverables first, then break each into work packages.</p><p style="margin-top: 0.8rem;"><button class="btn btn-primary" data-act="newGroup">＋ First deliverable</button></p></div>`;
+        }
+        return `<div class="wbs-scroll"><div class="wbs-tree">
+            <div class="wn wn-root"><span class="mono">0</span><strong>${esc(P.name)}</strong><span>${work.length} work package${work.length === 1 ? '' : 's'} · ${pct}% done</span></div>
+            <div class="wbs-stem" aria-hidden="true"></div>
+            <ul class="wbs-l1">
+                ${A.groups().map(g => column(g, A.childrenOf(g.id), g.title, A.code(g))).join('')}
+                ${loose.length ? column(null, loose, `Not in a ${A.groupWord().toLowerCase()}`, '–') : ''}
+                <li class="wg"><button class="wn wn-new" data-act="newGroup">＋ ${esc(A.F.hierarchy ? 'Deliverable' : 'Deliverable / epic')}</button></li>
+            </ul>
+        </div></div>
+        <p class="muted small" style="margin-top: 0.6rem;">Click any box to open it. Colours show status: grey to do · blue in progress · purple review · green done.</p>`;
+    }
+
     A.state.workMode = 'backlog';
     A.register('work', {
         render() {
             const F = A.F;
-            const tree = F.hierarchy || (F.wbs && A.state.workMode === 'wbs');
+            // 'backlog' (ranked list) · 'wbs' (WBS list) · 'chart' (WBS chart)
+            let mode = A.state.workMode;
+            if (!F.wbs) mode = 'backlog';
+            else if (F.hierarchy && mode === 'backlog') mode = 'wbs';
+            const tree = mode === 'wbs';
+            const modes = !F.wbs ? [] : F.hierarchy ? [['wbs', '☰ List'], ['chart', '🌳 Chart']] : [['backlog', esc(F.workLabel)], ['wbs', '☰ WBS list'], ['chart', '🌳 WBS chart']];
             const toolbar = `<div class="view-head">
                 <div class="toolbar">
                     <input class="input" type="search" id="workSearch" placeholder="Search items" value="${esc(A.state.search)}" aria-label="Search items">
                     <select class="select" data-change="filterWho" aria-label="Filter by person">${whoOptions()}</select>
                     <label class="small" style="display: flex; gap: 0.35rem; align-items: center;"><input type="checkbox" data-change="toggleDone" ${A.state.showDone ? 'checked' : ''}> Show done</label>
                 </div>
-                <div class="toolbar">${!F.hierarchy && F.wbs ? `<div class="seg small" role="radiogroup" aria-label="Work view">
-                    <button role="radio" aria-checked="${!tree}" data-act="workMode" data-v="backlog">${esc(F.workLabel)}</button>
-                    <button role="radio" aria-checked="${tree}" data-act="workMode" data-v="wbs">WBS tree</button></div>` : ''}
+                <div class="toolbar">${modes.length ? `<div class="seg small" role="radiogroup" aria-label="Work view">${modes.map(([k, l]) => `<button role="radio" aria-checked="${mode === k}" data-act="workMode" data-v="${k}">${l}</button>`).join('')}</div>` : ''}
                     <button class="btn btn-ghost" data-act="newGroup">＋ ${F.wbs ? 'Deliverable' : 'Epic'}</button></div>
             </div>`;
+
+            if (mode === 'chart') {
+                return { sub: 'Work breakdown structure: the project broken into deliverables, work packages, and subtasks', html: toolbar + wbsChart() };
+            }
 
             if (tree) {
                 const groups = A.groups();
                 const loose = A.work().filter(i => !i.parentId || !A.item(i.parentId)).filter(matches);
+                // An item row followed by its subtasks, indented
+                const withSubs = (i, depth, endCell) => itemRow(i, { tree: true, depth, endCell }) + A.subtasksOf(i.id).filter(matches).map(st => withSubs(st, depth + 1, '<td></td>')).join('');
                 const body = groups.map((g, gi) => {
                     const kids = A.childrenOf(g.id);
                     const shown = kids.filter(matches);
@@ -160,10 +212,10 @@
                             <span class="mono" style="margin-right: 0.4rem;">${A.code(g)}</span><button class="icon-btn" style="font-weight: 700; color: var(--ink);" data-act="openItem" data-id="${g.id}">${esc(g.title)}</button>
                             <span class="muted small" style="margin-left: 0.4rem;">${doneN}/${kids.length} done${F.schedule ? ` · ${days(kids)}d` : ''}${F.points ? ` · ${pts(kids)} pt` : ''}</span></td>
                         <td style="text-align: right; white-space: nowrap;">${move('moveGroup', g.id, -1, gi === 0, 'Move deliverable up')}${move('moveGroup', g.id, 1, gi === groups.length - 1, 'Move deliverable down')}<button class="icon-btn" data-act="newItem" data-parent-id="${g.id}" aria-label="Add item to ${esc(g.title)}">＋</button></td></tr>
-                        ${shown.map((i, ii) => itemRow(i, { tree: true, endCell: `<td style="text-align: right; white-space: nowrap;">${move('moveChild', i.id, -1, kids.indexOf(i) === 0, 'Move up')}${move('moveChild', i.id, 1, kids.indexOf(i) === kids.length - 1, 'Move down')}</td>` })).join('')}
+                        ${shown.map(i => withSubs(i, 0, `<td style="text-align: right; white-space: nowrap;">${move('moveChild', i.id, -1, kids.indexOf(i) === 0, 'Move up')}${move('moveChild', i.id, 1, kids.indexOf(i) === kids.length - 1, 'Move down')}<button class="icon-btn" data-act="newItem" data-parent-id="${i.id}" aria-label="Add subtask to ${esc(i.title)}" title="Add subtask">＋</button></td>`)).join('')}
                         ${!kids.length ? `<tr><td colspan="${F.moscow ? 6 : 5}" class="muted small" style="padding-left: 2rem;">No work packages yet. <button class="icon-btn" data-act="newItem" data-parent-id="${g.id}">＋ Add one</button></td></tr>` : ''}`;
                 }).join('');
-                const looseRows = loose.length ? `<tr class="group-row"><td colspan="${F.moscow ? 6 : 5}">Not in a deliverable</td></tr>${loose.map(i => itemRow(i, { tree: true, endCell: '<td></td>' })).join('')}` : '';
+                const looseRows = loose.length ? `<tr class="group-row"><td colspan="${F.moscow ? 6 : 5}">Not in a deliverable</td></tr>${loose.map(i => withSubs(i, 0, '<td></td>')).join('')}` : '';
                 return {
                     sub: 'Work breakdown structure: deliverables broken into work packages',
                     html: toolbar + (F.moscow ? moscowSummary() : '') + (groups.length || loose.length
@@ -173,8 +225,8 @@
                 };
             }
 
-            const list = A.ranked().filter(matches);
-            const all = A.ranked().filter(i => i.status !== 'done');
+            const list = A.topItems().filter(matches);
+            const all = A.topItems().filter(i => i.status !== 'done');
             const canRank = F.ranked || F.moscow;
             return {
                 sub: F.moscow ? 'Requirements prioritised with MoSCoW' : 'Ordered by value: the top is done first',
@@ -205,7 +257,7 @@
     A.action('workMode', el => { A.state.workMode = el.dataset.v; A.render(); });
     A.action('toggleDone', el => { A.state.showDone = el.checked; A.render(); });
     A.action('moveRank', el => {
-        const list = A.ranked().filter(i => i.status !== 'done');
+        const list = A.topItems().filter(i => i.status !== 'done');
         const i = list.findIndex(x => x.id === el.dataset.id), j = i + Number(el.dataset.dir);
         if (i < 0 || j < 0 || j >= list.length) return;
         [list[i].rank, list[j].rank] = [list[j].rank, list[i].rank];
@@ -239,14 +291,34 @@
         return A.activeIteration() ? 'iteration' : 'all';
     }
 
+    // Quick filters (Jira-style): search, people, deliverable/epic, type, priority, due
+    A.state.bf = { q: '', people: [], group: '', type: '', prio: '', due: '' };
+    const today = () => D.todayISO();
+    const weekEnd = () => D.addDays(today(), 7);
+    const topGroupOf = i => { let x = i; while (x && x.parentId && A.item(x.parentId) && A.item(x.parentId).kind !== 'group') x = A.item(x.parentId); return x && x.parentId ? x.parentId : ''; };
+    function boardMatch(i) {
+        const f = A.state.bf;
+        if (f.q && !`${A.keyOf(i)} ${i.title}`.toLowerCase().includes(f.q.toLowerCase())) return false;
+        if (f.people.length && !f.people.includes(i.assigneeId || 'none')) return false;
+        if (f.group && topGroupOf(i) !== f.group) return false;
+        if (f.type && (f.type === 'subtask' ? !A.isSubtask(i) : (A.isSubtask(i) || (i.type || 'task') !== f.type))) return false;
+        if (f.prio && (i.moscow || 'S') !== f.prio) return false;
+        if (f.due === 'overdue' && !(i.dueDate && i.dueDate < today() && i.status !== 'done')) return false;
+        if (f.due === 'week' && !(i.dueDate && i.dueDate >= today() && i.dueDate <= weekEnd())) return false;
+        if (f.due === 'none' && i.dueDate) return false;
+        return true;
+    }
+    const filtersOn = () => { const f = A.state.bf; return !!(f.q || f.people.length || f.group || f.type || f.prio || f.due); };
+
     A.register('board', {
         render() {
-            const F = A.F;
+            const F = A.F, f = A.state.bf;
             const scope = boardScope();
             const active = A.activeIteration();
             const cols = scope === 'iteration' ? ['todo', 'doing', 'review', 'done'] : ['backlog', 'todo', 'doing', 'review', 'done'];
-            let items = A.ranked().filter(i => (!A.state.who || (A.state.who === 'none' ? !i.assigneeId : i.assigneeId === A.state.who)));
-            if (scope === 'iteration') items = active ? items.filter(i => i.iterationId === active.id) : [];
+            let scoped = A.ranked();
+            if (scope === 'iteration') scoped = active ? scoped.filter(i => i.iterationId === active.id) : [];
+            const items = scoped.filter(boardMatch);
             const limit = Number(A.P.settings.wipLimit) || 3;
             const doingAll = A.work().filter(i => i.status === 'doing').length;
 
@@ -254,11 +326,12 @@
                 const g = A.item(i.parentId);
                 const ci = cols.indexOf(i.status);
                 return `<div class="kcard" draggable="true" data-id="${i.id}" style="--g:${g ? PMT.ui.colorFor(g.id) : 'var(--line)'}">
-                    <div class="k-top"><span>${A.code(i) ? `<span class="mono">${A.code(i)}</span> ` : ''}${g ? esc(g.title) : ''}</span><span>${i.type === 'bug' ? '🐞' : ''}</span></div>
+                    <div class="k-top"><span><span class="key">${A.keyOf(i)}</span> ${A.isSubtask(i) ? `↳ ${A.keyOf(g)}` : g ? esc(g.title) : ''}</span><span>${i.type === 'bug' ? '🐞' : ''}</span></div>
                     <button class="k-title" data-act="openItem" data-id="${i.id}">${esc(i.title)}</button>
                     <div class="k-foot">
                         ${F.moscow ? `<span class="pill ${i.moscow || 'S'}">${(i.moscow || 'S')}</span>` : ''}
                         ${sizeOf(i) ? `<span class="pill">${sizeOf(i)}</span>` : ''}
+                        ${i.dueDate ? `<span class="pill ${i.status !== 'done' && i.dueDate < today() ? 'crit' : ''}" title="Due ${D.fmt(i.dueDate, { day: 'numeric', month: 'short', year: 'numeric' })}">📅 ${D.fmt(i.dueDate)}</span>` : ''}
                         <button class="icon-btn" data-act="moveCard" data-id="${i.id}" data-dir="-1" ${ci <= 0 ? 'disabled' : ''} aria-label="Move ${esc(i.title)} left">◀</button>
                         <button class="icon-btn" data-act="moveCard" data-id="${i.id}" data-dir="1" ${ci === cols.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(i.title)} right">▶</button>
                         ${avatar(A.member(i.assigneeId))}
@@ -269,9 +342,20 @@
                 ${F.iterations ? `<div class="seg small" role="radiogroup" aria-label="Board scope">
                     <button role="radio" aria-checked="${scope === 'iteration'}" data-act="boardScope" data-v="iteration">${active ? esc(active.name) : `Active ${F.iterName.toLowerCase()}`}</button>
                     <button role="radio" aria-checked="${scope === 'all'}" data-act="boardScope" data-v="all">All work</button></div>` : ''}
-                <select class="select" data-change="filterWho" aria-label="Filter by person">${whoOptions()}</select>
                 ${F.flow ? `<span class="small ${doingAll >= limit ? '' : 'muted'}" style="${doingAll >= limit ? 'color: var(--warn); font-weight: 600;' : ''}">WIP ${doingAll}/${limit}</span>` : ''}
-            </div></div>`;
+            </div></div>
+            <div class="qf" role="group" aria-label="Filters">
+                <input class="input qf-search" type="search" id="bfSearch" placeholder="Search board" value="${esc(f.q)}" aria-label="Search board">
+                <div class="qf-people" role="group" aria-label="Filter by person">
+                    ${A.P.members.map(m => `<button class="qf-av ${f.people.includes(m.id) ? 'on' : ''}" data-act="bfPerson" data-v="${m.id}" aria-pressed="${f.people.includes(m.id)}" title="${esc(m.name)}">${avatar(m)}</button>`).join('')}
+                    <button class="qf-av ${f.people.includes('none') ? 'on' : ''}" data-act="bfPerson" data-v="none" aria-pressed="${f.people.includes('none')}" title="Unassigned">${avatar(null)}</button>
+                </div>
+                ${A.groups().length ? `<select class="select" data-change="bfSet" data-k="group" aria-label="Filter by ${esc(A.groupWord().toLowerCase())}"><option value="">All ${esc(F.wbs ? 'deliverables' : 'epics')}</option>${A.groups().map(g => `<option value="${g.id}" ${f.group === g.id ? 'selected' : ''}>${esc(g.title)}</option>`).join('')}</select>` : ''}
+                <select class="select" data-change="bfSet" data-k="type" aria-label="Filter by type"><option value="">All types</option>${[['task', 'Tasks'], ['story', 'Stories'], ['bug', 'Bugs'], ['subtask', 'Subtasks']].map(([k, l]) => `<option value="${k}" ${f.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                ${F.moscow ? `<select class="select" data-change="bfSet" data-k="prio" aria-label="Filter by priority"><option value="">All priorities</option>${Object.entries(MOSCOW).map(([k, l]) => `<option value="${k}" ${f.prio === k ? 'selected' : ''}>${l}</option>`).join('')}</select>` : ''}
+                <select class="select" data-change="bfSet" data-k="due" aria-label="Filter by due date"><option value="">Any due date</option>${[['overdue', 'Overdue'], ['week', 'Due in 7 days'], ['none', 'No due date']].map(([k, l]) => `<option value="${k}" ${f.due === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
+                ${filtersOn() ? `<span class="small muted">Showing ${items.length} of ${scoped.length}</span><button class="btn btn-ghost btn-sm" data-act="bfClear">Clear filters</button>` : ''}
+            </div>`;
 
             if (scope === 'iteration' && !active) {
                 return { sub: 'Drag cards as work moves', html: head + `<div class="card empty"><div class="big">🔁</div><h3>No active ${F.iterName.toLowerCase()}</h3><p>Plan and start one to see its board here.</p><p style="margin-top: 0.8rem;"><a class="btn btn-primary" href="#iterations">Go to ${F.iterName}s</a></p></div>` };
@@ -287,6 +371,15 @@
             };
         },
         mount(root) {
+            const q = root.querySelector('#bfSearch');
+            if (q) q.addEventListener('input', () => {
+                A.state.bf.q = q.value;
+                const pos = q.selectionStart;
+                A.render();
+                const again = document.getElementById('bfSearch');
+                again.focus();
+                again.setSelectionRange(pos, pos);
+            });
             root.querySelectorAll('.kcard').forEach(c => {
                 c.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', c.dataset.id); c.classList.add('dragging'); });
                 c.addEventListener('dragend', () => c.classList.remove('dragging'));
@@ -305,6 +398,14 @@
     });
 
     A.action('boardScope', el => { A.state.boardScope = el.dataset.v; A.render(); });
+    A.action('bfPerson', el => {
+        const p = A.state.bf.people, v = el.dataset.v;
+        A.state.bf.people = p.includes(v) ? p.filter(x => x !== v) : [...p, v];
+        A.render();
+        document.querySelector(`[data-act="bfPerson"][data-v="${v}"]`)?.focus();
+    });
+    A.action('bfSet', el => { A.state.bf[el.dataset.k] = el.value; A.render(); });
+    A.action('bfClear', () => { A.state.bf = { q: '', people: [], group: '', type: '', prio: '', due: '' }; A.render(); });
     A.action('moveCard', el => {
         const it = A.item(el.dataset.id);
         const cols = boardScope() === 'iteration' ? ['todo', 'doing', 'review', 'done'] : ['backlog', 'todo', 'doing', 'review', 'done'];
