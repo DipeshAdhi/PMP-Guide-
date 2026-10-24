@@ -12,6 +12,7 @@
         <div class="in">
             <a class="brand" href="index.html">PM Ready<span>Project Tool</span></a>
             <a class="back" href="../index.html">← PM Ready home</a>
+            <span id="userChip" style="margin-left: 0.4rem;"></span>
         </div>
     </header>
 
@@ -28,8 +29,9 @@
                 <a class="btn btn-primary" href="#new">＋ New project</a>
             </div>
         </div>
+        <div id="uploadNote"></div>
         <div id="projects"></div>
-        <p class="muted small" style="margin-top: 1.5rem;">Projects are saved in this browser. Use Settings → Export in a project to back it up or move it to another device.</p>
+        <p class="muted small" style="margin-top: 1.5rem;" id="storageNote">Projects are saved in this browser. Use Settings → Export in a project to back it up or move it to another device.</p>
     </main>
 
     <!-- New project wizard -->
@@ -47,6 +49,8 @@
     </main>
 
 <script src="js/store.js"></script>
+<script src="../assets/js/account.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/schedule.js"></script>
 <script src="js/methods.js"></script>
 <script src="js/templates.js"></script>
@@ -56,7 +60,10 @@ const { esc, toast } = PMT.ui;
 
 // ─── Projects list ───
 async function renderList() {
-    const list = await PMT.store.list();
+    let list;
+    try { list = await PMT.store.list(); }
+    catch (e) { document.getElementById('projects').innerHTML = `<div class="card empty"><h3>Could not load your projects</h3><p>${esc(e.userMessage || 'The server did not answer. Try again in a moment.')}</p></div>`; return; }
+    if (PMT.cloud) renderUploadNote(list);
     const el = document.getElementById('projects');
     if (!list.length) {
         el.innerHTML = `<div class="card empty"><div class="big">📁</div><h3 style="margin: 0.4rem 0;">No projects yet</h3>
@@ -69,6 +76,7 @@ async function renderList() {
         const tpl = PMT.TEMPLATES.find(t => t.id === p.template);
         return `<a class="project-card" href="project.html?id=${encodeURIComponent(p.id)}">
             <span class="pill">${PMT.methodIcon(p.method)} ${esc(PMT.methodName(p.method))}</span>
+            ${p.role ? `<span class="pill" title="${esc(PMT.ROLE_HELP[p.role])}">${p.companyName ? `🏢 ${esc(p.companyName)} · ` : ''}${PMT.ROLE_LABELS[p.role]}</span>` : ''}
             <h3>${esc(p.name)}</h3>
             ${p.description ? `<p class="muted small">${esc(p.description)}</p>` : ''}
             <div class="bar" aria-label="${pct}% done"><div style="width:${pct}%"></div></div>
@@ -95,10 +103,11 @@ document.getElementById('importFile').addEventListener('change', async e => {
         }
         p.activity.push({ at: new Date().toISOString(), text: `Imported from ${file.name}` });
         await PMT.store.save(p);
+        if (PMT.cloud) localStorage.setItem(UPLOADED_KEY, JSON.stringify([...uploadedIds(), p.id]));
         toast(`Imported "${p.name}"`, 'good');
         renderList();
     } catch (err) {
-        toast(err instanceof SyntaxError ? 'That file is not valid JSON.' : err.message, 'bad');
+        toast(err instanceof SyntaxError ? 'That file is not valid JSON.' : err.userMessage || err.message, 'bad');
     }
 });
 
@@ -130,6 +139,9 @@ function renderStep() {
             <p class="muted" style="margin-bottom: 1.2rem;">You can change all of this later in Settings.</p>
             <div class="field"><label for="pName">Project name</label><input class="input" id="pName" required maxlength="80" value="${esc(draft.name)}" placeholder="e.g. Customer portal 2.0"><span class="hint" id="nameErr" role="alert"></span></div>
             <div class="field"><label for="pDesc">Description <span class="muted">(optional)</span></label><textarea class="textarea" id="pDesc" maxlength="300" placeholder="What is this project for?">${esc(draft.description)}</textarea></div>
+            ${PMT.cloud && PMT.companies.length ? `<div class="field" style="max-width: 360px;"><label for="pOwner">Belongs to</label><select class="select" id="pOwner">
+                <option value="">👤 Me (personal project)</option>${PMT.companies.map(c => `<option value="${c.id}" ${draft.companyId === c.id ? 'selected' : ''}>🏢 ${esc(c.name)}</option>`).join('')}</select>
+                <span class="hint">Company owners and admins can see and manage company projects.</span></div>` : ''}
             <div class="field" style="max-width: 240px;"><label for="pStart">Start date</label><input class="input" type="date" id="pStart" value="${draft.startDate}"><span class="hint">Weekends are skipped when scheduling.</span></div>`;
         document.getElementById('pName').focus();
     } else if (step === 1) {
@@ -195,6 +207,8 @@ function collect() {
         draft.name = document.getElementById('pName').value.trim();
         draft.description = document.getElementById('pDesc').value.trim();
         draft.startDate = document.getElementById('pStart').value || draft.startDate;
+        const owner = document.getElementById('pOwner');
+        if (owner) draft.companyId = owner.value || null;
         if (!draft.name) {
             document.getElementById('nameErr').textContent = 'Give the project a name to continue.';
             document.getElementById('pName').focus();
@@ -214,11 +228,12 @@ document.getElementById('wizardForm').addEventListener('submit', async e => {
     if (badEmail) { toast(`Check the email for ${badEmail.name}.`, 'warn'); return; }
     if (!members.length) { toast('Add at least one person.', 'warn'); return; }
     const project = PMT.createProject({ ...draft, members });
+    if (PMT.cloud && draft.companyId) project.companyId = draft.companyId;
     try {
         await PMT.store.save(project);
         location.href = `project.html?id=${encodeURIComponent(project.id)}`;
     } catch (err) {
-        toast('Could not save: browser storage is full or blocked.', 'bad');
+        toast(err.userMessage || 'Could not save: browser storage is full or blocked.', 'bad');
     }
 });
 document.getElementById('backBtn').addEventListener('click', () => {
@@ -236,7 +251,42 @@ function route() {
     if (wizard) { step = 0; renderStep(); } else renderList();
 }
 window.addEventListener('hashchange', route);
-route();
+PMT.ready.then(() => {
+    if (PMT.cloud) {
+        PMT.userMenu(document.getElementById('userChip'));
+        document.getElementById('storageNote').textContent = 'Projects are saved to your account. Open a project\'s Team page to choose who else can open it.';
+    }
+    route();
+});
+
+// ─── Server mode: offer to upload projects that are only in this browser ───
+const UPLOADED_KEY = 'pmt_uploaded_v1';
+const uploadedIds = () => { try { return JSON.parse(localStorage.getItem(UPLOADED_KEY)) || []; } catch (e) { return []; } };
+async function localOnly(list) {
+    const local = await PMT.localStore.list();
+    const done = uploadedIds();
+    return local.filter(p => !done.includes(p.id) && !list.some(x => x.id === p.id));
+}
+async function renderUploadNote(list) {
+    const el = document.getElementById('uploadNote');
+    const pending = await localOnly(list);
+    el.innerHTML = pending.length ? `<div class="note upload-note"><span>💾 <strong>${pending.length} project${pending.length > 1 ? 's are' : ' is'} saved only in this browser</strong> (${pending.map(p => esc(p.name)).join(', ')}). Upload to your account to open ${pending.length > 1 ? 'them' : 'it'} anywhere and share with your team.</span>
+        <button class="btn btn-primary btn-sm" id="uploadLocal">Upload to my account</button></div>` : '';
+    document.getElementById('uploadLocal')?.addEventListener('click', async e => {
+        e.target.disabled = true;
+        let n = 0;
+        for (const s of pending) {
+            const p = await PMT.localStore.get(s.id);
+            try {
+                await PMT.store.save(p);
+                localStorage.setItem(UPLOADED_KEY, JSON.stringify([...uploadedIds(), s.id]));
+                n++;
+            } catch (err) { toast(`Could not upload "${s.name}": ${err.userMessage || err.message}`, 'bad'); }
+        }
+        if (n) toast(`Uploaded ${n} project${n > 1 ? 's' : ''}. The copies in this browser are kept as a backup.`, 'good');
+        renderList();
+    });
+}
 </script>
 </body>
 </html>

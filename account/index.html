@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My account - PM Ready</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Project_Mangment_Tool/css/app.css">
+    <link rel="stylesheet" href="account.css">
+</head>
+<body>
+    <header class="top">
+        <div class="in">
+            <a class="brand" href="../index.html">PM Ready</a>
+            <a class="back" style="margin-left: 0;" href="../Project_Mangment_Tool/index.html">Projects</a>
+            <a class="back" style="margin-left: 0;" href="../learn/index.html">Course</a>
+            <span id="chip" class="user-chip"></span>
+        </div>
+    </header>
+
+    <main class="page" id="main">
+        <p class="muted">Loading…</p>
+    </main>
+
+<script src="../assets/js/account.js"></script>
+<script src="../Project_Mangment_Tool/js/ui.js"></script>
+<script>
+const A = window.PMAccount;
+const { esc, toast } = PMT.ui;
+const ROLE = { owner: 'Owner', admin: 'Admin', member: 'Member', manager: 'Manager', viewer: 'Viewer' };
+let me, companies = [], selected = null, companyDetail = null;
+
+function chip(user) {
+    document.getElementById('chip').innerHTML = `<details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(PMT.ui.initials(user.name))}</span><span>${esc(user.name)}</span></summary>
+        <div class="menu"><div class="who">${esc(user.email)}</div>
+        ${user.platformRole === 'admin' ? '<a href="../admin/index.html">Admin dashboard</a>' : ''}
+        <button type="button" id="signOut">Sign out</button></div></details>`;
+    document.getElementById('signOut').addEventListener('click', () => A.signOut());
+}
+
+async function load() {
+    if (!await A.available()) {
+        document.getElementById('main').innerHTML = `<div class="card empty"><h2>Accounts need the PM Ready server</h2><p>Open the site through the server (see backend/README.md). Without it, your course progress and projects are saved in this browser.</p></div>`;
+        return;
+    }
+    const m = await A.me(true);
+    if (!m) { location.replace(A.signInUrl()); return; }
+    me = m.user;
+    chip(me);
+    const [cs, ps, course] = await Promise.all([A.api('GET', '/companies'), A.api('GET', '/projects'), A.api('GET', '/me/course')]);
+    companies = cs.companies;
+    if (!selected && companies.length) selected = companies[0].id;
+    companyDetail = selected ? await A.api('GET', `/companies/${selected}`) : null;
+    render(ps.projects, course);
+}
+
+function render(projects, course) {
+    const done = course.modulesDone || 0;
+    const canManage = companyDetail && ['owner', 'admin'].includes(companyDetail.role);
+    document.getElementById('main').innerHTML = `
+        <div class="page-head"><div><h1>Hello, ${esc(me.name.split(' ')[0])}</h1>
+            <p class="muted">${me.accountType === 'company' ? 'Company account' : 'Personal account'} · ${esc(me.email)} · joined ${new Date(me.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</p></div></div>
+        <div class="acct-grid">
+            <section class="card">
+                <h2>📘 Course</h2>
+                <div class="bar" aria-label="${done} of 8 modules"><div style="width:${done / 8 * 100}%"></div></div>
+                <p class="small" style="margin: 0.5rem 0 0.8rem;">${done} of 8 modules complete. Progress is saved to your account, so it follows you to any device.</p>
+                <a class="btn btn-ghost btn-sm" href="../learn/index.html">${done ? 'Continue the course' : 'Start the course'} →</a>
+            </section>
+            <section class="card">
+                <h2>📁 Projects</h2>
+                ${projects.length ? `<table class="tbl"><tbody>${projects.slice(0, 6).map(p => `<tr><td><a href="../Project_Mangment_Tool/project.html?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a>${p.companyName ? `<br><span class="muted small">${esc(p.companyName)}</span>` : ''}</td><td><span class="pill">${ROLE[p.role]}</span></td></tr>`).join('')}</tbody></table>`
+                    : '<p class="muted small">No projects yet.</p>'}
+                <p style="margin-top: 0.7rem;"><a class="btn btn-ghost btn-sm" href="../Project_Mangment_Tool/index.html">All projects →</a></p>
+            </section>
+
+            <section class="card span">
+                <h2>🏢 Companies</h2>
+                ${companies.length ? `<div class="company-tabs">${companies.map(c => `<button type="button" class="btn btn-ghost btn-sm" data-company="${c.id}" aria-pressed="${c.id === selected}">${esc(c.name)} <span class="muted">· ${ROLE[c.role]}</span></button>`).join('')}</div>` : '<p class="muted small" style="margin-bottom: 0.8rem;">You are not in a company yet. Create one to run projects with your team, or ask a company admin to add your email.</p>'}
+                ${companyDetail ? `
+                    <div class="table-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>
+                    ${companyDetail.members.map(m => `<tr><td>${esc(m.name || '—')}${m.isYou ? ' <span class="pill">You</span>' : ''}</td><td>${esc(m.email)}</td>
+                        <td>${canManage && m.role !== 'owner' ? `<select class="select" data-crole="${m.id}" aria-label="Role for ${esc(m.email)}"><option value="member" ${m.role === 'member' ? 'selected' : ''}>Member</option><option value="admin" ${m.role === 'admin' ? 'selected' : ''}>Admin</option></select>` : ROLE[m.role]}</td>
+                        <td>${m.status === 'pending' ? '<span class="pill doing">Waiting for sign-up</span>' : '<span class="pill done">Active</span>'}</td>
+                        <td>${m.role !== 'owner' && (canManage || m.isYou) ? `<button class="icon-btn" data-cremove="${m.id}" aria-label="${m.isYou ? 'Leave company' : `Remove ${esc(m.email)}`}">${m.isYou ? 'Leave' : '✕'}</button>` : ''}</td></tr>`).join('')}
+                    </tbody></table></div>
+                    ${canManage ? `<form class="inline-form" id="addCompanyMember" style="margin-top: 0.8rem;">
+                        <div class="field"><label for="cmEmail">Add a person by email</label><input class="input" type="email" id="cmEmail" name="email" required placeholder="name@company.com"></div>
+                        <div class="field" style="flex: 0 0 140px;"><label for="cmRole">Company role</label><select class="select" id="cmRole" name="role"><option value="member">Member</option><option value="admin">Admin</option></select></div>
+                        <button class="btn btn-primary" type="submit">Add</button></form>
+                        <p class="muted small" style="margin-top: 0.5rem;">Admins see and manage every project of the company. Members see the projects they're added to. People without an account join when they register with this email.</p>` : ''}` : ''}
+                <form class="inline-form" id="newCompany" style="margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 1rem;">
+                    <div class="field"><label for="ncName">New company</label><input class="input" id="ncName" name="name" maxlength="120" required placeholder="Company name"></div>
+                    <button class="btn btn-ghost" type="submit">＋ Create company</button>
+                </form>
+            </section>
+
+            <section class="card">
+                <h2>👤 Profile</h2>
+                <form class="inline-form" id="profile"><div class="field"><label for="pfName">Name</label><input class="input" id="pfName" name="name" maxlength="80" value="${esc(me.name)}" required></div><button class="btn btn-ghost" type="submit">Save</button></form>
+            </section>
+            <section class="card">
+                <h2>🔒 Password</h2>
+                <form id="password">
+                    <div class="field"><label for="pwCur">Current password</label><input class="input" type="password" id="pwCur" name="current" autocomplete="current-password" required></div>
+                    <div class="field" style="margin-top: 0.6rem;"><label for="pwNew">New password</label><input class="input" type="password" id="pwNew" name="next" minlength="8" autocomplete="new-password" required><span class="hint">At least 8 characters. Other devices will be signed out.</span></div>
+                    <button class="btn btn-ghost" type="submit" style="margin-top: 0.6rem;">Change password</button>
+                </form>
+            </section>
+        </div>`;
+}
+
+// ─── Actions ───
+const run = async (fn, okMsg) => {
+    try { await fn(); if (okMsg) toast(okMsg, 'good'); await load(); }
+    catch (e) { toast(e.userMessage || 'Something went wrong.', 'bad'); }
+};
+document.addEventListener('click', e => {
+    const c = e.target.closest('[data-company]');
+    if (c) { selected = c.dataset.company; load(); return; }
+    const r = e.target.closest('[data-cremove]');
+    if (r) {
+        const mine = companyDetail.members.find(m => m.id === r.dataset.cremove);
+        if (!confirm(mine.isYou ? 'Leave this company? You lose access to its projects unless you were added to them directly.' : `Remove ${mine.email} from the company?`)) return;
+        if (mine.isYou) selected = null;
+        run(() => A.api('DELETE', `/companies/${companyDetail.company.id}/members/${mine.id}`), mine.isYou ? 'You left the company' : 'Removed');
+    }
+});
+document.addEventListener('change', e => {
+    const s = e.target.closest('[data-crole]');
+    if (s) run(() => A.api('PATCH', `/companies/${companyDetail.company.id}/members/${s.dataset.crole}`, { role: s.value }), 'Role updated');
+});
+document.addEventListener('submit', e => {
+    const f = e.target, v = Object.fromEntries(new FormData(f));
+    e.preventDefault();
+    if (f.id === 'addCompanyMember') run(async () => {
+        const r = await A.api('POST', `/companies/${companyDetail.company.id}/members`, v);
+        toast(r.pending ? `${v.email} will join when they create an account` : `${v.email} added`, 'good');
+    });
+    if (f.id === 'newCompany') run(async () => { const r = await A.api('POST', '/companies', v); selected = r.company.id; }, 'Company created');
+    if (f.id === 'profile') run(() => A.api('PATCH', '/auth/me', v).then(() => A.me(true)), 'Saved');
+    if (f.id === 'password') run(() => A.api('POST', '/auth/password', v), 'Password changed');
+});
+document.addEventListener('click', e => { const d = document.querySelector('#chip details'); if (d && d.open && !d.contains(e.target)) d.open = false; });
+
+load();
+</script>
+</body>
+</html>

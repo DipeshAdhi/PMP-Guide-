@@ -2,7 +2,7 @@
 
 A free, static website for getting **project-management ready**: learn how projects work step by step, or open the Project Tool and run a real project.
 
-No backend, no build step. Everything runs in the browser, and progress and boards are saved in the visitor's own browser (`localStorage`).
+No build step. On a static host (GitHub Pages) everything runs in the browser and is saved in the visitor's own browser (`localStorage`). Run with the **PM Ready server** ([backend/](backend/README.md): Node.js + MongoDB) to add accounts: course progress follows the user, projects are shared with a team or a company, and an admin dashboard shows usage.
 
 ## Two sides
 
@@ -55,7 +55,11 @@ assets/
   js/site-nav.js        Shared navigation + course progress (every page loads it)
   js/schedule.js        Example schedule + critical path calculation
   js/agile.js           Agile Manifesto values/principles + helpers
+  js/account.js         Sign-in state, API client, course progress sync (server mode only)
 Project_Mangment_Tool/ The Project Tool app (see its README)
+account/              Sign in / create account (personal or company), My account, companies
+admin/                Admin dashboard (platform admins only)
+backend/              PM Ready server: Express API + MongoDB (see backend/README.md)
 docs/                 Older design notes (historical)
 ```
 
@@ -69,17 +73,19 @@ Every page loads the navigation with:
 
 ## Run locally
 
-Any static file server works, for example:
+With accounts (needs MongoDB at `mongodb://localhost:27017/`; details in [backend/README.md](backend/README.md)):
 
 ```bash
-python3 -m http.server 8765
+cd backend && npm install && npm start
 ```
 
-Then open http://localhost:8765.
+Then open http://localhost:4000.
+
+Without accounts, any static file server works, for example `python3 -m http.server 8765`, then open http://localhost:8765.
 
 ## Deploy
 
-Pushing to `main` deploys the whole repository to GitHub Pages (`.github/workflows/static.yml`).
+Pushing to `main` deploys the whole repository to GitHub Pages (`.github/workflows/static.yml`). GitHub Pages only serves static files, so the live site runs in browser-only mode; accounts need the server hosted somewhere (with a hosted MongoDB, e.g. Atlas).
 
 ## Roadmap
 
@@ -87,8 +93,10 @@ Pushing to `main` deploys the whole repository to GitHub Pages (`.github/workflo
 2. ✅ Project Tool: one project shared by all its screens
 3. ✅ Methodology presets (Predictive, Scrum, Kanban, XP, DSDM) that change how the tool works
 4. ✅ Hybrid: presets or a custom choice per area
-5. Backend: accounts, shared projects, real-time updates
-6. Role-based access control (with the backend)
+5. ✅ Backend (MongoDB): accounts (personal or company), shared projects, course progress per account, admin dashboard
+6. ✅ Access roles per project (owner, manager, member, viewer) and per company (owner, admin, member)
+7. Email invitations and password reset by email, email verification, 2FA
+8. Finer roles (e.g. members edit only their own items), hosting the server, PostgreSQL
 
 ## Note
 

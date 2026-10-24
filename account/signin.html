@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - PM Ready</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Project_Mangment_Tool/css/app.css">
+    <link rel="stylesheet" href="account.css">
+</head>
+<body>
+    <header class="top">
+        <div class="in">
+            <a class="brand" href="../index.html">PM Ready</a>
+            <a class="back" href="../index.html">← Home</a>
+        </div>
+    </header>
+
+    <main class="auth-wrap">
+        <div class="card auth-card">
+            <div class="tabs" role="tablist" aria-label="Sign in or create an account">
+                <button type="button" role="tab" id="tabIn" aria-selected="true" aria-controls="signinForm">Sign in</button>
+                <button type="button" role="tab" id="tabUp" aria-selected="false" aria-controls="registerForm">Create account</button>
+            </div>
+
+            <div id="offline" class="note warn" hidden>
+                Accounts need the PM Ready server, and this page was opened without it. Everything else still works and is saved in this browser.
+                <br><a href="../Project_Mangment_Tool/index.html">Open the Project Tool</a> · <a href="../learn/index.html">Go to the course</a>
+            </div>
+
+            <form id="signinForm" role="tabpanel" aria-labelledby="tabIn" novalidate>
+                <h1>Welcome back</h1>
+                <p class="muted">One account for the course and your projects.</p>
+                <div class="field"><label for="inEmail">Email</label><input class="input" type="email" id="inEmail" name="email" autocomplete="email" required></div>
+                <div class="field"><label for="inPass">Password</label><input class="input" type="password" id="inPass" name="password" autocomplete="current-password" required></div>
+                <p class="form-err" id="inErr" role="alert"></p>
+                <button class="btn btn-primary wide" type="submit">Sign in</button>
+            </form>
+
+            <form id="registerForm" role="tabpanel" aria-labelledby="tabUp" novalidate hidden>
+                <h1>Create your account</h1>
+                <p class="muted">Study the course, run projects, or both.</p>
+                <fieldset class="acct-type">
+                    <legend class="label">Account type</legend>
+                    <label class="choice-row"><input type="radio" name="accountType" value="personal" checked><span><strong>Personal</strong><small>For yourself: learning and your own projects. You can still join company projects.</small></span></label>
+                    <label class="choice-row"><input type="radio" name="accountType" value="company"><span><strong>Company</strong><small>Creates a company workspace. Add your people and run company projects together.</small></span></label>
+                </fieldset>
+                <div class="field" id="companyField" hidden><label for="upCompany">Company name</label><input class="input" id="upCompany" name="companyName" maxlength="120" autocomplete="organization"></div>
+                <div class="field"><label for="upName">Your name</label><input class="input" id="upName" name="name" maxlength="80" autocomplete="name" required></div>
+                <div class="field"><label for="upEmail">Email</label><input class="input" type="email" id="upEmail" name="email" autocomplete="email" required>
+                    <span class="hint">If a project manager added this email to a project, it opens for you right away.</span></div>
+                <div class="field"><label for="upPass">Password</label><input class="input" type="password" id="upPass" name="password" minlength="8" autocomplete="new-password" required><span class="hint">At least 8 characters.</span></div>
+                <p class="form-err" id="upErr" role="alert"></p>
+                <button class="btn btn-primary wide" type="submit">Create account</button>
+            </form>
+        </div>
+    </main>
+
+<script src="../assets/js/account.js"></script>
+<script>
+const A = window.PMAccount;
+const next = A.safeNext(new URLSearchParams(location.search).get('next')) || '../Project_Mangment_Tool/index.html';
+const $ = id => document.getElementById(id);
+
+function showTab(up) {
+    $('tabIn').setAttribute('aria-selected', !up);
+    $('tabUp').setAttribute('aria-selected', up);
+    $('signinForm').hidden = up;
+    $('registerForm').hidden = !up;
+    (up ? $('upName') : $('inEmail')).focus();
+    history.replaceState(null, '', up ? '#register' : location.pathname + location.search);
+}
+$('tabIn').addEventListener('click', () => showTab(false));
+$('tabUp').addEventListener('click', () => showTab(true));
+document.querySelectorAll('input[name="accountType"]').forEach(r => r.addEventListener('change', () => {
+    $('companyField').hidden = document.querySelector('input[name="accountType"]:checked').value !== 'company';
+}));
+
+async function submit(form, path, errEl) {
+    errEl.textContent = '';
+    const btn = form.querySelector('button[type="submit"]');
+    const body = Object.fromEntries(new FormData(form));
+    btn.disabled = true;
+    try {
+        await A.api('POST', path, body);
+        location.href = next;
+    } catch (e) {
+        errEl.textContent = e.userMessage || 'Could not reach the server. Try again.';
+        btn.disabled = false;
+    }
+}
+$('signinForm').addEventListener('submit', e => { e.preventDefault(); submit(e.target, '/auth/login', $('inErr')); });
+$('registerForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const f = e.target;
+    if (!f.name.value.trim()) { $('upErr').textContent = 'Enter your name.'; return f.name.focus(); }
+    if (f.password.value.length < 8) { $('upErr').textContent = 'Use a password of at least 8 characters.'; return f.password.focus(); }
+    submit(f, '/auth/register', $('upErr'));
+});
+
+(async () => {
+    if (!await A.available()) {
+        $('offline').hidden = false;
+        document.querySelectorAll('form button, form input').forEach(el => { el.disabled = true; });
+        return;
+    }
+    if (await A.me()) { location.replace(next); return; }
+    if (location.hash === '#register') showTab(true);
+})();
+</script>
+</body>
+</html>

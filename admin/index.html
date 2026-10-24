@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin dashboard - PM Ready</title>
+    <meta name="robots" content="noindex">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Project_Mangment_Tool/css/app.css">
+    <link rel="stylesheet" href="../account/account.css">
+</head>
+<body>
+    <header class="top">
+        <div class="in">
+            <a class="brand" href="../index.html">PM Ready<span>Admin</span></a>
+            <a class="back" style="margin-left: 0;" href="../account/index.html">My account</a>
+            <span id="chip" class="user-chip"></span>
+        </div>
+    </header>
+
+    <main class="page" id="main"><p class="muted">Loading…</p></main>
+
+<script src="../assets/js/account.js"></script>
+<script src="../Project_Mangment_Tool/js/ui.js"></script>
+<script>
+const A = window.PMAccount;
+const { esc, toast } = PMT.ui;
+const when = d => d ? new Date(d).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
+const state = { tab: 'users', q: '', page: 1 };
+let me;
+
+async function boot() {
+    const main = document.getElementById('main');
+    if (!await A.available()) { main.innerHTML = '<div class="card empty"><h2>The admin dashboard needs the PM Ready server</h2></div>'; return; }
+    const m = await A.me();
+    if (!m) { location.replace(A.signInUrl()); return; }
+    me = m.user;
+    document.getElementById('chip').innerHTML = `<details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(PMT.ui.initials(me.name))}</span><span>${esc(me.name)}</span></summary>
+        <div class="menu"><div class="who">${esc(me.email)}</div><a href="../Project_Mangment_Tool/index.html">Projects</a><button type="button" id="signOut">Sign out</button></div></details>`;
+    document.getElementById('signOut').addEventListener('click', () => A.signOut());
+    if (me.platformRole !== 'admin') {
+        main.innerHTML = '<div class="card empty"><div class="big">🔒</div><h2>Admins only</h2><p>This dashboard is for the PM Ready team.</p></div>';
+        return;
+    }
+    const s = await A.api('GET', '/admin/stats');
+    const maxDay = Math.max(1, ...s.signupsLast30Days.map(d => d.count));
+    const maxMod = Math.max(1, ...s.courseModulesDone);
+    const kpi = (n, l) => `<div class="card kpi"><div class="n">${n}</div><div class="l">${l}</div></div>`;
+    main.innerHTML = `
+        <div class="page-head"><div><h1>Admin dashboard</h1><p class="muted">Everyone using PM Ready: the course and the Project Tool.</p></div></div>
+        <div class="kpis">
+            ${kpi(s.users, 'Registered users')}
+            ${kpi(s.courseLearners, 'Studying the course')}
+            ${kpi(s.projectUsers, 'Using projects')}
+            ${kpi(s.companies, 'Companies')}
+            ${kpi(s.projects, 'Projects')}
+            ${kpi(s.activeLast7Days, 'Active in the last 7 days')}
+        </div>
+        <div class="acct-grid">
+            <section class="card">
+                <h2>Sign-ups, last 30 days</h2>
+                <div class="spark" role="img" aria-label="${s.signupsLast30Days.reduce((a, d) => a + d.count, 0)} sign-ups in 30 days">${s.signupsLast30Days.map(d => `<span style="height:${d.count / maxDay * 100}%" title="${d.day}: ${d.count}"></span>`).join('')}</div>
+                <div class="spark-axis"><span>${when(s.signupsLast30Days[0].day)}</span><span>Today</span></div>
+            </section>
+            <section class="card">
+                <h2>Who uses what</h2>
+                <div class="venn" style="margin-bottom: 1rem;">
+                    <span class="pill">📘 Course only: ${s.courseLearners - s.both}</span>
+                    <span class="pill">📁 Projects only: ${s.projectUsers - s.both}</span>
+                    <span class="pill done">Both: ${s.both}</span>
+                    <span class="pill">Not started: ${Math.max(0, s.users - s.courseLearners - s.projectUsers + s.both)}</span>
+                </div>
+                <div class="venn"><span class="pill">👤 Personal accounts: ${s.personalAccounts}</span><span class="pill">🏢 Company accounts: ${s.companyAccounts}</span><span class="pill">🔑 Admins: ${s.admins}</span></div>
+            </section>
+            <section class="card span">
+                <h2>Course: modules finished per learner</h2>
+                <div class="dist" role="img" aria-label="Learners by number of modules finished">${s.courseModulesDone.map((n, i) => `<div><span>${n}</span><i style="height:${n / maxMod * 80}%"></i><span>${i}</span></div>`).join('')}</div>
+                <p class="muted small" style="text-align: center; margin-top: 0.3rem;">Modules finished (0–8)</p>
+            </section>
+            <section class="card span">
+                <div class="company-tabs" role="tablist">
+                    ${['users', 'companies', 'projects', 'audit'].map(t => `<button type="button" class="btn btn-ghost btn-sm" data-tab="${t}" aria-pressed="${state.tab === t}">${{ users: '👥 Users', companies: '🏢 Companies', projects: '📁 Projects', audit: '🧾 Activity log' }[t]}</button>`).join('')}
+                </div>
+                <div id="list"></div>
+            </section>
+        </div>`;
+    loadList();
+}
+
+async function loadList() {
+    const el = document.getElementById('list');
+    document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === state.tab));
+    const pager = r => `<div class="pager">${r.total} total · page ${r.page} of ${Math.max(1, Math.ceil(r.total / r.limit))}
+        <button class="btn btn-ghost btn-sm" data-page="-1" ${r.page <= 1 ? 'disabled' : ''}>‹ Prev</button>
+        <button class="btn btn-ghost btn-sm" data-page="1" ${r.page * r.limit >= r.total ? 'disabled' : ''}>Next ›</button></div>`;
+    try {
+        if (state.tab === 'users') {
+            const r = await A.api('GET', `/admin/users?q=${encodeURIComponent(state.q)}&page=${state.page}`);
+            el.innerHTML = `<form class="inline-form" id="search" style="margin-bottom: 0.7rem;"><div class="field"><label for="q" class="sr-only">Search users</label><input class="input" id="q" name="q" value="${esc(state.q)}" placeholder="Search name or email"></div><button class="btn btn-ghost">Search</button></form>
+                <div class="table-wrap"><table class="tbl"><thead><tr><th>User</th><th>Type</th><th>Course</th><th>Projects</th><th>Companies</th><th>Joined</th><th>Last active</th><th>Access</th></tr></thead><tbody>
+                ${r.users.map(u => `<tr><td><strong>${esc(u.name)}</strong>${u.platformRole === 'admin' ? ' <span class="pill doing">Admin</span>' : ''}<br><span class="muted small">${esc(u.email)}</span></td>
+                    <td>${u.accountType === 'company' ? '🏢 Company' : '👤 Personal'}</td>
+                    <td>${u.courseModulesDone == null ? '<span class="muted">—</span>' : `${u.courseModulesDone}/8`}</td>
+                    <td>${u.projects}</td><td>${u.companies}</td><td>${when(u.createdAt)}</td><td>${when(u.lastActiveAt)}</td>
+                    <td>${u.id === me.id ? '<span class="muted small">You</span>' : `<button class="btn btn-ghost btn-sm" data-disable="${u.id}" data-v="${!u.disabled}">${u.disabled ? 'Enable' : 'Disable'}</button>`}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">No users found.</td></tr>'}
+                </tbody></table></div>${pager(r)}`;
+        } else if (state.tab === 'companies') {
+            const r = await A.api('GET', `/admin/companies?page=${state.page}`);
+            el.innerHTML = `<div class="table-wrap"><table class="tbl"><thead><tr><th>Company</th><th>Created by</th><th>People</th><th>Projects</th><th>Created</th></tr></thead><tbody>
+                ${r.companies.map(c => `<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.createdBy)}</td><td>${c.members}</td><td>${c.projects}</td><td>${when(c.createdAt)}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No companies yet.</td></tr>'}
+                </tbody></table></div>${pager(r)}`;
+        } else if (state.tab === 'projects') {
+            const r = await A.api('GET', `/admin/projects?page=${state.page}`);
+            el.innerHTML = `<p class="muted small" style="margin-bottom: 0.5rem;">Names and numbers only; project contents stay private to their teams.</p>
+                <div class="table-wrap"><table class="tbl"><thead><tr><th>Project</th><th>Company</th><th>Owner</th><th>People with access</th><th>Created</th><th>Updated</th></tr></thead><tbody>
+                ${r.projects.map(p => `<tr><td><strong>${esc(p.name)}</strong></td><td>${p.company ? esc(p.company) : '<span class="muted">Personal</span>'}</td><td>${esc(p.owner)}</td><td>${p.people}</td><td>${when(p.createdAt)}</td><td>${when(p.updatedAt)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">No projects yet.</td></tr>'}
+                </tbody></table></div>${pager(r)}`;
+        } else {
+            const r = await A.api('GET', '/admin/audit');
+            el.innerHTML = `<div class="table-wrap"><table class="tbl"><thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead><tbody>
+                ${r.events.map(a => `<tr><td class="small" style="white-space: nowrap;">${new Date(a.at).toLocaleString()}</td><td>${esc(a.actor || 'system')}</td><td><code>${esc(a.action)}</code></td><td class="small muted">${esc(Object.entries(a.meta || {}).map(([k, v]) => `${k}: ${v}`).join(', '))}</td></tr>`).join('')}
+                </tbody></table></div>`;
+        }
+    } catch (e) { el.innerHTML = `<p class="note warn">${esc(e.userMessage || 'Could not load.')}</p>`; }
+}
+
+document.addEventListener('click', async e => {
+    const t = e.target.closest('[data-tab]');
+    if (t) { state.tab = t.dataset.tab; state.page = 1; loadList(); return; }
+    const p = e.target.closest('[data-page]');
+    if (p && !p.disabled) { state.page += Number(p.dataset.page); loadList(); return; }
+    const d = e.target.closest('[data-disable]');
+    if (d) {
+        const disable = d.dataset.v === 'true';
+        if (disable && !confirm('Disable this account? They are signed out and can\'t sign in until enabled again.')) return;
+        try { await A.api('PATCH', `/admin/users/${d.dataset.disable}`, { disabled: disable }); toast(disable ? 'Account disabled' : 'Account enabled', 'good'); loadList(); }
+        catch (err) { toast(err.userMessage || 'Could not update.', 'bad'); }
+    }
+    const c = document.querySelector('#chip details');
+    if (c && c.open && !c.contains(e.target)) c.open = false;
+});
+document.addEventListener('submit', e => {
+    if (e.target.id !== 'search') return;
+    e.preventDefault();
+    state.q = e.target.q.value.trim();
+    state.page = 1;
+    loadList();
+});
+boot();
+</script>
+</body>
+</html>

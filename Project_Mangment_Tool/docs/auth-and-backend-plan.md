@@ -1,6 +1,6 @@
 # Accounts, sign-in and backend: plan
 
-Status: **plan only, nothing built yet.** This document decides how user accounts and the backend will work *before* any backend code is written, so the frontend can be prepared for it without rework.
+Status (2026-10-24): **phases 1–2 are built**, with one change from this plan: the backend is our own **Node.js + MongoDB** server ([backend/](../../backend/README.md)) instead of Supabase, with PostgreSQL planned later behind the same repository functions. Built: email + password accounts (personal or company), companies, project access by email with roles, version-checked saves, course progress per account, admin dashboard. Still open: email sending (invites, reset), verification, OAuth, 2FA, item-level permissions. The rest of this document is the original plan.
 
 Scope: the **Project Tool** only. The Learn side stays account-free (course progress stays in the browser) unless we decide otherwise later.
 

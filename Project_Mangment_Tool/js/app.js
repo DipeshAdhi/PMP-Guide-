@@ -106,10 +106,30 @@
         el.className = `saved ${error ? 'err' : ''}`;
         el.textContent = error ? 'Not saved' : `Saved ${new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
     }
+    A.saving = 0;
     A.save = async () => {
+        A.saving++;
         try { await PMT.store.save(A.P); setSaved(false); }
-        catch (e) { setSaved(true); toast('Could not save: browser storage is full or blocked.', 'bad'); }
+        catch (e) {
+            setSaved(true);
+            if (e.code === 'conflict') showBanner('conflict', `⚠️ ${PMT.ui.esc(e.userMessage)} Your latest change was not saved.`, 'Reload');
+            else toast(e.userMessage || 'Could not save: browser storage is full or blocked.', 'bad');
+        }
+        finally { A.saving--; }
     };
+    // Banner above the view: view-only notice or "someone else saved" conflict
+    function showBanner(kind, html, button) {
+        let el = document.getElementById('banner');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'banner';
+            document.querySelector('.topbar').after(el);
+        }
+        el.className = `banner ${kind}`;
+        el.setAttribute('role', kind === 'conflict' ? 'alert' : 'status');
+        el.innerHTML = `<span>${html}</span>${button ? `<button class="btn btn-ghost btn-sm" type="button" data-act="reloadProject">${button}</button>` : ''}`;
+    }
+    A.action('reloadProject', () => location.reload());
     // Re-render keeps keyboard focus on the control that was used
     function focusKey(el) {
         if (!el || el === document.body) return null;
@@ -119,6 +139,14 @@
         return parts.length ? el.tagName.toLowerCase() + parts.join('') : null;
     }
     A.commit = async (logText, toastMsg, kind) => {
+        // View-only access: undo the change on screen; the server would refuse it anyway
+        if (A.readOnly) {
+            A.P = JSON.parse(A.snapshot);
+            A.refreshFeatures();
+            render();
+            toast('You have view-only access to this project.', 'warn');
+            return;
+        }
         if (logText) A.log(logText);
         const key = focusKey(document.activeElement);
         render();
@@ -141,9 +169,9 @@
         };
         document.getElementById('sidebar').innerHTML = `
             <div class="brand-row"><a class="brand" href="index.html">PM Ready<span>Project Tool</span></a></div>
-            <div class="proj"><strong>${esc(P.name)}</strong><span class="method">${PMT.methodIcon(P.method)} ${esc(PMT.methodName(P.method))}</span></div>
+            <div class="proj"><strong>${esc(P.name)}</strong><span class="method">${PMT.methodIcon(P.method)} ${esc(PMT.methodName(P.method))}</span>${A.meta ? `<span class="method" title="${esc(PMT.ROLE_HELP[A.meta.role])}">${A.meta.companyName ? `🏢 ${esc(A.meta.companyName)} · ` : ''}Your access: ${PMT.ROLE_LABELS[A.meta.role]}</span>` : ''}</div>
             <nav aria-label="Project">${F.views.map(v => `<a href="#${v}" ${A.view === v ? 'aria-current="page"' : ''}><span aria-hidden="true">${ICONS[v]}</span>${esc(A.viewLabel(v))}${counts[v] ? `<span class="count">${counts[v]}</span>` : ''}</a>`).join('')}</nav>
-            <div class="foot"><a href="index.html">← All projects</a><a href="../index.html">PM Ready home</a></div>`;
+            <div class="foot">${PMT.cloud ? PMT.userMenuHtml() : ''}<a href="index.html">← All projects</a><a href="../index.html">PM Ready home</a></div>`;
     }
 
     function render() {
@@ -464,6 +492,7 @@
         P.settings.tools = P.settings.tools || {};
         A.refreshFeatures();
         A.migrate();
+        if (PMT.cloud) startCloud();
         document.title = `${P.name} - PM Ready Project Tool`;
         document.getElementById('dlgForm').addEventListener('submit', saveDialog);
         document.getElementById('dlgCancel').addEventListener('click', () => dlg().close());
@@ -492,4 +521,33 @@
         setSaved(false);
     }
     A.boot = boot;
+
+    // ─── Server mode: role, view-only, and other people's saves ───
+    function startCloud() {
+        A.meta = PMT.store.meta(A.P.id);
+        A.readOnly = A.meta.role === 'viewer';
+        A.snapshot = JSON.stringify(A.P);
+        if (A.readOnly) {
+            document.getElementById('addItemTop').hidden = true;
+            showBanner('view-only', '👁 <strong>View only.</strong> You can look around and download, but not change this project. Ask the project manager for edit access.');
+        }
+        // Check every 20 s whether a teammate saved; skip while typing in the editor or saving
+        setInterval(async () => {
+            if (document.hidden || A.saving || dlg().open || document.getElementById('evDialog')?.open) return;
+            try {
+                const remote = await PMT.store.remoteVersion(A.P.id);
+                if (!remote) return;
+                const fresh = await PMT.store.get(A.P.id);
+                if (!fresh) return;
+                A.P = fresh;
+                fresh.settings.tools = fresh.settings.tools || {};
+                A.refreshFeatures();
+                A.migrate();
+                A.snapshot = JSON.stringify(A.P);
+                document.getElementById('banner')?.classList.contains('conflict') && document.getElementById('banner').remove();
+                render();
+                toast(`Updated with changes from ${remote.updatedBy || 'a teammate'}.`);
+            } catch (e) { /* offline for a moment; try again next time */ }
+        }, 20000);
+    }
 })();

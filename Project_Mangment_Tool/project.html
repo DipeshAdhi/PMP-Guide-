@@ -36,6 +36,8 @@
     </dialog>
 
 <script src="js/store.js"></script>
+<script src="../assets/js/account.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/schedule.js"></script>
 <script src="js/methods.js"></script>
 <script src="js/templates.js"></script>
@@ -48,6 +50,6 @@
 <script src="js/views-gantt.js"></script>
 <script src="js/views-calendar.js"></script>
 <script src="js/views-exports.js"></script>
-<script>PMT.app.boot();</script>
+<script>PMT.ready.then(() => PMT.app.boot());</script>
 </body>
 </html>

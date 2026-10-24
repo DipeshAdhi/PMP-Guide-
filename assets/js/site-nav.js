@@ -61,7 +61,11 @@
         try { return Object.assign({ read: {}, tried: {}, check: {} }, JSON.parse(localStorage.getItem(KEY)) || {}); }
         catch (e) { return { read: {}, tried: {}, check: {} }; }
     }
-    function save(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {} }
+    function save(p) {
+        try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {}
+        // Signed in on the PM Ready server: copy progress to the account too
+        if (window.PMAccount) window.PMAccount.courseChanged();
+    }
     const isDone = (p, id) => !!(p.read[id] && p.tried[id] && (p.check[id] || 0) >= 2);
     window.PMCourse = {
         COURSE,
@@ -113,7 +117,16 @@
     .sn-module .sn-inner { padding: 0.6rem 1.5rem; gap: 0.8rem; flex-wrap: wrap; }
     .sn-module a { margin-left: auto; background: #2C3E50; color: #fff; text-decoration: none; font-weight: 600; padding: 0.4rem 0.9rem; border-radius: 8px; white-space: nowrap; }
     .sn-module a:hover { background: #FF6B5B; }
-    .sn-bar a:focus-visible, .sn-crumbs a:focus-visible, .sn-module a:focus-visible { outline: 3px solid #FFB700; outline-offset: 2px; }
+    .sn-bar a:focus-visible, .sn-crumbs a:focus-visible, .sn-module a:focus-visible, .sn-acct summary:focus-visible { outline: 3px solid #FFB700; outline-offset: 2px; }
+    .sn-bar a.sn-signin { color: #2C3E50; background: #FFB700; text-decoration: none; font-size: 0.82rem; font-weight: 700; border-radius: 20px; padding: 0.3rem 0.85rem; white-space: nowrap; }
+    .sn-acct { position: relative; }
+    .sn-acct summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 0.45rem; color: #fff; font-size: 0.85rem; font-weight: 600; }
+    .sn-acct summary::-webkit-details-marker { display: none; }
+    .sn-av { width: 28px; height: 28px; border-radius: 50%; background: #FFB700; color: #2C3E50; display: inline-grid; place-items: center; font-weight: 800; font-size: 0.75rem; }
+    .sn-menu { position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); min-width: 210px; padding: 0.4rem; z-index: 80; }
+    .sn-menu .who { padding: 0.5rem 0.7rem; font-size: 0.78rem; color: #6B7280; border-bottom: 1px solid #EEF0F2; margin-bottom: 0.3rem; overflow-wrap: anywhere; }
+    .sn-menu a, .sn-menu button { display: block; width: 100%; text-align: left; padding: 0.5rem 0.7rem; border-radius: 6px; color: #1F2A37; text-decoration: none; font: 600 0.88rem 'Inter', system-ui, sans-serif; background: none; border: 0; cursor: pointer; }
+    .sn-menu a:hover, .sn-menu button:hover { background: #F3F4F6; }
     @media (max-width: 680px) {
         .sn-inner { padding: 0.6rem 1rem; gap: 0.6rem; flex-wrap: wrap; }
         .sn-links { order: 3; flex-basis: 100%; }
@@ -160,4 +173,45 @@
     }
 
     script.insertAdjacentHTML('beforebegin', html);
+
+    // ─── Account (only when the site runs on the PM Ready server) ───
+    const rightEl = script.previousElementSibling?.matches?.('.sn-bar') ? script.previousElementSibling.querySelector('.sn-right')
+        : document.querySelector('.sn-bar .sn-right');
+    function showAccount() {
+        const A = window.PMAccount;
+        A.available().then(async ok => {
+            if (!ok || !rightEl) return;
+            const me = await A.me();
+            const box = document.createElement('div');
+            if (!me) {
+                box.innerHTML = `<a class="sn-signin" href="${A.signInUrl()}">Sign in</a>`;
+            } else {
+                const u = me.user;
+                const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                const ini = u.name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+                box.innerHTML = `<details class="sn-acct"><summary aria-label="Account menu for ${esc(u.name)}"><span class="sn-av" aria-hidden="true">${esc(ini)}</span></summary>
+                    <div class="sn-menu" role="menu"><div class="who"><strong>${esc(u.name)}</strong><br>${esc(u.email)}</div>
+                    <a role="menuitem" href="${url('account/index.html')}">My account</a>
+                    <a role="menuitem" href="${url(PM_TOOL)}">My projects</a>
+                    ${u.platformRole === 'admin' ? `<a role="menuitem" href="${url('admin/index.html')}">Admin dashboard</a>` : ''}
+                    <button role="menuitem" type="button" data-signout>Sign out</button></div></details>`;
+                box.querySelector('[data-signout]').addEventListener('click', () => A.signOut());
+                document.addEventListener('click', e => { const d = box.querySelector('details'); if (d.open && !d.contains(e.target)) d.open = false; });
+                // Progress from another device: show it on this page too (once)
+                const sync = await A.syncCourse();
+                if (sync && sync.changedLocal && !sessionStorage.getItem('pmCourseSynced')) {
+                    sessionStorage.setItem('pmCourseSynced', '1');
+                    location.reload();
+                }
+            }
+            rightEl.appendChild(box);
+        });
+    }
+    if (window.PMAccount) showAccount();
+    else {
+        const s = document.createElement('script');
+        s.src = url('assets/js/account.js');
+        s.onload = showAccount;
+        document.head.appendChild(s);
+    }
 })();

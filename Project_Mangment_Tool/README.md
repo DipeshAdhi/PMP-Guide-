@@ -2,7 +2,7 @@
 
 A working project management tool, separate from the learning side of PM Ready. Its job is to **run real projects**: create a project, choose how it will be run, then assign, plan, and track the work.
 
-No backend yet. Projects are saved in the browser (`localStorage`). Export/import (JSON) moves a project between browsers.
+Projects are saved in the browser (`localStorage`), or in MongoDB with accounts and sharing when the site runs on the PM Ready server (see [Accounts and the server](#accounts-and-the-server)). Export/import (JSON) moves a project between browsers.
 
 ## Flow
 
@@ -102,7 +102,8 @@ The **Timeline** view lays out every sprint (done, active, planned) on the calen
 index.html          Projects list + new-project wizard
 project.html        Project app shell (sidebar, top bar, item editor)
 css/app.css         App styles
-js/store.js         Storage adapter (localStorage now; swap for an API later)
+js/store.js         Storage adapter for this browser (localStorage)
+js/cloud.js         Server mode: sign-in check, API storage adapter, access list, user menu
 js/schedule.js      Working-day dates + critical path method
 js/methods.js       Methodologies, hybrid presets, features(), method picker UI
 js/templates.js     Prebuilt templates + createProject()
@@ -146,24 +147,23 @@ Project {
 }
 ```
 
-## Moving to a backend
+## Accounts and the server
 
-All reads and writes go through `PMT.store`, and every method already returns a Promise:
+The Project Tool runs in two modes, chosen automatically:
 
-```js
-PMT.store = {
-  list()          // → summaries for the projects page
-  get(id)         // → full project
-  save(project)   // → saved project (sets updatedAt)
-  remove(id)
-};
-```
+| | Browser only | With the PM Ready server ([backend/](../backend/README.md)) |
+|---|---|---|
+| When | GitHub Pages, opening the files directly | Opened through the server, e.g. http://localhost:4000 |
+| Sign-in | None | Required (one account for the course and projects) |
+| Projects saved in | This browser (`localStorage`) | MongoDB, shared with the people you add |
+| Team → access | "Invite" placeholder | **Who can open this project**: add by email as Manager, Member or Viewer; people without an account get access when they register |
+| Company projects | – | Wizard step 1 "Belongs to": me or one of my companies |
 
-The full plan for accounts, sign-in, roles, invitations and the backend is in [docs/auth-and-backend-plan.md](docs/auth-and-backend-plan.md).
+All reads and writes go through `PMT.store` (`list / get / save / remove`, all Promise-based). [js/cloud.js](js/cloud.js) swaps in an API adapter with the same methods when the server is found, so no screen talks to the server directly. In server mode:
 
-A server version can implement the same four methods with `fetch` (e.g. `GET /projects`, `GET /projects/:id`, `PUT /projects/:id`, `DELETE /projects/:id`) without changing any screen. Things to add with the backend:
+- Saves are version-checked: if someone saved in between, the save is refused and a banner asks to reload (nobody's work is silently overwritten).
+- Every 20 seconds an open project checks for teammates' saves and refreshes.
+- Viewers get a "View only" banner; any change they try is undone (the server refuses it too).
+- Projects saved only in this browser can be uploaded to the account from the projects page. Projects from another address (e.g. GitHub Pages) move with Settings → Export and Import.
 
-- **Accounts and role-based access** (planned): members already have ids and roles, so permissions can be attached to them.
-- **Conflict handling**: `updatedAt` is already on every save; the server can reject stale writes.
-- **Real-time updates**: today, other tabs in the same browser refresh automatically (storage events); a backend would push changes between users.
-- **Finer-grained endpoints** (per item, per comment) once projects get large.
+The plan for the next steps (email invitations, password reset by email, 2FA, finer roles) is in [docs/auth-and-backend-plan.md](docs/auth-and-backend-plan.md).
