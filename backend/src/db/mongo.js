@@ -55,10 +55,15 @@ export async function connectMongo({ uri, dbName }) {
         db.collection('projectMembers').createIndex({ projectId: 1, userId: 1 }),
         db.collection('projectMembers').createIndex({ userId: 1 }),
         db.collection('projectMembers').createIndex({ email: 1, status: 1 }),
-        db.collection('audit').createIndex({ at: -1 })
+        db.collection('audit').createIndex({ at: -1 }),
+        db.collection('audit').createIndex({ actorId: 1, at: -1 }),
+        db.collection('emails').createIndex({ at: -1 }),
+        db.collection('tokens').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
     ]);
+    // Accounts made before email confirmation existed count as confirmed
+    await db.collection('users').updateMany({ emailVerified: { $exists: false } }, { $set: { emailVerified: true } });
 
-    const names = ['users', 'sessions', 'companies', 'companyMembers', 'projects', 'projectMembers', 'course', 'audit'];
+    const names = ['users', 'sessions', 'companies', 'companyMembers', 'projects', 'projectMembers', 'course', 'audit', 'emails', 'tokens'];
     const cols = Object.fromEntries(names.map(n => [n, collection(db.collection(n))]));
     return { cols, close: () => client.close(), ping: () => db.command({ ping: 1 }) };
 }

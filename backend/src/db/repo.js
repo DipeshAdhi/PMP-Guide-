@@ -5,7 +5,7 @@
 
    Tables (collections)
      users           { id, email, name, passwordHash, accountType, platformRole, disabled,
-                       createdAt, lastLoginAt, lastActiveAt }
+                       emailVerified, createdAt, lastLoginAt, lastActiveAt }
      sessions        { id (= sha256 of the cookie token), userId, createdAt, expiresAt, userAgent }
      companies       { id, name, createdBy, createdAt }
      companyMembers  { id, companyId, userId | null, email, role, status, addedBy, createdAt }
@@ -13,6 +13,9 @@
      projectMembers  { id, projectId, userId | null, email, role, memberId, status, addedBy, createdAt }
      course          { id (= userId), data, modulesDone, updatedAt }
      audit           { id, at, actorId, action, target, meta }
+     emails          { id, at, to, kind, subject, status: sent|logged|failed, error, actorId }  (no body)
+     tokens          { id (= sha256 of the link token), kind: verify|reset|invite, email, userId,
+                       meta, createdAt, expiresAt, usedAt }
 
    status 'pending' + userId null = added by email before that person
    registered; claimPending() links them when they sign up.
@@ -25,7 +28,7 @@ const now = () => new Date().toISOString();
 const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function createRepo({ cols }) {
-    const { users, sessions, companies, companyMembers, projects, projectMembers, course, audit } = cols;
+    const { users, sessions, companies, companyMembers, projects, projectMembers, course, audit, emails, tokens } = cols;
 
     return {
         // ─── Users ───
@@ -49,6 +52,7 @@ export function createRepo({ cols }) {
                 return s && s.expiresAt > now() ? s : null;
             },
             remove: id => sessions.remove({ id }),
+            forUser: userId => sessions.find({ userId, expiresAt: { $gte: now() } }, { sort: { createdAt: -1 } }),
             removeForUser: (userId, exceptId) => sessions.removeMany(exceptId ? { userId, id: { $ne: exceptId } } : { userId })
         },
 
@@ -132,14 +136,38 @@ export function createRepo({ cols }) {
 
         audit: {
             add: (actorId, action, target, meta = {}) => audit.insert({ id: newId('a'), at: now(), actorId, action, target, meta }),
-            recent: (limit = 30) => audit.find({}, { sort: { at: -1 }, limit })
+            recent: (limit = 30) => audit.find({}, { sort: { at: -1 }, limit }),
+            byActor: (actorId, limit = 20) => audit.find({ actorId }, { sort: { at: -1 }, limit })
+        },
+
+        // ─── Email log (subjects and status only) ───
+        emails: {
+            add: e => emails.insert(e),
+            async list({ skip = 0, limit = 50, to } = {}) {
+                const filter = to ? { to } : {};
+                const [rows, total] = await Promise.all([emails.find(filter, { sort: { at: -1 }, skip, limit }), emails.count(filter)]);
+                return { rows, total };
+            }
+        },
+
+        // ─── One-time link tokens: confirm email, reset password, invitations ───
+        tokens: {
+            create: t => tokens.insert(t),
+            async get(id, kind) {
+                const t = await tokens.findOne({ id, kind });
+                return t && !t.usedAt && t.expiresAt > now() ? t : null;
+            },
+            use: id => tokens.update({ id }, { usedAt: now() }),
+            removeFor: (email, kind) => tokens.removeMany({ email, kind, usedAt: null })
         },
 
         // ─── Numbers for the admin dashboard ───
         async stats() {
             const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
             const since7 = new Date(Date.now() - 7 * 864e5).toISOString();
-            const [usersTotal, admins, companyAccounts, companiesTotal, projectsTotal, active7, learnerIds, projectUserIds, recent, courseRows] = await Promise.all([
+            const [unverified, emailsSent, usersTotal, admins, companyAccounts, companiesTotal, projectsTotal, active7, learnerIds, projectUserIds, recent, courseRows] = await Promise.all([
+                users.count({ emailVerified: false }),
+                emails.count({ at: { $gte: since30 } }),
                 users.count({}),
                 users.count({ platformRole: 'admin' }),
                 users.count({ accountType: 'company' }),
@@ -160,7 +188,7 @@ export function createRepo({ cols }) {
             const courseModules = Array(9).fill(0);
             courseRows.forEach(r => { courseModules[Math.max(0, Math.min(8, r.modulesDone || 0))]++; });
             return {
-                users: usersTotal, admins, companyAccounts, personalAccounts: usersTotal - companyAccounts,
+                users: usersTotal, admins, companyAccounts, personalAccounts: usersTotal - companyAccounts, unverified, emailsLast30Days: emailsSent,
                 companies: companiesTotal, projects: projectsTotal, activeLast7Days: active7,
                 courseLearners: learners.size, projectUsers: projectUsers.size, both,
                 signupsLast30Days: Object.entries(byDay).map(([day, count]) => ({ day, count })),

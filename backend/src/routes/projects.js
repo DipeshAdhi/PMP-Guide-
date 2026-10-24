@@ -2,8 +2,9 @@
 import { Router } from 'express';
 import { requireUser } from '../auth.js';
 import { requireProject, requireCompany, canGrant, PROJECT_ROLES } from '../permissions.js';
-import { EMAIL, cleanEmail, bad, HttpError } from '../security.js';
+import { EMAIL, cleanEmail, bad, HttpError, rateLimit } from '../security.js';
 import { newId } from '../db/repo.js';
+import { notifyMember, accountReady } from '../invites.js';
 
 const now = () => new Date().toISOString();
 const ID = /^[A-Za-z0-9_-]{4,64}$/;
@@ -26,9 +27,14 @@ function summary(p, role, companies) {
     };
 }
 
-export function projectRoutes(repo) {
+export function projectRoutes(repo, mailer) {
     const r = Router();
     r.use(requireUser);
+    const inviteLimit = rateLimit({ windowMs: 60 * 60e3, max: 60, key: req => `invite|${req.user.id}` });
+    async function target(project) {
+        const company = project.companyId ? await repo.companies.byId(project.companyId) : null;
+        return { type: 'project', id: project.id, name: project.name, company: company?.name || null };
+    }
 
     async function accessList(projectId, meId) {
         const ms = await repo.projectMembers.forProject(projectId);
@@ -118,8 +124,8 @@ export function projectRoutes(repo) {
         res.json({ role: access.role, people: await accessList(req.params.id, req.user.id) });
     });
 
-    // Add by email: active now if they have an account, otherwise when they register
-    r.post('/:id/access', async (req, res) => {
+    // Add by email: active now (and notified) if they have a confirmed account, otherwise invited by email
+    r.post('/:id/access', inviteLimit, async (req, res) => {
         const access = await requireProject(repo, req.user, req.params.id, 'manageAccess');
         const email = cleanEmail(req.body.email);
         const role = req.body.role || 'member';
@@ -127,10 +133,22 @@ export function projectRoutes(repo) {
         if (!canGrant(access, role)) throw bad(`You can't give the ${role} role.`);
         if (await repo.projectMembers.byEmail(req.params.id, email)) throw new HttpError(409, 'exists', 'This person already has access.');
         const user = await repo.users.byEmail(email);
+        const active = accountReady(user);
         const memberId = typeof req.body.memberId === 'string' ? req.body.memberId.slice(0, 64) : null;
-        await repo.projectMembers.add({ id: newId('pm'), projectId: req.params.id, userId: user?.id || null, email, role, memberId, status: user ? 'active' : 'pending', addedBy: req.user.id, createdAt: now() });
-        await repo.audit.add(req.user.id, 'project.access.add', req.params.id, { email, role });
-        res.status(201).json({ people: await accessList(req.params.id, req.user.id), pending: !user, name: user?.name || null });
+        await repo.projectMembers.add({ id: newId('pm'), projectId: req.params.id, userId: active ? user.id : null, email, role, memberId, status: active ? 'active' : 'pending', addedBy: req.user.id, createdAt: now() });
+        const emailed = await notifyMember(repo, mailer, { inviter: req.user, email, role, target: await target(access.project), active });
+        await repo.audit.add(req.user.id, 'project.access.add', req.params.id, { email, role, emailed });
+        res.status(201).json({ people: await accessList(req.params.id, req.user.id), pending: !active, emailed, name: user?.name || null });
+    });
+
+    r.post('/:id/access/:aid/resend', inviteLimit, async (req, res) => {
+        const access = await requireProject(repo, req.user, req.params.id, 'manageAccess');
+        const m = await repo.projectMembers.byId(req.params.aid);
+        if (!m || m.projectId !== req.params.id) throw new HttpError(404, 'not_found', 'Person not found.');
+        if (m.status !== 'pending') throw bad('This person already has access.');
+        const emailed = await notifyMember(repo, mailer, { inviter: req.user, email: m.email, role: m.role, target: await target(access.project), active: false });
+        if (!emailed) throw new HttpError(502, 'email_failed', 'The email could not be sent. Try again later.');
+        res.json({ ok: true });
     });
 
     r.patch('/:id/access/:aid', async (req, res) => {

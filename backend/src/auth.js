@@ -82,4 +82,4 @@ export const requireAdmin = (req, res, next) => {
 };
 
 // What the browser is allowed to see about a user
-export const publicUser = u => u && ({ id: u.id, email: u.email, name: u.name, accountType: u.accountType, platformRole: u.platformRole, createdAt: u.createdAt });
+export const publicUser = u => u && ({ id: u.id, email: u.email, name: u.name, accountType: u.accountType, platformRole: u.platformRole, emailVerified: !!u.emailVerified, createdAt: u.createdAt });

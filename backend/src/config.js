@@ -10,5 +10,16 @@ export const config = {
     sessionDays: Number(env.SESSION_DAYS) || 30,
     cookieSecure: env.COOKIE_SECURE === 'true',
     // Largest project document accepted (a big project is a few hundred KB)
-    maxBody: '5mb'
+    maxBody: '5mb',
+    // Address of the site, used for links in emails
+    appUrl: (env.APP_URL || `http://localhost:${Number(env.PORT) || 4000}`).replace(/\/$/, ''),
+    // Email: SMTP server (Mailpit locally; Gmail, Resend, SES… in production). No SMTP_HOST = print emails to the console.
+    smtp: {
+        host: env.SMTP_HOST || '',
+        port: Number(env.SMTP_PORT) || 587,
+        secure: env.SMTP_SECURE === 'true',
+        user: env.SMTP_USER || '',
+        pass: env.SMTP_PASS || ''
+    },
+    mailFrom: env.MAIL_FROM || 'PM Ready <no-reply@pmready.local>'
 };

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
 import { openDatabase } from './db/index.js';
 import { loadUser } from './auth.js';
+import { createMailer } from './mailer.js';
 import { sameOriginWrites, HttpError } from './security.js';
 import { authRoutes } from './routes/auth.js';
 import { companyRoutes } from './routes/companies.js';
@@ -17,7 +18,9 @@ const SITE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..
 
 export function createApp(db) {
     const { repo } = db;
+    const mailer = db.mailer || createMailer(repo);
     const app = express();
+    app.locals.mailer = mailer;
     app.disable('x-powered-by');
     app.set('trust proxy', 'loopback');
 
@@ -36,9 +39,9 @@ export function createApp(db) {
         await db.ping();
         res.json({ ok: true, db: config.dbDriver });
     });
-    api.use('/auth', authRoutes(repo));
-    api.use('/companies', companyRoutes(repo));
-    api.use('/projects', projectRoutes(repo));
+    api.use('/auth', authRoutes(repo, mailer));
+    api.use('/companies', companyRoutes(repo, mailer));
+    api.use('/projects', projectRoutes(repo, mailer));
     api.use('/me/course', courseRoutes(repo));
     api.use('/admin', adminRoutes(repo));
     api.use((req, res) => res.status(404).json({ error: 'not_found', message: 'No such API endpoint.' }));
@@ -69,7 +72,15 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
         if (config.dbDriver === 'mongo') console.error('  Is MongoDB running? See backend/README.md → "Start MongoDB".\n');
         process.exit(1);
     }
-    const server = createApp(db).listen(config.port, '127.0.0.1', () => {
+    // Express 5 calls this with an error too (e.g. the port is taken)
+    const server = createApp(db).listen(config.port, '127.0.0.1', async err => {
+        if (err) {
+            console.error(err.code === 'EADDRINUSE'
+                ? `\nPort ${config.port} is already in use: PM Ready (or another app) is already running there.\n  Open http://localhost:${config.port}, or stop the other one (Ctrl+C in its terminal), or set PORT in backend/.env.\n`
+                : `\nCould not start the server: ${err.message}\n`);
+            await db.close();
+            process.exit(1);
+        }
         console.log(`PM Ready running at http://localhost:${config.port}  (database: ${config.dbDriver}${config.dbDriver === 'mongo' ? ` ${config.mongoUri}${config.dbName}` : ''})`);
         if (!config.adminEmails.length) console.log('Tip: set ADMIN_EMAILS in backend/.env (or run "npm run make-admin -- you@company.com") to open the admin dashboard.');
     });

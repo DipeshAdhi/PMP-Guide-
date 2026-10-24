@@ -27,6 +27,34 @@ export function adminRoutes(repo) {
         res.json({ users, total, page: p, limit });
     });
 
+    // Everything about one user (not the contents of their projects)
+    r.get('/users/:id', async (req, res) => {
+        const u = await repo.users.byId(req.params.id);
+        if (!u) throw new HttpError(404, 'not_found', 'User not found.');
+        const [cms, pms, course, sessions, activity, emails] = await Promise.all([
+            repo.companyMembers.forUser(u.id), repo.projectMembers.forUser(u.id), repo.course.get(u.id),
+            repo.sessions.forUser(u.id), repo.audit.byActor(u.id, 20), repo.emails.list({ to: u.email, limit: 20 })
+        ]);
+        const [companies, projects] = await Promise.all([repo.companies.byIds(cms.map(m => m.companyId)), repo.projects.byIds(pms.map(m => m.projectId))]);
+        const projCompanies = await repo.companies.byIds([...new Set(projects.map(p => p.companyId).filter(Boolean))]);
+        res.json({
+            user: { ...publicUser(u), disabled: !!u.disabled, lastLoginAt: u.lastLoginAt, lastActiveAt: u.lastActiveAt },
+            companies: cms.map(m => ({ id: m.companyId, name: companies.find(c => c.id === m.companyId)?.name || '', role: m.role, since: m.createdAt })),
+            projects: projects.map(p => ({ id: p.id, name: p.name, role: pms.find(m => m.projectId === p.id).role, company: projCompanies.find(c => c.id === p.companyId)?.name || null, updatedAt: p.updatedAt })),
+            course: course ? { modulesDone: course.modulesDone, updatedAt: course.updatedAt, data: course.data } : null,
+            sessions: sessions.map(s => ({ createdAt: s.createdAt, expiresAt: s.expiresAt, device: s.userAgent })),
+            activity: activity.map(a => ({ at: a.at, action: a.action, meta: a.meta })),
+            emails: emails.rows.map(e => ({ at: e.at, kind: e.kind, subject: e.subject, status: e.status }))
+        });
+    });
+
+    // Email log: who was emailed what, and whether it went out (no message bodies)
+    r.get('/emails', async (req, res) => {
+        const { limit, skip, page: p } = page(req);
+        const { rows, total } = await repo.emails.list({ skip, limit });
+        res.json({ emails: rows.map(e => ({ at: e.at, to: e.to, kind: e.kind, subject: e.subject, status: e.status, error: e.error })), total, page: p, limit });
+    });
+
     // Disable/enable an account or make someone a platform admin
     r.patch('/users/:id', async (req, res) => {
         const u = await repo.users.byId(req.params.id);
