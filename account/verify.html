@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm email - PM Ready</title>
+    <meta name="referrer" content="no-referrer">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Project_Mangment_Tool/css/app.css">
+    <link rel="stylesheet" href="account.css">
+</head>
+<body>
+    <header class="top"><div class="in"><a class="brand" href="../index.html">PM Ready</a></div></header>
+    <main class="auth-wrap">
+        <div class="card auth-card" id="box" aria-live="polite"><h1>Confirming your email…</h1></div>
+    </main>
+<script src="../assets/js/account.js"></script>
+<script>
+(async () => {
+    const box = document.getElementById('box');
+    const token = new URLSearchParams(location.search).get('token');
+    // Keep the token out of the address bar and history
+    history.replaceState(null, '', location.pathname);
+    try {
+        const r = await PMAccount.api('POST', '/auth/verify', { token });
+        const opened = (r.claimed?.projects || 0) + (r.claimed?.companies || 0);
+        box.innerHTML = `<h1>✓ Email confirmed</h1>
+            <p class="muted" style="margin-bottom: 1.2rem;">${opened ? `Invitations waiting for this address are now open (${r.claimed.projects} project${r.claimed.projects === 1 ? '' : 's'}, ${r.claimed.companies} compan${r.claimed.companies === 1 ? 'y' : 'ies'}).` : 'Thanks! Invitations sent to this address will open for you.'}</p>
+            <a class="btn btn-primary wide" href="../Project_Mangment_Tool/index.html">Go to my projects</a>`;
+    } catch (e) {
+        box.innerHTML = `<h1>This link didn't work</h1><p class="muted" style="margin-bottom: 1.2rem;">${(e.userMessage || 'Try again.').replace(/</g, '&lt;')}</p>
+            <a class="btn btn-ghost wide" href="index.html">Go to My account</a>`;
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset password - PM Ready</title>
+    <meta name="referrer" content="no-referrer">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Project_Mangment_Tool/css/app.css">
+    <link rel="stylesheet" href="account.css">
+</head>
+<body>
+    <header class="top"><div class="in"><a class="brand" href="../index.html">PM Ready</a><a class="back" href="signin.html">← Sign in</a></div></header>
+    <main class="auth-wrap">
+        <div class="card auth-card" id="box" aria-live="polite">
+            <!-- Step 1: ask for the email -->
+            <form id="askForm" novalidate>
+                <h1>Reset your password</h1>
+                <p class="muted">Enter your account's email. We'll send a link to choose a new password.</p>
+                <div class="field"><label for="email">Email</label><input class="input" type="email" id="email" name="email" autocomplete="email" required></div>
+                <p class="form-err" id="askErr" role="alert"></p>
+                <button class="btn btn-primary wide" type="submit">Send reset link</button>
+            </form>
+            <!-- Step 2: from the email link -->
+            <form id="setForm" novalidate hidden>
+                <h1>Choose a new password</h1>
+                <p class="muted">You'll be signed out on all devices, then you can sign in with the new password.</p>
+                <div class="field"><label for="pass">New password</label><input class="input" type="password" id="pass" name="password" minlength="8" autocomplete="new-password" required><span class="hint">At least 8 characters.</span></div>
+                <p class="form-err" id="setErr" role="alert"></p>
+                <button class="btn btn-primary wide" type="submit">Save new password</button>
+            </form>
+        </div>
+    </main>
+<script src="../assets/js/account.js"></script>
+<script>
+const A = window.PMAccount, $ = id => document.getElementById(id);
+const token = new URLSearchParams(location.search).get('token');
+if (token) {
+    history.replaceState(null, '', location.pathname);
+    $('askForm').hidden = true;
+    $('setForm').hidden = false;
+}
+$('askForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('askErr').textContent = '';
+    try {
+        await A.api('POST', '/auth/forgot', { email: $('email').value });
+        $('box').innerHTML = `<h1>Check your email</h1><p class="muted" style="margin-bottom: 1.2rem;">If an account uses that address, a reset link is on its way. It works for 1 hour.</p><a class="btn btn-ghost wide" href="signin.html">Back to sign in</a>`;
+    } catch (err) { $('askErr').textContent = err.userMessage || 'Could not reach the server.'; }
+});
+$('setForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('setErr').textContent = '';
+    if ($('pass').value.length < 8) { $('setErr').textContent = 'Use a password of at least 8 characters.'; return; }
+    try {
+        const r = await A.api('POST', '/auth/reset', { token, password: $('pass').value });
+        $('box').innerHTML = `<h1>✓ Password changed</h1><p class="muted" style="margin-bottom: 1.2rem;">Sign in with your new password.</p><a class="btn btn-primary wide" href="signin.html">Sign in</a>`;
+    } catch (err) { $('setErr').textContent = err.userMessage || 'Could not reach the server.'; }
+});
+</script>
+</body>
+</html>

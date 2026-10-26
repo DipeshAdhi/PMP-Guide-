@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company - PM Ready</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Project_Mangment_Tool/css/app.css">
+    <link rel="stylesheet" href="account.css">
+</head>
+<body>
+    <header class="top">
+        <div class="in">
+            <a class="brand" href="../index.html">PM Ready<span>Company</span></a>
+            <a class="back" style="margin-left: 0;" href="index.html">My account</a>
+            <a class="back" style="margin-left: 0;" href="../Project_Mangment_Tool/index.html">Projects</a>
+            <span id="chip" class="user-chip"></span>
+        </div>
+    </header>
+
+    <main class="page" id="main"><p class="muted">Loading…</p></main>
+
+<script src="../assets/js/account.js"></script>
+<script src="../Project_Mangment_Tool/js/ui.js"></script>
+<script>
+const A = window.PMAccount;
+const { esc, toast } = PMT.ui;
+const id = new URLSearchParams(location.search).get('id');
+const ROLE = { owner: 'Owner', admin: 'Admin', member: 'Staff member' };
+const when = d => d ? new Date(d).toLocaleDateString(undefined, { dateStyle: 'medium' }) : '—';
+let data, me;
+
+async function load() {
+    if (!await A.available()) { document.getElementById('main').innerHTML = '<div class="card empty"><h2>Companies need the PM Ready server</h2></div>'; return; }
+    const m = await A.me();
+    if (!m) { location.replace(A.signInUrl()); return; }
+    me = m.user;
+    document.getElementById('chip').innerHTML = `<details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(PMT.ui.initials(me.name))}</span><span>${esc(me.name)}</span></summary>
+        <div class="menu"><div class="who">${esc(me.email)}</div>${me.platformRole === 'admin' ? '<a href="../admin/index.html">Admin dashboard</a>' : ''}<button type="button" id="signOut">Sign out</button></div></details>`;
+    document.getElementById('signOut').addEventListener('click', () => A.signOut());
+    try { data = await A.api('GET', `/companies/${encodeURIComponent(id)}`); }
+    catch (e) { document.getElementById('main').innerHTML = `<div class="card empty"><h2>Company not found</h2><p>${esc(e.userMessage || '')}</p><p style="margin-top: 1rem;"><a class="btn btn-primary" href="index.html">My account</a></p></div>`; return; }
+    render();
+}
+
+function render() {
+    const { company, role, members, projects } = data;
+    const admin = role === 'owner' || role === 'admin';
+    const active = members.filter(m => m.status === 'active').length;
+    document.title = `${company.name} - PM Ready`;
+    document.getElementById('main').innerHTML = `
+        <div class="page-head"><div>
+            <h1>🏢 ${esc(company.name)}</h1>
+            <p class="muted">You are ${role === 'member' ? 'a staff member' : `the company ${ROLE[role].toLowerCase()}`} · created ${when(company.createdAt)}</p>
+        </div>${admin ? `<a class="btn btn-primary" href="../Project_Mangment_Tool/index.html#new">＋ New company project</a>` : ''}</div>
+
+        <div class="kpis">
+            <div class="card kpi"><div class="n">${active}</div><div class="l">Staff with an account</div></div>
+            <div class="card kpi"><div class="n">${members.length - active}</div><div class="l">Invited, not joined yet</div></div>
+            <div class="card kpi"><div class="n">${projects.length}</div><div class="l">${admin ? 'Company projects' : 'Your company projects'}</div></div>
+        </div>
+
+        <section class="card" style="margin-bottom: 1rem;">
+            <h2 style="font-size: 1.1rem; margin-bottom: 0.4rem;">👥 Staff</h2>
+            ${admin ? `<form class="inline-form" id="addStaff" style="margin-bottom: 0.9rem;">
+                <div class="field"><label for="sEmail">Add staff by email</label><input class="input" type="email" id="sEmail" name="email" required maxlength="200" placeholder="name@company.com"></div>
+                <div class="field" style="flex: 0 0 170px;"><label for="sRole">Role</label><select class="select" id="sRole" name="role"><option value="member">Staff member</option><option value="admin">Admin</option></select></div>
+                <button class="btn btn-primary" type="submit">Add and email</button></form>
+                <p class="muted small" style="margin: -0.4rem 0 0.9rem;">People who already have an account are added straight away and get an email. Everyone else gets an <strong>invitation email</strong> with a link to create their account. <strong>Admins</strong> see and manage every company project and its staff; <strong>staff members</strong> open the projects they're added to.</p>` : ''}
+            <div class="table-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Email</th><th>Role</th><th>Status</th><th>Projects</th><th>Last active</th><th></th></tr></thead><tbody>
+            ${members.map(m => `<tr>
+                <td>${m.name ? esc(m.name) : '<span class="muted">—</span>'}${m.isYou ? ' <span class="pill">You</span>' : ''}</td>
+                <td>${esc(m.email)}</td>
+                <td>${admin && m.role !== 'owner' && !m.isYou ? `<select class="select" data-role="${m.id}" aria-label="Role for ${esc(m.email)}"><option value="member" ${m.role === 'member' ? 'selected' : ''}>Staff member</option><option value="admin" ${m.role === 'admin' ? 'selected' : ''}>Admin</option></select>` : ROLE[m.role]}</td>
+                <td>${m.status === 'pending' ? `<span class="pill doing">Invited ${when(m.createdAt)}</span>` : '<span class="pill done">Active</span>'}</td>
+                <td>${m.projects}</td>
+                <td class="small">${m.status === 'pending' ? '—' : when(m.lastActiveAt)}</td>
+                <td style="white-space: nowrap;">
+                    ${admin && m.status === 'pending' ? `<button class="btn btn-ghost btn-sm" data-resend="${m.id}">✉ Resend</button>` : ''}
+                    ${m.role !== 'owner' && (admin || m.isYou) ? `<button class="btn btn-ghost btn-sm" data-remove="${m.id}">${m.isYou ? 'Leave' : 'Remove'}</button>` : ''}
+                </td></tr>`).join('')}
+            </tbody></table></div>
+        </section>
+
+        <section class="card">
+            <h2 style="font-size: 1.1rem; margin-bottom: 0.6rem;">📁 ${admin ? 'Company projects' : 'Your company projects'}</h2>
+            ${projects.length ? `<div class="table-wrap"><table class="tbl"><thead><tr><th>Project</th><th>Owner</th><th>People</th><th>Progress</th><th>Updated</th></tr></thead><tbody>
+                ${projects.map(p => `<tr><td><a href="../Project_Mangment_Tool/project.html?id=${encodeURIComponent(p.id)}">${esc(p.name)}</a></td><td>${esc(p.owner)}</td><td>${p.people}</td>
+                    <td style="min-width: 140px;"><div class="bar"><div style="width:${p.total ? Math.round(p.done / p.total * 100) : 0}%"></div></div><span class="muted small">${p.done}/${p.total} done</span></td><td class="small">${when(p.updatedAt)}</td></tr>`).join('')}
+                </tbody></table></div>` : `<p class="muted small">No projects yet.${admin ? ' Create one and choose this company under "Belongs to".' : ''}</p>`}
+        </section>`;
+}
+
+const run = async (fn, ok) => {
+    try { const r = await fn(); if (ok) toast(typeof ok === 'function' ? ok(r) : ok, 'good'); data = await A.api('GET', `/companies/${encodeURIComponent(id)}`); render(); }
+    catch (e) { toast(e.userMessage || 'Something went wrong.', 'bad'); }
+};
+document.addEventListener('submit', e => {
+    if (e.target.id !== 'addStaff') return;
+    e.preventDefault();
+    const v = Object.fromEntries(new FormData(e.target));
+    run(() => A.api('POST', `/companies/${encodeURIComponent(id)}/members`, v),
+        r => !r.emailed ? `${v.email} added, but the email could not be sent` : r.pending ? `Invitation emailed to ${v.email}` : `${v.email} added and notified by email`);
+});
+document.addEventListener('change', e => {
+    const s = e.target.closest('[data-role]');
+    if (s) run(() => A.api('PATCH', `/companies/${encodeURIComponent(id)}/members/${s.dataset.role}`, { role: s.value }), 'Role updated');
+});
+document.addEventListener('click', e => {
+    const r = e.target.closest('[data-resend]');
+    if (r) { run(() => A.api('POST', `/companies/${encodeURIComponent(id)}/members/${r.dataset.resend}/resend`, {}), 'Invitation sent again'); return; }
+    const x = e.target.closest('[data-remove]');
+    if (x) {
+        const m = data.members.find(y => y.id === x.dataset.remove);
+        if (!confirm(m.isYou ? 'Leave this company?' : `Remove ${m.email} from the staff? They keep access to projects they were added to directly.`)) return;
+        if (m.isYou) { A.api('DELETE', `/companies/${encodeURIComponent(id)}/members/${m.id}`).then(() => { location.href = 'index.html'; }, err => toast(err.userMessage, 'bad')); return; }
+        run(() => A.api('DELETE', `/companies/${encodeURIComponent(id)}/members/${m.id}`), 'Removed');
+    }
+    const c = document.querySelector('#chip details');
+    if (c && c.open && !c.contains(e.target)) c.open = false;
+});
+load();
+</script>
+</body>
+</html>
