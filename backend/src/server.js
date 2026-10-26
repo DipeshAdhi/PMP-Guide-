@@ -14,16 +14,17 @@ import { projectRoutes } from './routes/projects.js';
 import { courseRoutes } from './routes/course.js';
 import { adminRoutes } from './routes/admin.js';
 import { userRoutes } from './routes/users.js';
+import { googleRoutes, googleEnabled } from './routes/google.js';
 
 const SITE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
-export function createApp(db) {
+export function createApp(db, options = {}) {
     const { repo } = db;
     const mailer = db.mailer || createMailer(repo);
     const app = express();
     app.locals.mailer = mailer;
     app.disable('x-powered-by');
-    app.set('trust proxy', 'loopback');
+    app.set('trust proxy', config.trustProxy);
 
     app.use((req, res, next) => {
         res.set({ 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin' });
@@ -40,6 +41,9 @@ export function createApp(db) {
         await db.ping();
         res.json({ ok: true, db: config.dbDriver });
     });
+    // Which sign-in buttons the pages should show
+    api.get('/auth/providers', (req, res) => res.json({ password: true, google: googleEnabled() }));
+    api.use('/auth/google', googleRoutes(repo, { fetchImpl: options.fetch }));
     api.use('/auth', authRoutes(repo, mailer));
     api.use('/companies', companyRoutes(repo, mailer));
     api.use('/projects', projectRoutes(repo, mailer));
@@ -70,13 +74,13 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
     try {
         db = await openDatabase(config);
     } catch (err) {
-        console.error(`\nCould not connect to the database (${config.dbDriver}: ${config.dbDriver === 'mongo' ? config.mongoUri : ''}).`);
+        console.error(`\nCould not connect to the database (${config.dbDriver}${config.dbDriver === 'mongo' ? ': ' + config.mongoUri.replace(/\/\/[^@/]*@/, '//***@') : ''}).`);
         console.error(`  ${err.message}`);
         if (config.dbDriver === 'mongo') console.error('  Is MongoDB running? See backend/README.md → "Start MongoDB".\n');
         process.exit(1);
     }
     // Express 5 calls this with an error too (e.g. the port is taken)
-    const server = createApp(db).listen(config.port, '127.0.0.1', async err => {
+    const server = createApp(db).listen(config.port, config.host, async err => {
         if (err) {
             console.error(err.code === 'EADDRINUSE'
                 ? `\nPort ${config.port} is already in use: PM Ready (or another app) is already running there.\n  Open http://localhost:${config.port}, or stop the other one (Ctrl+C in its terminal), or set PORT in backend/.env.\n`
@@ -84,8 +88,11 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.a
             await db.close();
             process.exit(1);
         }
-        console.log(`PM Ready running at http://localhost:${config.port}  (database: ${config.dbDriver}${config.dbDriver === 'mongo' ? ` ${config.mongoUri}${config.dbName}` : ''})`);
-        if (!config.adminEmails.length) console.log('Tip: set ADMIN_EMAILS in backend/.env (or run "npm run make-admin -- you@company.com") to open the admin dashboard.');
+        // Never print database passwords (hosted MongoDB URLs contain them)
+        const dbShown = config.dbDriver === 'mongo' ? ` ${config.mongoUri.replace(/\/\/[^@/]*@/, '//***@')}${config.dbName}` : '';
+        console.log(`PM Ready running at ${config.appUrl}  (listening on ${config.host}:${config.port}, database: ${config.dbDriver}${dbShown})`);
+        if (!config.superAdminEmail) console.log('Tip: set SUPER_ADMIN_EMAIL in backend/.env to your email to get the admin dashboard.');
+        console.log(`Email: ${config.smtp.host ? `${config.smtp.host}:${config.smtp.port}` : 'printed here (no SMTP_HOST)'} · Google sign-in: ${config.google.clientId && config.google.clientSecret ? 'on' : 'off (see backend/SETUP.md)'}`);
     });
     const stop = async () => { server.close(); await db.close(); process.exit(0); };
     process.on('SIGINT', stop);

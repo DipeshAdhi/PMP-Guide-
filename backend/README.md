@@ -12,6 +12,8 @@ Node.js + Express + MongoDB. It serves the whole website **and** a JSON API unde
 
 Without the server (GitHub Pages, opening the files directly) the site keeps working exactly as before: everything is saved in the browser.
 
+**Setting up Google sign-in, Gmail sending and online hosting: follow [SETUP.md](SETUP.md).**
+
 ## Run it
 
 Requirements: Node.js 22.9+ and MongoDB.
@@ -76,6 +78,8 @@ All under `/api`, JSON in and out. Writes must be JSON and come from the same or
 | GET | `/auth/invite/:token` | What an invitation link is for (sign-up page) |
 | POST | `/auth/verify` · `/auth/verify/resend` | Confirm email from the link / send the link again |
 | POST | `/auth/forgot` · `/auth/reset` | Email a reset link / set a new password from it |
+| GET | `/auth/providers` | Which sign-in options are on (`google: true` when configured) |
+| GET | `/auth/google/start` · `/auth/google/callback` | Sign in with Google (OAuth 2.0 code flow with PKCE); creates or links the account by verified email |
 | PUT · DELETE | `/auth/me/avatar` | Profile picture `{ image: data URL }` (JPEG/PNG/WebP, ≤ 300 KB; the browser crops it to 256 px) |
 | GET | `/users/:id/avatar` | The picture (signed-in people only) |
 | GET · POST | `/companies` | My companies / create one |
@@ -130,7 +134,9 @@ Routes never touch the database driver. Everything goes through the repository i
 
 - Invitation, confirmation and reset links are single-use random tokens (only their hash is stored) that expire: invitations 14 days, confirmation 24 hours, reset 1 hour. Reset signs out every device.
 
-Not built yet: two-step login (2FA), Google/Microsoft sign-in. See [../Project_Mangment_Tool/docs/auth-and-backend-plan.md](../Project_Mangment_Tool/docs/auth-and-backend-plan.md).
+- Google sign-in: state + PKCE, the state is also bound to the browser by a short-lived cookie, and only emails Google marks as verified are accepted.
+
+Not built yet: two-step login (2FA), Microsoft sign-in. See [../Project_Mangment_Tool/docs/auth-and-backend-plan.md](../Project_Mangment_Tool/docs/auth-and-backend-plan.md).
 
 ## Files
 

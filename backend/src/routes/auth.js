@@ -110,7 +110,8 @@ export function authRoutes(repo, mailer) {
     });
 
     r.post('/password', requireUser, strict, async (req, res) => {
-        if (!await verifyPassword(String(req.body.current || ''), req.user.passwordHash)) throw new HttpError(401, 'bad_login', 'Your current password is incorrect.');
+        // Accounts made with Google have no password yet: they can set one directly
+        if (req.user.passwordHash && !await verifyPassword(String(req.body.current || ''), req.user.passwordHash)) throw new HttpError(401, 'bad_login', 'Your current password is incorrect.');
         checkPassword(req.body.next);
         await repo.users.update(req.user.id, { passwordHash: await hashPassword(req.body.next) });
         // Sign out every other device

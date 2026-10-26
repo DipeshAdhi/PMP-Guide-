@@ -10,8 +10,7 @@ const DAY = 864e5;
 export const sha256 = s => createHash('sha256').update(s).digest('hex');
 
 // New one-time link token; only its hash is stored
-export async function makeToken(repo, { kind, email, userId = null, meta = {}, ttlMs }) {
-    const token = randomBytes(32).toString('base64url');
+export async function makeToken(repo, { kind, email, userId = null, meta = {}, ttlMs, token = randomBytes(32).toString('base64url') }) {
     const t = new Date();
     await repo.tokens.create({ id: sha256(token), kind, email, userId, meta, createdAt: t.toISOString(), expiresAt: new Date(t.getTime() + ttlMs).toISOString(), usedAt: null });
     return token;

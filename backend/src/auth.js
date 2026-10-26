@@ -47,7 +47,7 @@ export async function endSession(repo, req, res) {
     res.clearCookie(COOKIE, { path: '/' });
 }
 
-function readCookie(req, name) {
+export function readCookie(req, name) {
     const header = req.headers.cookie || '';
     for (const part of header.split(';')) {
         const i = part.indexOf('=');
@@ -87,5 +87,6 @@ export const requireAdmin = (req, res, next) => {
 export const avatarUrl = u => u && u.avatarAt ? `/api/users/${u.id}/avatar?v=${Date.parse(u.avatarAt)}` : null;
 export const publicUser = u => u && ({
     id: u.id, email: u.email, name: u.name, accountType: u.accountType, platformRole: u.platformRole,
-    superAdmin: isSuperAdmin(u), emailVerified: !!u.emailVerified, avatarUrl: avatarUrl(u), createdAt: u.createdAt
+    superAdmin: isSuperAdmin(u), emailVerified: !!u.emailVerified, avatarUrl: avatarUrl(u), createdAt: u.createdAt,
+    hasPassword: !!u.passwordHash, google: !!u.googleId
 });

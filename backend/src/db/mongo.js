@@ -45,6 +45,7 @@ export async function connectMongo({ uri, dbName }) {
     await Promise.all([
         db.collection('users').createIndex({ email: 1 }, { unique: true }),
         db.collection('users').createIndex({ createdAt: -1 }),
+        db.collection('users').createIndex({ googleId: 1 }, { unique: true, partialFilterExpression: { googleId: { $type: 'string' } } }),
         db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
         db.collection('sessions').createIndex({ userId: 1 }),
         db.collection('companyMembers').createIndex({ companyId: 1, userId: 1 }),

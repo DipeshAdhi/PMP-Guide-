@@ -37,6 +37,7 @@ export function createRepo({ cols }) {
             create: u => users.insert(u),
             byId: id => users.findOne({ id }),
             byEmail: email => users.findOne({ email: email.toLowerCase() }),
+            byGoogleId: googleId => users.findOne({ googleId: String(googleId) }),
             update: (id, patch) => users.update({ id }, patch),
             async list({ q = '', skip = 0, limit = 50 } = {}) {
                 const filter = q ? { $or: [{ email: { $regex: escapeRegex(q), $options: 'i' } }, { name: { $regex: escapeRegex(q), $options: 'i' } }] } : {};

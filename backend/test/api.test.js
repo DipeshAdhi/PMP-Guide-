@@ -7,6 +7,8 @@ process.env.DB_DRIVER = process.env.TEST_DB_DRIVER || 'memory';
 process.env.DB_NAME = 'pm_ready_test';
 process.env.SUPER_ADMIN_EMAIL = 'boss@pmready.test';
 process.env.ADMIN_EMAILS = '';
+process.env.GOOGLE_CLIENT_ID = 'test-client.apps.googleusercontent.com';
+process.env.GOOGLE_CLIENT_SECRET = 'test-secret';
 const { config } = await import('../src/config.js');
 const { openDatabase } = await import('../src/db/index.js');
 const { createApp } = await import('../src/server.js');
@@ -15,7 +17,7 @@ let server, base, db, mailer;
 before(async () => {
     if (config.dbDriver === 'mongo') await dropTestDb();
     db = await openDatabase(config);
-    const app = createApp(db);
+    const app = createApp(db, { fetch: fakeGoogle });
     mailer = app.locals.mailer;
     server = app.listen(0);
     await new Promise(r => server.once('listening', r));
@@ -48,6 +50,29 @@ function client() {
         return { status: res.status, body: text ? JSON.parse(text) : null };
     };
 }
+
+// Stand-in for Google's servers: the profile it returns is set by each test
+let googleProfile = null;
+async function fakeGoogle(url, opts = {}) {
+    const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    if (url === 'https://oauth2.googleapis.com/token') {
+        const form = new URLSearchParams(opts.body);
+        return form.get('code') === 'good-code' && form.get('code_verifier') ? json({ access_token: 'at-123' }) : json({ error: 'invalid_grant' }, 400);
+    }
+    if (url === 'https://openidconnect.googleapis.com/v1/userinfo') return opts.headers?.Authorization === 'Bearer at-123' ? json(googleProfile) : json({}, 401);
+    return new Response('', { status: 404 });
+}
+// Runs the Google sign-in like a browser: start → (Google) → callback. Returns the session cookie and where it landed.
+async function googleSignIn({ tamperState = false, code = 'good-code', next } = {}) {
+    const start = await fetch(`${base}/api/auth/google/start${next ? `?next=${encodeURIComponent(next)}` : ''}`, { redirect: 'manual' });
+    const to = new URL(start.headers.get('location'));
+    const state = to.searchParams.get('state');
+    const oauthCookie = start.headers.get('set-cookie').split(';')[0];
+    const cb = await fetch(`${base}/api/auth/google/callback?code=${code}&state=${tamperState ? 'x' + state : state}`, { redirect: 'manual', headers: { Cookie: oauthCookie } });
+    const session = (cb.headers.getSetCookie?.() || []).map(c => c.split(';')[0]).find(c => c.startsWith('pmr_session=') && c !== 'pmr_session=');
+    return { googleUrl: to, landed: cb.headers.get('location'), session };
+}
+const asCookie = cookie => (path) => fetch(base + path, { headers: { Cookie: cookie } }).then(r => r.json());
 
 // The token in the newest email of a kind sent to someone
 function mailTo(to, kind) {
@@ -293,6 +318,36 @@ test('profile picture: upload, show to signed-in people, remove', async () => {
     const access = await ben('GET', `/api/companies/${companyId}`);
     assert.ok(access.body.members.find(m => m.email === 'ana@test.dev').avatarUrl);
     assert.equal((await ana('DELETE', '/api/auth/me/avatar')).body.user.avatarUrl, null);
+});
+
+test('sign in with Google: new account, invitations open, existing accounts link', async () => {
+    assert.equal((await anon('GET', '/api/auth/providers')).body.google, true);
+    // Ana invites someone who will sign up with Google
+    await ana('POST', `/api/projects/${projectId}/access`, { email: 'gina@gmail.test', role: 'viewer' });
+    googleProfile = { sub: 'g-1001', email: 'Gina@gmail.test', email_verified: true, name: 'Gina Google' };
+    const g = await googleSignIn({ next: '/account/index.html' });
+    assert.equal(g.googleUrl.host, 'accounts.google.com');
+    assert.equal(g.googleUrl.searchParams.get('code_challenge_method'), 'S256');
+    assert.equal(g.landed, '/account/index.html');
+    const me = await asCookie(g.session)('/api/auth/me');
+    assert.deepEqual([me.user.email, me.user.emailVerified, me.user.google, me.user.hasPassword], ['gina@gmail.test', true, true, false]);
+    const projects = await asCookie(g.session)('/api/projects');
+    assert.equal(projects.projects.find(p => p.id === projectId).role, 'viewer');
+    // Same Google account again → same user, no duplicate
+    const again = await googleSignIn();
+    assert.equal((await asCookie(again.session)('/api/auth/me')).user.id, me.user.id);
+    // Existing password account with the same email gets Google linked
+    googleProfile = { sub: 'g-2002', email: 'ben@acme.dev', email_verified: true, name: 'Ben' };
+    const b = await googleSignIn();
+    assert.equal((await asCookie(b.session)('/api/auth/me')).user.email, 'ben@acme.dev');
+    // Refused: tampered state, bad code, unverified Google email
+    assert.match((await googleSignIn({ tamperState: true })).landed, /error=google_expired/);
+    assert.match((await googleSignIn({ code: 'bad' })).landed, /error=google_failed/);
+    googleProfile = { sub: 'g-3003', email: 'x@gmail.test', email_verified: false };
+    assert.match((await googleSignIn()).landed, /error=google_unverified/);
+    // A "next" pointing to another site is ignored
+    googleProfile = { sub: 'g-1001', email: 'gina@gmail.test', email_verified: true, name: 'Gina Google' };
+    assert.equal((await googleSignIn({ next: 'https://evil.example/' })).landed, '/Project_Mangment_Tool/index.html');
 });
 
 test('owner deletes; project disappears for everyone', async () => {

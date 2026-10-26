@@ -3,6 +3,8 @@ const env = process.env;
 
 export const config = {
     port: Number(env.PORT) || 4000,
+    // 127.0.0.1 = only this computer; hosting platforms need 0.0.0.0
+    host: env.HOST || '127.0.0.1',
     dbDriver: env.DB_DRIVER || 'mongo',
     mongoUri: env.MONGODB_URI || 'mongodb://localhost:27017/',
     dbName: env.DB_NAME || 'pm_ready',
@@ -24,5 +26,9 @@ export const config = {
         user: env.SMTP_USER || '',
         pass: env.SMTP_PASS || ''
     },
-    mailFrom: env.MAIL_FROM || 'PM Ready <no-reply@pmready.local>'
+    mailFrom: env.MAIL_FROM || 'PM Ready <no-reply@pmready.local>',
+    // Sign in with Google (OAuth client from Google Cloud Console). Empty = button hidden.
+    google: { clientId: env.GOOGLE_CLIENT_ID || '', clientSecret: env.GOOGLE_CLIENT_SECRET || '' },
+    // Behind a hosting proxy (Render, Railway, Fly, Nginx…) set TRUST_PROXY=1 so client IPs and HTTPS are seen correctly
+    trustProxy: env.TRUST_PROXY ? (/^\d+$/.test(env.TRUST_PROXY) ? Number(env.TRUST_PROXY) : env.TRUST_PROXY) : 'loopback'
 };
