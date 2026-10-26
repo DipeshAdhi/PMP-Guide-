@@ -5,8 +5,10 @@ Node.js + Express + MongoDB. It serves the whole website **and** a JSON API unde
 - One account for both sides: the **course** (progress is saved to the account) and the **Project Tool** (projects are saved to the database and shared).
 - Register as **Personal** or **Company** (a company workspace is created with you as owner).
 - One user → many projects and many companies. One project → many people.
-- A project manager adds people **by email** with an access role; people without an account get access as soon as they register with that email.
-- **Admin dashboard** (`/admin/`) for our company: users, course learners, project users, companies, projects, sign-ups, activity log.
+- **Company staff** (`/account/company.html`): owners/admins add staff by email (Staff member or Admin), resend invitations, change roles, remove; see the company's projects.
+- A project manager adds people to a project **by email** with an access role.
+- **Email notifications**: people with an account get "you were added" emails; people without one get an **invitation email** with a sign-up link, and their access starts when they register from it. New accounts confirm their email; forgotten passwords are reset by email.
+- **Admin dashboard** (`/admin/`) for our company: users (click one for everything about them: account, confirmed email, companies, projects, course progress per module, signed-in devices, emails, activity), companies, projects, email log, activity log; make/remove admins, disable accounts.
 
 Without the server (GitHub Pages, opening the files directly) the site keeps working exactly as before: everything is saved in the browser.
 
@@ -28,6 +30,14 @@ brew tap mongodb/brew && brew install mongodb-community && brew services start m
 
 MongoDB Compass can then connect to `mongodb://localhost:27017/` to look at the `pm_ready` database.
 
+### 1b. Email inbox for development (Mailpit)
+
+```bash
+docker run -d --name pm-ready-mail --restart unless-stopped -p 127.0.0.1:1025:1025 -p 127.0.0.1:8025:8025 axllent/mailpit
+```
+
+Every email the app sends lands in **http://localhost:8025** instead of real inboxes. For real delivery, put your email provider's SMTP settings in `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`), e.g. Gmail with an app password, Resend, Amazon SES or Brevo, and set `APP_URL` to the site's public address so links work.
+
 ### 2. Start the server
 
 ```bash
@@ -39,13 +49,13 @@ npm start
 
 Open **http://localhost:4000**. Register with the email you put in `ADMIN_EMAILS` to get the admin dashboard (or run `npm run make-admin -- you@company.com` for an existing account).
 
-`npm run dev` restarts on code changes. `npm test` runs the API tests against an in-memory database (MongoDB not needed). `DB_DRIVER=memory npm start` runs the whole site without MongoDB (data is lost on restart).
+`npm run dev` restarts on code changes. `npm test` runs the API tests against an in-memory database (MongoDB not needed); `npm run test:mongo` runs them against MongoDB in a throwaway `pm_ready_test` database. `DB_DRIVER=memory npm start` runs the whole site without MongoDB (data is lost on restart).
 
 ## Roles
 
 | Level | Roles | Notes |
 |---|---|---|
-| Platform (our company) | `admin`, `user` | Admins open `/admin/`: counts, users, companies, project names (not project contents), activity log; can disable accounts |
+| Platform (our company) | `admin`, `user` | Admins open `/admin/`: counts, every user's details, companies, project names (not project contents), email and activity logs; make admins, disable accounts. `ADMIN_EMAILS` accounts become admins once their email is confirmed |
 | Company | `owner`, `admin`, `member` | Owners/admins add people by email and see/manage **every** project of the company |
 | Project | `owner`, `manager`, `member`, `viewer` | Owner: everything incl. delete. Manager: edit + manage access. Member: edit. Viewer: read and download only |
 
@@ -62,32 +72,39 @@ All under `/api`, JSON in and out. Writes must be JSON and come from the same or
 | POST | `/auth/login` · `/auth/logout` | Sign in (rate-limited) / out |
 | GET · PATCH | `/auth/me` | Current user + companies (`user: null` when signed out) / change name |
 | POST | `/auth/password` | `{ current, next }`; signs out other devices |
+| GET | `/auth/invite/:token` | What an invitation link is for (sign-up page) |
+| POST | `/auth/verify` · `/auth/verify/resend` | Confirm email from the link / send the link again |
+| POST | `/auth/forgot` · `/auth/reset` | Email a reset link / set a new password from it |
 | GET · POST | `/companies` | My companies / create one |
 | GET · PATCH | `/companies/:id` | Company + members / rename (admin) |
-| POST · PATCH · DELETE | `/companies/:id/members[/:mid]` | Add by email, change role, remove or leave |
+| POST · PATCH · DELETE | `/companies/:id/members[/:mid]` | Add staff by email (emails them), change role, remove or leave |
+| POST | `/companies/:id/members/:mid/resend` | Send the invitation again |
 | GET · POST | `/projects` | Projects I can open (summaries) / create `{ doc, companyId? }` |
 | GET · PUT · DELETE | `/projects/:id` | Open / save `{ doc, version }` (409 if someone saved first) / delete (soft) |
 | GET | `/projects/:id/version` | Cheap check for other people's saves |
-| GET · POST · PATCH · DELETE | `/projects/:id/access[/:aid]` | Who can open it; add by email, change role, remove/leave |
+| GET · POST · PATCH · DELETE | `/projects/:id/access[/:aid]` | Who can open it; add by email (emails them), change role, remove/leave |
+| POST | `/projects/:id/access/:aid/resend` | Send the invitation again |
 | POST | `/projects/:id/transfer` | Owner hands the project over |
 | GET · PUT | `/me/course` | Course progress |
-| GET | `/admin/stats` · `/admin/users` · `/admin/companies` · `/admin/projects` · `/admin/audit` | Admin dashboard |
+| GET | `/admin/stats` · `/admin/users` · `/admin/users/:id` · `/admin/companies` · `/admin/projects` · `/admin/emails` · `/admin/audit` | Admin dashboard |
 | PATCH | `/admin/users/:id` | `{ disabled }` or `{ platformRole }` |
 
 ## Data (MongoDB collections)
 
 | Collection | Fields |
 |---|---|
-| `users` | `_id, email (unique), name, passwordHash, accountType, platformRole, disabled, createdAt, lastLoginAt, lastActiveAt` |
-| `sessions` | `_id` (SHA-256 of the cookie token), `userId, createdAt, expiresAt` (auto-deleted when expired), `userAgent` |
+| `users` | `_id, email (unique), name, passwordHash, accountType, platformRole, disabled, emailVerified, createdAt, lastLoginAt, lastActiveAt` |
+| `sessions` | `_id` (SHA-256 of the cookie token), `userId, createdAt, expiresAt` (ignored once expired), `userAgent` |
 | `companies` | `_id, name, createdBy, createdAt` |
 | `companyMembers` | `_id, companyId, userId \| null, email, role, status: active\|pending, addedBy, createdAt` |
 | `projects` | `_id, companyId \| null, ownerId, name, doc` (the Project Tool's whole project), `version, createdAt, updatedAt, updatedBy, deletedAt` |
 | `projectMembers` | `_id, projectId, userId \| null, email, role, memberId` (link to the team member in `doc.members`), `status, addedBy, createdAt` |
 | `course` | `_id` (= userId), `data { read, tried, check }, modulesDone, updatedAt` |
 | `audit` | `_id, at, actorId, action, target, meta` |
+| `emails` | `_id, at, to, kind, subject, status: sent\|logged\|failed, error, actorId` (no message bodies or links) |
+| `tokens` | `_id` (SHA-256 of the link token), `kind: verify\|reset\|invite, email, userId, meta, createdAt, expiresAt, usedAt` |
 
-`status: pending` with `userId: null` means "added by email before registering"; registration turns these into active memberships.
+`status: pending` with `userId: null` means "invited by email, not joined yet". It becomes active when that person proves the address is theirs: registering from the invitation link, confirming their email, or resetting their password. So registering with someone else's address never opens their invitations.
 
 ## Switching to PostgreSQL later
 
@@ -107,7 +124,9 @@ Routes never touch the database driver. Everything goes through the repository i
 - Projects you can't open return 404 (ids can't be probed). Project saves are version-checked, so nobody overwrites someone else's work by accident.
 - `/backend/` is never served as a web page, and dotfiles (`.env`) are refused.
 
-Not built yet: email sending (invitations, password reset by email), email verification, 2FA. See [../Project_Mangment_Tool/docs/auth-and-backend-plan.md](../Project_Mangment_Tool/docs/auth-and-backend-plan.md).
+- Invitation, confirmation and reset links are single-use random tokens (only their hash is stored) that expire: invitations 14 days, confirmation 24 hours, reset 1 hour. Reset signs out every device.
+
+Not built yet: two-step login (2FA), Google/Microsoft sign-in. See [../Project_Mangment_Tool/docs/auth-and-backend-plan.md](../Project_Mangment_Tool/docs/auth-and-backend-plan.md).
 
 ## Files
 
@@ -117,6 +136,8 @@ src/config.js        Settings from environment variables
 src/auth.js          Password hashing, sessions, current-user middleware
 src/security.js      Same-origin check, rate limits, input helpers
 src/permissions.js   Roles and access checks
+src/invites.js       Adding people by email, invitation/confirm/reset links
+src/mailer.js        Email templates and SMTP sending (logged without bodies)
 src/routes/*.js      auth, companies, projects, course, admin
 src/db/repo.js       Every database query (the contract for Postgres later)
 src/db/mongo.js      MongoDB driver + indexes
