@@ -1,6 +1,6 @@
 // Companies: create, staff (add by email with notification, roles, remove), company projects
 import { Router } from 'express';
-import { requireUser } from '../auth.js';
+import { requireUser, avatarUrl } from '../auth.js';
 import { requireCompany, COMPANY_ROLES } from '../permissions.js';
 import { EMAIL, cleanEmail, cleanText, bad, HttpError, rateLimit } from '../security.js';
 import { newId } from '../db/repo.js';
@@ -18,7 +18,7 @@ export function companyRoutes(repo, mailer) {
         const access = await Promise.all(projects.map(p => repo.projectMembers.forProject(p.id)));
         const users = await Promise.all(ms.map(m => m.userId ? repo.users.byId(m.userId) : null));
         return ms.map((m, i) => ({
-            id: m.id, email: m.email, name: users[i]?.name || '', role: m.role, status: m.status, isYou: m.userId === meId, createdAt: m.createdAt,
+            id: m.id, email: m.email, name: users[i]?.name || '', avatarUrl: avatarUrl(users[i]), role: m.role, status: m.status, isYou: m.userId === meId, createdAt: m.createdAt,
             lastActiveAt: users[i]?.lastActiveAt || null,
             // Company projects this person can open directly (owners/admins can open all of them anyway)
             projects: access.filter(list => list.some(a => a.status === 'active' ? a.userId && a.userId === m.userId : a.email === m.email)).length

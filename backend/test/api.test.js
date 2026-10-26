@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 
 process.env.DB_DRIVER = process.env.TEST_DB_DRIVER || 'memory';
 process.env.DB_NAME = 'pm_ready_test';
-process.env.ADMIN_EMAILS = 'boss@pmready.test';
+process.env.SUPER_ADMIN_EMAIL = 'boss@pmready.test';
+process.env.ADMIN_EMAILS = '';
 const { config } = await import('../src/config.js');
 const { openDatabase } = await import('../src/db/index.js');
 const { createApp } = await import('../src/server.js');
@@ -171,6 +172,8 @@ test('registering someone else\'s email does not grab their invitation', async (
     const squat = client();
     const r = await squat('POST', '/api/auth/register', { name: 'Not Dan', email: 'dan@test.dev', password: 'password-5' });
     assert.equal(r.body.claimed.projects, 0);
+    // The account is told an invitation is waiting for the email confirmation
+    assert.deepEqual((await squat('GET', '/api/auth/me')).body.waiting, { companies: 0, projects: 1 });
     assert.equal((await squat('GET', `/api/projects/${projectId}`)).status, 404);
     // Adding an unconfirmed account keeps it pending too
     const again = await ana('GET', `/api/projects/${projectId}/access`);
@@ -263,6 +266,33 @@ test('admin dashboard numbers', async () => {
     const cid = u.users[0].id;
     await boss('PATCH', `/api/admin/users/${cid}`, { disabled: true });
     assert.equal((await cara('GET', '/api/auth/me')).body.user, null);
+});
+
+test('main admin: the only one who adds or removes admins', async () => {
+    const me = (await boss('GET', '/api/auth/me')).body.user;
+    assert.equal(me.superAdmin, true);
+    const anaId = (await boss('GET', '/api/admin/users?q=ana')).body.users[0].id;
+    const benId = (await boss('GET', '/api/admin/users?q=ben')).body.users[0].id;
+    assert.equal((await boss('PATCH', `/api/admin/users/${anaId}`, { platformRole: 'admin' })).status, 200);
+    // Ana is an admin now, but can't make admins, change the main admin, or touch another admin
+    assert.equal((await ana('GET', '/api/admin/stats')).status, 200);
+    assert.equal((await ana('PATCH', `/api/admin/users/${benId}`, { platformRole: 'admin' })).status, 403);
+    assert.equal((await ana('PATCH', `/api/admin/users/${me.id}`, { disabled: true })).status, 403);
+    assert.equal((await boss('PATCH', `/api/admin/users/${anaId}`, { platformRole: 'user' })).status, 200);
+    assert.equal((await ana('GET', '/api/admin/stats')).status, 403);
+});
+
+test('profile picture: upload, show to signed-in people, remove', async () => {
+    // A 1×1 PNG
+    const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    assert.equal((await ana('PUT', '/api/auth/me/avatar', { image: 'data:image/png;base64,' + Buffer.from('<svg/>').toString('base64') })).status, 400);
+    const up = await ana('PUT', '/api/auth/me/avatar', { image: png });
+    assert.match(up.body.user.avatarUrl, /^\/api\/users\/u_\w+\/avatar\?v=\d+$/);
+    const res = await fetch(base + up.body.user.avatarUrl, { headers: { Cookie: (await ben('GET', '/api/auth/me')) && '' } });
+    assert.equal(res.status, 401); // not for signed-out visitors
+    const access = await ben('GET', `/api/companies/${companyId}`);
+    assert.ok(access.body.members.find(m => m.email === 'ana@test.dev').avatarUrl);
+    assert.equal((await ana('DELETE', '/api/auth/me/avatar')).body.user.avatarUrl, null);
 });
 
 test('owner deletes; project disappears for everyone', async () => {

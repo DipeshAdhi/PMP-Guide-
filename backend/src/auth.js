@@ -6,6 +6,8 @@ import { scrypt, randomBytes, timingSafeEqual, createHash } from 'node:crypto';
 import { promisify } from 'node:util';
 import { config } from './config.js';
 
+export const isSuperAdmin = u => !!(u && config.superAdminEmail && u.email === config.superAdminEmail && u.emailVerified);
+
 const scryptAsync = promisify(scrypt);
 const KEYLEN = 64;
 const COOKIE = 'pmr_session';
@@ -82,4 +84,8 @@ export const requireAdmin = (req, res, next) => {
 };
 
 // What the browser is allowed to see about a user
-export const publicUser = u => u && ({ id: u.id, email: u.email, name: u.name, accountType: u.accountType, platformRole: u.platformRole, emailVerified: !!u.emailVerified, createdAt: u.createdAt });
+export const avatarUrl = u => u && u.avatarAt ? `/api/users/${u.id}/avatar?v=${Date.parse(u.avatarAt)}` : null;
+export const publicUser = u => u && ({
+    id: u.id, email: u.email, name: u.name, accountType: u.accountType, platformRole: u.platformRole,
+    superAdmin: isSuperAdmin(u), emailVerified: !!u.emailVerified, avatarUrl: avatarUrl(u), createdAt: u.createdAt
+});

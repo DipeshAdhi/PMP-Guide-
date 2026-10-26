@@ -16,6 +16,7 @@
      emails          { id, at, to, kind, subject, status: sent|logged|failed, error, actorId }  (no body)
      tokens          { id (= sha256 of the link token), kind: verify|reset|invite, email, userId,
                        meta, createdAt, expiresAt, usedAt }
+     avatars         { id (= userId), mime, data (base64, ≤ 300 KB), updatedAt }   users.avatarAt marks a picture
 
    status 'pending' + userId null = added by email before that person
    registered; claimPending() links them when they sign up.
@@ -28,7 +29,7 @@ const now = () => new Date().toISOString();
 const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export function createRepo({ cols }) {
-    const { users, sessions, companies, companyMembers, projects, projectMembers, course, audit, emails, tokens } = cols;
+    const { users, sessions, companies, companyMembers, projects, projectMembers, course, audit, emails, tokens, avatars } = cols;
 
     return {
         // ─── Users ───
@@ -115,6 +116,13 @@ export function createRepo({ cols }) {
             remove: id => projectMembers.remove({ id })
         },
 
+        // Invitations waiting for an address (shown until the email is confirmed)
+        async pendingFor(email) {
+            const filter = { email: email.toLowerCase(), status: 'pending', userId: null };
+            const [c, p] = await Promise.all([companyMembers.count(filter), projectMembers.count(filter)]);
+            return { companies: c, projects: p };
+        },
+
         // Someone registered: activate everything they were added to by email
         async claimPending(email, userId) {
             const filter = { email: email.toLowerCase(), status: 'pending', userId: null };
@@ -138,6 +146,25 @@ export function createRepo({ cols }) {
             add: (actorId, action, target, meta = {}) => audit.insert({ id: newId('a'), at: now(), actorId, action, target, meta }),
             recent: (limit = 30) => audit.find({}, { sort: { at: -1 }, limit }),
             byActor: (actorId, limit = 20) => audit.find({ actorId }, { sort: { at: -1 }, limit })
+        },
+
+        // ─── Profile pictures ───
+        avatars: {
+            get: userId => avatars.findOne({ id: userId }),
+            async set(userId, mime, data) {
+                const at = now();
+                if (!(await avatars.update({ id: userId }, { mime, data, updatedAt: at }))) await avatars.insert({ id: userId, mime, data, updatedAt: at });
+                await users.update({ id: userId }, { avatarAt: at });
+                return at;
+            },
+            async remove(userId) { await avatars.remove({ id: userId }); await users.update({ id: userId }, { avatarAt: null }); }
+        },
+        // Pictures for many people at once, by email (team and staff lists)
+        async avatarsByEmail(emails) {
+            const list = [...new Set(emails.filter(Boolean))];
+            if (!list.length) return {};
+            const rows = await users.find({ email: { $in: list } }, { fields: ['id', 'email', 'avatarAt'] });
+            return Object.fromEntries(rows.filter(u => u.avatarAt).map(u => [u.email, `/api/users/${u.id}/avatar?v=${Date.parse(u.avatarAt)}`]));
         },
 
         // ─── Email log (subjects and status only) ───

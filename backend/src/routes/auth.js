@@ -97,7 +97,9 @@ export function authRoutes(repo, mailer) {
     // 200 with user null when signed out, so pages can check without an error
     r.get('/me', async (req, res) => {
         if (!req.user) return res.json({ user: null });
-        res.json({ user: publicUser(req.user), companies: await myCompanies(req.user.id) });
+        // Unconfirmed email: say how many invitations are waiting for the confirmation
+        const waiting = req.user.emailVerified ? null : await repo.pendingFor(req.user.email);
+        res.json({ user: publicUser(req.user), companies: await myCompanies(req.user.id), waiting });
     });
 
     r.patch('/me', requireUser, async (req, res) => {
@@ -115,6 +117,23 @@ export function authRoutes(repo, mailer) {
         await repo.sessions.removeForUser(req.user.id, req.sessionId);
         await repo.audit.add(req.user.id, 'user.password', req.user.id);
         res.json({ ok: true });
+    });
+
+    // ─── Profile picture: the browser sends a small square JPEG/PNG as a data URL ───
+    r.put('/me/avatar', requireUser, async (req, res) => {
+        const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(req.body.image || ''));
+        if (!m) throw bad('Choose a JPEG, PNG or WebP picture.');
+        const bytes = Buffer.from(m[2], 'base64');
+        if (bytes.length > 300 * 1024) throw bad('That picture is too large (max 300 KB after resizing).');
+        // Check the file really is the image type it claims
+        const sig = { 'image/jpeg': b => b[0] === 0xFF && b[1] === 0xD8, 'image/png': b => b[0] === 0x89 && b.toString('ascii', 1, 4) === 'PNG', 'image/webp': b => b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP' };
+        if (!sig[m[1]](bytes)) throw bad('That file is not a valid picture.');
+        const at = await repo.avatars.set(req.user.id, m[1], m[2]);
+        res.json({ user: publicUser({ ...req.user, avatarAt: at }) });
+    });
+    r.delete('/me/avatar', requireUser, async (req, res) => {
+        await repo.avatars.remove(req.user.id);
+        res.json({ user: publicUser({ ...req.user, avatarAt: null }) });
     });
 
     // ─── Confirm email ───

@@ -60,7 +60,7 @@ function collection() {
 }
 
 export async function connectMemory() {
-    const names = ['users', 'sessions', 'companies', 'companyMembers', 'projects', 'projectMembers', 'course', 'audit', 'emails', 'tokens'];
+    const names = ['users', 'sessions', 'companies', 'companyMembers', 'projects', 'projectMembers', 'course', 'audit', 'emails', 'tokens', 'avatars'];
     const cols = Object.fromEntries(names.map(n => [n, collection()]));
     return { cols, close: async () => {}, ping: async () => ({ ok: 1 }) };
 }

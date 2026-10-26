@@ -1,6 +1,6 @@
 // Projects: list, create, open, save (with version check), delete, and who has access
 import { Router } from 'express';
-import { requireUser } from '../auth.js';
+import { requireUser, avatarUrl } from '../auth.js';
 import { requireProject, requireCompany, canGrant, PROJECT_ROLES } from '../permissions.js';
 import { EMAIL, cleanEmail, bad, HttpError, rateLimit } from '../security.js';
 import { newId } from '../db/repo.js';
@@ -39,7 +39,7 @@ export function projectRoutes(repo, mailer) {
     async function accessList(projectId, meId) {
         const ms = await repo.projectMembers.forProject(projectId);
         const users = await Promise.all(ms.map(m => m.userId ? repo.users.byId(m.userId) : null));
-        return ms.map((m, i) => ({ id: m.id, email: m.email, name: users[i]?.name || '', role: m.role, status: m.status, memberId: m.memberId || null, isYou: m.userId === meId }));
+        return ms.map((m, i) => ({ id: m.id, email: m.email, name: users[i]?.name || '', avatarUrl: avatarUrl(users[i]), role: m.role, status: m.status, memberId: m.memberId || null, isYou: m.userId === meId }));
     }
 
     // Projects I was added to + every project of companies I own/administer

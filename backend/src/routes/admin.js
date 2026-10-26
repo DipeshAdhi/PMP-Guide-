@@ -1,7 +1,7 @@
 // Platform admin (our company): numbers and lists of users, companies, projects.
 // Admins see names, counts and dates, not the contents of people's projects.
 import { Router } from 'express';
-import { requireAdmin, publicUser } from '../auth.js';
+import { requireAdmin, publicUser, isSuperAdmin } from '../auth.js';
 import { bad, HttpError } from '../security.js';
 
 const page = req => {
@@ -60,9 +60,13 @@ export function adminRoutes(repo) {
         const u = await repo.users.byId(req.params.id);
         if (!u) throw new HttpError(404, 'not_found', 'User not found.');
         if (u.id === req.user.id) throw bad('You can\'t change your own admin account here.');
+        if (isSuperAdmin(u)) throw new HttpError(403, 'forbidden', 'The main admin account can\'t be changed.');
+        // Only the main admin manages other admins
+        if (u.platformRole === 'admin' && !isSuperAdmin(req.user)) throw new HttpError(403, 'forbidden', 'Only the main admin can change another admin.');
         const patch = {};
         if (typeof req.body.disabled === 'boolean') patch.disabled = req.body.disabled;
         if (req.body.platformRole !== undefined) {
+            if (!isSuperAdmin(req.user)) throw new HttpError(403, 'forbidden', 'Only the main admin can add or remove admins.');
             if (!['admin', 'user'].includes(req.body.platformRole)) throw bad('Role must be admin or user.');
             patch.platformRole = req.body.platformRole;
         }

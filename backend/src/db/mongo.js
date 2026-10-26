@@ -63,7 +63,7 @@ export async function connectMongo({ uri, dbName }) {
     // Accounts made before email confirmation existed count as confirmed
     await db.collection('users').updateMany({ emailVerified: { $exists: false } }, { $set: { emailVerified: true } });
 
-    const names = ['users', 'sessions', 'companies', 'companyMembers', 'projects', 'projectMembers', 'course', 'audit', 'emails', 'tokens'];
+    const names = ['users', 'sessions', 'companies', 'companyMembers', 'projects', 'projectMembers', 'course', 'audit', 'emails', 'tokens', 'avatars'];
     const cols = Object.fromEntries(names.map(n => [n, collection(db.collection(n))]));
     return { cols, close: () => client.close(), ping: () => db.command({ ping: 1 }) };
 }

@@ -36,7 +36,7 @@ MongoDB Compass can then connect to `mongodb://localhost:27017/` to look at the 
 docker run -d --name pm-ready-mail --restart unless-stopped -p 127.0.0.1:1025:1025 -p 127.0.0.1:8025:8025 axllent/mailpit
 ```
 
-Every email the app sends lands in **http://localhost:8025** instead of real inboxes. For real delivery, put your email provider's SMTP settings in `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`), e.g. Gmail with an app password, Resend, Amazon SES or Brevo, and set `APP_URL` to the site's public address so links work.
+Every email the app sends lands in **http://localhost:8025** instead of real inboxes. Gmail is prepared in `.env`: create an App Password (Google account → Security → 2-Step Verification → App passwords), switch the commented Gmail lines on, restart, then check with `npm run email:test -- you@gmail.com`. For other providers, put your email provider's SMTP settings in `.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM`), e.g. Gmail with an app password, Resend, Amazon SES or Brevo, and set `APP_URL` to the site's public address so links work.
 
 ### 2. Start the server
 
@@ -55,7 +55,8 @@ Open **http://localhost:4000**. Register with the email you put in `ADMIN_EMAILS
 
 | Level | Roles | Notes |
 |---|---|---|
-| Platform (our company) | `admin`, `user` | Admins open `/admin/`: counts, every user's details, companies, project names (not project contents), email and activity logs; make admins, disable accounts. `ADMIN_EMAILS` accounts become admins once their email is confirmed |
+| Platform (our company) | **main admin** (`SUPER_ADMIN_EMAIL`), `admin`, `user` | The main admin is always an admin, can't be changed or disabled, and is the only one who can add or remove admins. |
+| | | Admins open `/admin/`: counts, every user's details, companies, project names (not project contents), email and activity logs; make admins, disable accounts. `ADMIN_EMAILS` accounts become admins once their email is confirmed |
 | Company | `owner`, `admin`, `member` | Owners/admins add people by email and see/manage **every** project of the company |
 | Project | `owner`, `manager`, `member`, `viewer` | Owner: everything incl. delete. Manager: edit + manage access. Member: edit. Viewer: read and download only |
 
@@ -75,6 +76,8 @@ All under `/api`, JSON in and out. Writes must be JSON and come from the same or
 | GET | `/auth/invite/:token` | What an invitation link is for (sign-up page) |
 | POST | `/auth/verify` · `/auth/verify/resend` | Confirm email from the link / send the link again |
 | POST | `/auth/forgot` · `/auth/reset` | Email a reset link / set a new password from it |
+| PUT · DELETE | `/auth/me/avatar` | Profile picture `{ image: data URL }` (JPEG/PNG/WebP, ≤ 300 KB; the browser crops it to 256 px) |
+| GET | `/users/:id/avatar` | The picture (signed-in people only) |
 | GET · POST | `/companies` | My companies / create one |
 | GET · PATCH | `/companies/:id` | Company + members / rename (admin) |
 | POST · PATCH · DELETE | `/companies/:id/members[/:mid]` | Add staff by email (emails them), change role, remove or leave |
@@ -102,6 +105,7 @@ All under `/api`, JSON in and out. Writes must be JSON and come from the same or
 | `course` | `_id` (= userId), `data { read, tried, check }, modulesDone, updatedAt` |
 | `audit` | `_id, at, actorId, action, target, meta` |
 | `emails` | `_id, at, to, kind, subject, status: sent\|logged\|failed, error, actorId` (no message bodies or links) |
+| `avatars` | `_id` (= userId), `mime, data` (base64), `updatedAt`; `users.avatarAt` marks who has one |
 | `tokens` | `_id` (SHA-256 of the link token), `kind: verify\|reset\|invite, email, userId, meta, createdAt, expiresAt, usedAt` |
 
 `status: pending` with `userId: null` means "invited by email, not joined yet". It becomes active when that person proves the address is theirs: registering from the invitation link, confirming their email, or resetting their password. So registering with someone else's address never opens their invitations.

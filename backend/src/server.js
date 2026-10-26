@@ -13,6 +13,7 @@ import { companyRoutes } from './routes/companies.js';
 import { projectRoutes } from './routes/projects.js';
 import { courseRoutes } from './routes/course.js';
 import { adminRoutes } from './routes/admin.js';
+import { userRoutes } from './routes/users.js';
 
 const SITE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -44,6 +45,7 @@ export function createApp(db) {
     api.use('/projects', projectRoutes(repo, mailer));
     api.use('/me/course', courseRoutes(repo));
     api.use('/admin', adminRoutes(repo));
+    api.use('/users', userRoutes(repo));
     api.use((req, res) => res.status(404).json({ error: 'not_found', message: 'No such API endpoint.' }));
     api.use((err, req, res, next) => {
         if (err instanceof HttpError) return res.status(err.status).json({ error: err.code, message: err.message });
@@ -57,7 +59,8 @@ export function createApp(db) {
 
     // ─── Website (static files); never serve the backend's own folder ───
     app.use('/backend', (req, res) => res.status(404).end());
-    app.use(express.static(SITE_ROOT, { dotfiles: 'deny', index: 'index.html' }));
+    // no-cache = browsers re-check each file, so an update shows up on the next reload
+    app.use(express.static(SITE_ROOT, { dotfiles: 'deny', index: 'index.html', setHeaders: res => res.set('Cache-Control', 'no-cache') }));
     return app;
 }
 
