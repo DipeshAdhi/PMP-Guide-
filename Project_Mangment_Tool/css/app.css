@@ -657,3 +657,8 @@ button.wn:hover { box-shadow: 0 4px 14px rgba(9,30,66,0.14); border-color: #C1C7
 .role-help { font-size: 0.78rem; color: var(--muted); }
 .upload-note { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
 .upload-note .btn { margin-left: auto; }
+@media (max-width: 600px) {
+    .top .user-chip summary > span:not(.avatar) { display: none; }
+    .top .in { gap: 0.6rem; }
+    .top a.back { font-size: 0.8rem; }
+}

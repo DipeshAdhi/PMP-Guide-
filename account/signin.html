@@ -28,6 +28,8 @@
                 <br><a href="../Project_Mangment_Tool/index.html">Open the Project Tool</a> · <a href="../learn/index.html">Go to the course</a>
             </div>
 
+            <div id="inviteNote" class="note" style="margin-top: 1rem;" hidden></div>
+
             <form id="signinForm" role="tabpanel" aria-labelledby="tabIn" novalidate>
                 <h1>Welcome back</h1>
                 <p class="muted">One account for the course and your projects.</p>
@@ -35,6 +37,7 @@
                 <div class="field"><label for="inPass">Password</label><input class="input" type="password" id="inPass" name="password" autocomplete="current-password" required></div>
                 <p class="form-err" id="inErr" role="alert"></p>
                 <button class="btn btn-primary wide" type="submit">Sign in</button>
+                <p class="small" style="text-align: center; margin-top: 0.9rem;"><a href="reset.html">Forgot your password?</a></p>
             </form>
 
             <form id="registerForm" role="tabpanel" aria-labelledby="tabUp" novalidate hidden>
@@ -59,7 +62,10 @@
 <script src="../assets/js/account.js"></script>
 <script>
 const A = window.PMAccount;
-const next = A.safeNext(new URLSearchParams(location.search).get('next')) || '../Project_Mangment_Tool/index.html';
+const params = new URLSearchParams(location.search);
+const next = A.safeNext(params.get('next')) || '../Project_Mangment_Tool/index.html';
+const inviteToken = params.get('invite');
+let invite = null;
 const $ = id => document.getElementById(id);
 
 function showTab(up) {
@@ -80,10 +86,13 @@ async function submit(form, path, errEl) {
     errEl.textContent = '';
     const btn = form.querySelector('button[type="submit"]');
     const body = Object.fromEntries(new FormData(form));
+    if (invite) { body.invite = inviteToken; body.email = invite.email; }
     btn.disabled = true;
     try {
-        await A.api('POST', path, body);
-        location.href = next;
+        const r = await A.api('POST', path, body);
+        // New account without an invitation: say a confirmation email is on its way
+        if (r.verifyEmailSent) sessionStorage.setItem('pmVerifySent', r.user.email);
+        location.href = invite ? (invite.type === 'project' ? '../Project_Mangment_Tool/index.html' : 'index.html') : next;
     } catch (e) {
         errEl.textContent = e.userMessage || 'Could not reach the server. Try again.';
         btn.disabled = false;
@@ -105,6 +114,24 @@ $('registerForm').addEventListener('submit', e => {
         return;
     }
     if (await A.me()) { location.replace(next); return; }
+    if (inviteToken) {
+        const note = $('inviteNote');
+        note.hidden = false;
+        try {
+            invite = await A.api('GET', `/auth/invite/${encodeURIComponent(inviteToken)}`);
+            const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            note.innerHTML = `✉️ <strong>${esc(invite.inviter)}</strong> invited you to ${invite.type === 'project' ? 'the project' : 'join'} <strong>${esc(invite.name)}</strong> as ${esc(invite.role)}.
+                ${invite.hasAccount ? 'You already have an account: sign in with ' + esc(invite.email) + '. If you haven\'t confirmed your email yet, use the link in your confirmation email.' : 'Create your account with <strong>' + esc(invite.email) + '</strong> to accept.'}`;
+            ['upEmail', 'inEmail'].forEach(id => { $(id).value = invite.email; });
+            $('upEmail').readOnly = true;
+            if (invite.hasAccount) { invite = null; showTab(false); return; }
+            showTab(true);
+            return;
+        } catch (e) {
+            note.className = 'note warn';
+            note.textContent = e.userMessage || 'This invitation link is not valid.';
+        }
+    }
     if (location.hash === '#register') showTab(true);
 })();
 </script>

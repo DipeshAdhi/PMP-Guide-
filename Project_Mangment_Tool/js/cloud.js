@@ -79,6 +79,7 @@
             add: (id, body) => Acc.api('POST', `/projects/${encodeURIComponent(id)}/access`, body),
             update: (id, aid, body) => Acc.api('PATCH', `/projects/${encodeURIComponent(id)}/access/${aid}`, body),
             remove: (id, aid) => Acc.api('DELETE', `/projects/${encodeURIComponent(id)}/access/${aid}`),
+            resend: (id, aid) => Acc.api('POST', `/projects/${encodeURIComponent(id)}/access/${aid}/resend`, {}),
             transfer: (id, aid) => Acc.api('POST', `/projects/${encodeURIComponent(id)}/transfer`, { accessId: aid })
         }
     };

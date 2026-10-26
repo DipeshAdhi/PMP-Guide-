@@ -28,7 +28,7 @@
 const A = window.PMAccount;
 const { esc, toast } = PMT.ui;
 const ROLE = { owner: 'Owner', admin: 'Admin', member: 'Member', manager: 'Manager', viewer: 'Viewer' };
-let me, companies = [], selected = null, companyDetail = null;
+let me, companies = [];
 
 function chip(user) {
     document.getElementById('chip').innerHTML = `<details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(PMT.ui.initials(user.name))}</span><span>${esc(user.name)}</span></summary>
@@ -49,17 +49,15 @@ async function load() {
     chip(me);
     const [cs, ps, course] = await Promise.all([A.api('GET', '/companies'), A.api('GET', '/projects'), A.api('GET', '/me/course')]);
     companies = cs.companies;
-    if (!selected && companies.length) selected = companies[0].id;
-    companyDetail = selected ? await A.api('GET', `/companies/${selected}`) : null;
     render(ps.projects, course);
 }
 
 function render(projects, course) {
     const done = course.modulesDone || 0;
-    const canManage = companyDetail && ['owner', 'admin'].includes(companyDetail.role);
     document.getElementById('main').innerHTML = `
         <div class="page-head"><div><h1>Hello, ${esc(me.name.split(' ')[0])}</h1>
             <p class="muted">${me.accountType === 'company' ? 'Company account' : 'Personal account'} · ${esc(me.email)} · joined ${new Date(me.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</p></div></div>
+        ${me.emailVerified ? '' : `<div class="note warn upload-note" style="margin-bottom: 1rem;"><span>✉️ <strong>Confirm your email.</strong> We sent a link to ${esc(me.email)}${sessionStorage.getItem('pmVerifySent') ? ' just now' : ''}. Invitations to projects and companies open after you confirm.</span><button class="btn btn-ghost btn-sm" type="button" id="resendVerify">Send again</button></div>`}
         <div class="acct-grid">
             <section class="card">
                 <h2>📘 Course</h2>
@@ -76,20 +74,11 @@ function render(projects, course) {
 
             <section class="card span">
                 <h2>🏢 Companies</h2>
-                ${companies.length ? `<div class="company-tabs">${companies.map(c => `<button type="button" class="btn btn-ghost btn-sm" data-company="${c.id}" aria-pressed="${c.id === selected}">${esc(c.name)} <span class="muted">· ${ROLE[c.role]}</span></button>`).join('')}</div>` : '<p class="muted small" style="margin-bottom: 0.8rem;">You are not in a company yet. Create one to run projects with your team, or ask a company admin to add your email.</p>'}
-                ${companyDetail ? `
-                    <div class="table-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>
-                    ${companyDetail.members.map(m => `<tr><td>${esc(m.name || '—')}${m.isYou ? ' <span class="pill">You</span>' : ''}</td><td>${esc(m.email)}</td>
-                        <td>${canManage && m.role !== 'owner' ? `<select class="select" data-crole="${m.id}" aria-label="Role for ${esc(m.email)}"><option value="member" ${m.role === 'member' ? 'selected' : ''}>Member</option><option value="admin" ${m.role === 'admin' ? 'selected' : ''}>Admin</option></select>` : ROLE[m.role]}</td>
-                        <td>${m.status === 'pending' ? '<span class="pill doing">Waiting for sign-up</span>' : '<span class="pill done">Active</span>'}</td>
-                        <td>${m.role !== 'owner' && (canManage || m.isYou) ? `<button class="icon-btn" data-cremove="${m.id}" aria-label="${m.isYou ? 'Leave company' : `Remove ${esc(m.email)}`}">${m.isYou ? 'Leave' : '✕'}</button>` : ''}</td></tr>`).join('')}
-                    </tbody></table></div>
-                    ${canManage ? `<form class="inline-form" id="addCompanyMember" style="margin-top: 0.8rem;">
-                        <div class="field"><label for="cmEmail">Add a person by email</label><input class="input" type="email" id="cmEmail" name="email" required placeholder="name@company.com"></div>
-                        <div class="field" style="flex: 0 0 140px;"><label for="cmRole">Company role</label><select class="select" id="cmRole" name="role"><option value="member">Member</option><option value="admin">Admin</option></select></div>
-                        <button class="btn btn-primary" type="submit">Add</button></form>
-                        <p class="muted small" style="margin-top: 0.5rem;">Admins see and manage every project of the company. Members see the projects they're added to. People without an account join when they register with this email.</p>` : ''}` : ''}
-                <form class="inline-form" id="newCompany" style="margin-top: 1rem; border-top: 1px solid var(--line); padding-top: 1rem;">
+                ${companies.length ? `<div class="kpis" style="margin-bottom: 0.8rem;">${companies.map(c => `<a class="card kpi" style="text-decoration: none;" href="company.html?id=${encodeURIComponent(c.id)}">
+                    <div class="n" style="font-size: 1.15rem;">${esc(c.name)}</div><div class="l">${ROLE[c.role]} · ${c.members} staff · ${c.projects} project${c.projects === 1 ? '' : 's'}</div>
+                    <div class="l" style="margin-top: 0.4rem; color: var(--ink); font-weight: 600;">${c.role === 'member' ? 'Open →' : 'Manage staff →'}</div></a>`).join('')}</div>`
+                    : '<p class="muted small" style="margin-bottom: 0.8rem;">You are not in a company yet. Create one to add your staff and run company projects, or ask your company admin to add your email.</p>'}
+                <form class="inline-form" id="newCompany" style="border-top: 1px solid var(--line); padding-top: 1rem;">
                     <div class="field"><label for="ncName">New company</label><input class="input" id="ncName" name="name" maxlength="120" required placeholder="Company name"></div>
                     <button class="btn btn-ghost" type="submit">＋ Create company</button>
                 </form>
@@ -116,28 +105,12 @@ const run = async (fn, okMsg) => {
     catch (e) { toast(e.userMessage || 'Something went wrong.', 'bad'); }
 };
 document.addEventListener('click', e => {
-    const c = e.target.closest('[data-company]');
-    if (c) { selected = c.dataset.company; load(); return; }
-    const r = e.target.closest('[data-cremove]');
-    if (r) {
-        const mine = companyDetail.members.find(m => m.id === r.dataset.cremove);
-        if (!confirm(mine.isYou ? 'Leave this company? You lose access to its projects unless you were added to them directly.' : `Remove ${mine.email} from the company?`)) return;
-        if (mine.isYou) selected = null;
-        run(() => A.api('DELETE', `/companies/${companyDetail.company.id}/members/${mine.id}`), mine.isYou ? 'You left the company' : 'Removed');
-    }
-});
-document.addEventListener('change', e => {
-    const s = e.target.closest('[data-crole]');
-    if (s) run(() => A.api('PATCH', `/companies/${companyDetail.company.id}/members/${s.dataset.crole}`, { role: s.value }), 'Role updated');
+    if (e.target.id === 'resendVerify') run(() => A.api('POST', '/auth/verify/resend', {}), 'Confirmation email sent');
 });
 document.addEventListener('submit', e => {
     const f = e.target, v = Object.fromEntries(new FormData(f));
     e.preventDefault();
-    if (f.id === 'addCompanyMember') run(async () => {
-        const r = await A.api('POST', `/companies/${companyDetail.company.id}/members`, v);
-        toast(r.pending ? `${v.email} will join when they create an account` : `${v.email} added`, 'good');
-    });
-    if (f.id === 'newCompany') run(async () => { const r = await A.api('POST', '/companies', v); selected = r.company.id; }, 'Company created');
+    if (f.id === 'newCompany') A.api('POST', '/companies', v).then(r => { location.href = `company.html?id=${encodeURIComponent(r.company.id)}`; }, err => toast(err.userMessage || 'Could not create the company.', 'bad'));
     if (f.id === 'profile') run(() => A.api('PATCH', '/auth/me', v).then(() => A.me(true)), 'Saved');
     if (f.id === 'password') run(() => A.api('POST', '/auth/password', v), 'Password changed');
 });

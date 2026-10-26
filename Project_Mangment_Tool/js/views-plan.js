@@ -329,7 +329,7 @@
     function accessCell(m) {
         if (!A.accessCache) return '<span class="muted small">…</span>';
         const a = accessFor(m.email);
-        if (a) return `<span class="pill ${a.status === 'pending' ? 'doing' : 'done'}" title="${esc(PMT.ROLE_HELP[a.role])}">${ROLES()[a.role]}${a.status === 'pending' ? ' · waiting for sign-up' : ''}</span>`;
+        if (a) return `<span class="pill ${a.status === 'pending' ? 'doing' : 'done'}" title="${esc(PMT.ROLE_HELP[a.role])}">${ROLES()[a.role]}${a.status === 'pending' ? ' · invited' : ''}</span>`;
         if (!m.email) return '<span class="muted small">Add an email to give access</span>';
         if (/@example\.com$/i.test(m.email)) return '<span class="muted small">Replace the example email</span>';
         return canManage() ? `<button class="btn btn-ghost btn-sm" data-act="memberGrant" data-id="${m.id}">🔑 Give access</button>` : '<span class="muted small">No access</span>';
@@ -344,6 +344,7 @@
         const rowActions = a => {
             const out = [];
             if (mine === 'owner' && a.role !== 'owner' && a.status === 'active') out.push(`<button class="btn btn-ghost btn-sm" data-act="accessTransfer" data-aid="${a.id}">Make owner</button>`);
+            if (manage && a.status === 'pending') out.push(`<button class="btn btn-ghost btn-sm" data-act="accessResend" data-aid="${a.id}">✉ Resend</button>`);
             if (a.isYou && a.role !== 'owner') out.push(`<button class="btn btn-ghost btn-sm" data-act="accessLeave" data-aid="${a.id}">Leave</button>`);
             else if (manage && a.role !== 'owner' && !(a.role === 'manager' && mine !== 'owner')) out.push(`<button class="icon-btn" data-act="accessRemove" data-aid="${a.id}" aria-label="Remove access for ${esc(a.email)}">✕</button>`);
             return out.join(' ');
@@ -354,13 +355,13 @@
             ${c.error ? `<p class="note warn">${esc(c.error)}</p>` : ''}
             <div class="table-wrap"><table class="tbl access-tbl"><thead><tr><th>Person</th><th>Email</th><th>Access</th><th>Status</th><th></th></tr></thead><tbody>
             ${c.people.map(a => `<tr><td>${esc(a.name || (P => P ? P.name : '—')(A.P.members.find(m => (m.email || '').toLowerCase() === a.email)))}${a.isYou ? ' <span class="pill">You</span>' : ''}</td><td>${esc(a.email)}</td><td>${roleSelect(a)}</td>
-                <td>${a.status === 'pending' ? '<span class="pill doing">Waiting for sign-up</span>' : '<span class="pill done">Active</span>'}</td><td style="white-space: nowrap;">${rowActions(a)}</td></tr>`).join('')}
+                <td>${a.status === 'pending' ? '<span class="pill doing">Invited by email</span>' : '<span class="pill done">Active</span>'}</td><td style="white-space: nowrap;">${rowActions(a)}</td></tr>`).join('')}
             </tbody></table></div>
             ${manage ? `<form class="team-add" data-form="accessAdd" style="margin-top: 0.8rem;">
                 <div class="field"><label for="acEmail">Give access by email</label><input class="input" type="email" id="acEmail" name="email" required maxlength="200" placeholder="name@company.com"></div>
                 <div class="field"><label for="acRole">Access</label><select class="select" id="acRole" name="role">${grantable().map(r => `<option value="${r}" ${r === 'member' ? 'selected' : ''}>${ROLES()[r]}</option>`).join('')}</select></div>
                 <button class="btn btn-primary" type="submit">Give access</button></form>
-                <p class="muted small" style="margin-top: 0.4rem;">People without an account get access when they register with this email. (Emails aren't sent yet; let them know.)</p>` : ''}
+                <p class="muted small" style="margin-top: 0.4rem;">Everyone gets an email: people with an account are added straight away; others get an invitation link to create their account, and their access starts when they do.</p>` : ''}
         </div>`;
     }
     async function accessDo(fn, okMsg) {
@@ -369,13 +370,13 @@
     }
     A.action('memberGrant', el => {
         const m = A.member(el.dataset.id);
-        accessDo(() => PMT.store.access.add(A.P.id, { email: m.email, role: 'member', memberId: m.id }), r => r.pending ? `${m.name} gets access when they sign up with ${m.email}` : `${m.name} can now open this project`);
+        accessDo(() => PMT.store.access.add(A.P.id, { email: m.email, role: 'member', memberId: m.id }), r => !r.emailed ? `${m.name} added, but the email could not be sent` : r.pending ? `Invitation emailed to ${m.email}` : `${m.name} can now open this project (emailed)`);
     });
     A.action('accessAdd', async (form, v) => {
         const email = v.email.trim().toLowerCase();
         if (!EMAIL.test(email)) return toast('That email address doesn\'t look right.', 'warn');
         const member = A.P.members.find(m => (m.email || '').toLowerCase() === email);
-        const r = await accessDo(() => PMT.store.access.add(A.P.id, { email, role: v.role, memberId: member?.id }), r => r.pending ? `${email} gets access when they sign up` : `${r.name || email} can now open this project`);
+        const r = await accessDo(() => PMT.store.access.add(A.P.id, { email, role: v.role, memberId: member?.id }), r => !r.emailed ? `${email} added, but the email could not be sent` : r.pending ? `Invitation emailed to ${email}` : `${r.name || email} can now open this project (emailed)`);
         // Also put them on the team so work can be assigned to them
         if (r && !member) {
             const name = r.name || email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase());
@@ -384,6 +385,7 @@
         }
         document.getElementById('acEmail')?.focus();
     });
+    A.action('accessResend', el => accessDo(() => PMT.store.access.resend(A.P.id, el.dataset.aid), 'Invitation sent again'));
     A.action('accessRole', el => accessDo(() => PMT.store.access.update(A.P.id, el.dataset.aid, { role: el.value }), 'Access updated'));
     A.action('accessRemove', el => {
         const a = A.accessCache.people.find(x => x.id === el.dataset.aid);

@@ -42,3 +42,7 @@
     .acct-grid { grid-template-columns: minmax(0, 1fr); }
     .auth-wrap { padding: 1.5rem 1rem; }
 }
+.linklike { background: none; border: 0; padding: 0; color: var(--ink); cursor: pointer; text-align: left; font: inherit; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.linklike:hover { text-decoration-color: currentColor; }
+#userDlg { width: min(980px, calc(100vw - 2rem)); }
+#userDlg .tbl th { background: none; }
