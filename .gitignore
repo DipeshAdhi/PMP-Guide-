@@ -27,3 +27,9 @@ build/
 # Environment variables
 .env
 .env.local
+
+# Server secrets: Gmail app password, Google client secret, database address. Never commit these.
+backend/.env
+**/.env
+**/.env.*
+!**/.env.example

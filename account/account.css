@@ -46,3 +46,7 @@
 .linklike:hover { text-decoration-color: currentColor; }
 #userDlg { width: min(980px, calc(100vw - 2rem)); }
 #userDlg .tbl th { background: none; }
+
+.google-btn { display: flex; align-items: center; justify-content: center; gap: 0.6rem; margin-top: 1rem; font-weight: 600; }
+.or-line { display: flex; align-items: center; gap: 0.7rem; color: var(--muted); font-size: 0.78rem; margin: 1rem 0 0.2rem; }
+.or-line::before, .or-line::after { content: ''; flex: 1; height: 1px; background: var(--line); }

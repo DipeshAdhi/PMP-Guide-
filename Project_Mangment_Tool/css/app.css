@@ -57,6 +57,7 @@ button { cursor: pointer; }
 .pill.W { background: #EEE; color: #888; }
 .pill.crit { background: #FFE9E9; color: var(--crit); }
 .avatar { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 0.68rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+img.avatar { object-fit: cover; background: #E5E7EB; }
 
 /* Cards */
 .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.2rem; }

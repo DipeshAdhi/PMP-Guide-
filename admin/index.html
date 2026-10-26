@@ -40,7 +40,7 @@ async function boot() {
     const m = await A.me();
     if (!m) { location.replace(A.signInUrl()); return; }
     me = m.user;
-    document.getElementById('chip').innerHTML = `<details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(PMT.ui.initials(me.name))}</span><span>${esc(me.name)}</span></summary>
+    document.getElementById('chip').innerHTML = `<details><summary>${A.avatarHtml(me, 28)}<span>${esc(me.name)}</span></summary>
         <div class="menu"><div class="who">${esc(me.email)}</div><a href="../Project_Mangment_Tool/index.html">Projects</a><button type="button" id="signOut">Sign out</button></div></details>`;
     document.getElementById('signOut').addEventListener('click', () => A.signOut());
     if (me.platformRole !== 'admin') {
@@ -105,7 +105,7 @@ async function loadList() {
             const r = await A.api('GET', `/admin/users?q=${encodeURIComponent(state.q)}&page=${state.page}`);
             el.innerHTML = `<form class="inline-form" id="search" style="margin-bottom: 0.7rem;"><div class="field"><label for="q" class="sr-only">Search users</label><input class="input" id="q" name="q" value="${esc(state.q)}" placeholder="Search name or email"></div><button class="btn btn-ghost">Search</button></form>
                 <div class="table-wrap"><table class="tbl"><thead><tr><th>User</th><th>Type</th><th>Course</th><th>Projects</th><th>Companies</th><th>Joined</th><th>Last active</th><th>Access</th></tr></thead><tbody>
-                ${r.users.map(u => `<tr><td><button class="linklike" data-user="${u.id}"><strong>${esc(u.name)}</strong></button>${u.platformRole === 'admin' ? ' <span class="pill doing">Admin</span>' : ''}${u.emailVerified ? '' : ' <span class="pill">Unconfirmed</span>'}${u.disabled ? ' <span class="pill review">Disabled</span>' : ''}<br><span class="muted small">${esc(u.email)}</span></td>
+                ${r.users.map(u => `<tr><td><span style="display: inline-flex; gap: 0.5rem; align-items: center; vertical-align: middle;">${A.avatarHtml(u, 30)}<button class="linklike" data-user="${u.id}"><strong>${esc(u.name)}</strong></button></span>${u.superAdmin ? ' <span class="pill doing">Main admin</span>' : u.platformRole === 'admin' ? ' <span class="pill doing">Admin</span>' : ''}${u.emailVerified ? '' : ' <span class="pill">Unconfirmed</span>'}${u.disabled ? ' <span class="pill review">Disabled</span>' : ''}<br><span class="muted small">${esc(u.email)}</span></td>
                     <td>${u.accountType === 'company' ? '🏢 Company' : '👤 Personal'}</td>
                     <td>${u.courseModulesDone == null ? '<span class="muted">—</span>' : `${u.courseModulesDone}/8`}</td>
                     <td>${u.projects}</td><td>${u.companies}</td><td>${when(u.createdAt)}</td><td>${when(u.lastActiveAt)}</td>
@@ -154,21 +154,21 @@ async function openUser(uid) {
         const row = (k, v) => `<tr><th style="width: 38%; text-transform: none; letter-spacing: 0; font-size: 0.82rem;">${k}</th><td>${v}</td></tr>`;
         const device = ua => /iPhone|iPad/.test(ua) ? 'iPhone/iPad' : /Android/.test(ua) ? 'Android' : /Mac OS/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : 'Other';
         const browser = ua => /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
-        document.getElementById('udTitle').textContent = u.name;
+        document.getElementById('udTitle').innerHTML = `<span style="display: inline-flex; gap: 0.6rem; align-items: center;">${A.avatarHtml(u, 40)}${esc(u.name)}${u.superAdmin ? ' <span class="pill doing">Main admin</span>' : ''}</span>`;
         body.innerHTML = `
             <div class="acct-grid">
                 <section><h3 style="margin-bottom: 0.4rem;">Account</h3><table class="tbl"><tbody>
                     ${row('Email', `${esc(u.email)} ${u.emailVerified ? '<span class="pill done">Confirmed</span>' : '<span class="pill">Not confirmed</span>'}`)}
                     ${row('Account type', u.accountType === 'company' ? '🏢 Company' : '👤 Personal')}
-                    ${row('Platform role', u.platformRole === 'admin' ? '🔑 Admin' : 'User')}
+                    ${row('Platform role', u.superAdmin ? '👑 Main admin' : u.platformRole === 'admin' ? '🔑 Admin' : 'User')}
                     ${row('Status', u.disabled ? '<span class="pill review">Disabled</span>' : '<span class="pill done">Active</span>')}
                     ${row('Joined', new Date(u.createdAt).toLocaleString())}
                     ${row('Last sign-in', u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : '—')}
                     ${row('Last active', u.lastActiveAt ? new Date(u.lastActiveAt).toLocaleString() : '—')}
                 </tbody></table>
-                ${u.id === me.id ? '<p class="muted small" style="margin-top: 0.6rem;">This is you.</p>' : `<div class="toolbar" style="margin-top: 0.7rem; flex-wrap: wrap;">
-                    <button class="btn btn-ghost btn-sm" data-admin="${u.id}" data-v="${u.platformRole === 'admin' ? 'user' : 'admin'}">${u.platformRole === 'admin' ? 'Remove admin' : 'Make admin'}</button>
-                    <button class="btn btn-ghost btn-sm" data-disable="${u.id}" data-v="${!u.disabled}">${u.disabled ? 'Enable account' : 'Disable account'}</button></div>`}
+                ${u.id === me.id ? '<p class="muted small" style="margin-top: 0.6rem;">This is you.</p>' : u.superAdmin ? '<p class="muted small" style="margin-top: 0.6rem;">The main admin account can\'t be changed.</p>' : `<div class="toolbar" style="margin-top: 0.7rem; flex-wrap: wrap;">
+                    ${me.superAdmin ? `<button class="btn btn-ghost btn-sm" data-admin="${u.id}" data-v="${u.platformRole === 'admin' ? 'user' : 'admin'}">${u.platformRole === 'admin' ? 'Remove admin' : 'Make admin'}</button>` : ''}
+                    ${u.platformRole === 'admin' && !me.superAdmin ? '<p class="muted small">Only the main admin can change another admin.</p>' : `<button class="btn btn-ghost btn-sm" data-disable="${u.id}" data-v="${!u.disabled}">${u.disabled ? 'Enable account' : 'Disable account'}</button>`}</div>`}
                 </section>
                 <section><h3 style="margin-bottom: 0.4rem;">Course ${d.course ? `· ${d.course.modulesDone}/8 finished` : ''}</h3>
                     ${d.course ? `<table class="tbl"><tbody>${MOD.map((t, i) => { const id = i + 1; const steps = [cd.read[id], cd.tried[id], (cd.check[id] || 0) >= 2].filter(Boolean).length;

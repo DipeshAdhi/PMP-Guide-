@@ -73,6 +73,7 @@
 
     // Only same-site paths are allowed as a return address
     function safeNext(next) {
+        if (!next) return null;
         try {
             const u = new URL(next || '', location.href);
             return u.origin === location.origin ? u.pathname + u.search + u.hash : null;
@@ -129,5 +130,32 @@
         pushTimer = setTimeout(async () => { if (await me()) pushCourse(); }, 800);
     }
 
-    window.PMAccount = { ROOT, api, available, me, signInUrl, safeNext, signOut, syncCourse, courseChanged };
+    // Round picture, or initials when there is none
+    const escHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    function avatarHtml(person, size = 28) {
+        const name = person && (person.name || person.email) || '?';
+        const style = `width:${size}px;height:${size}px;font-size:${Math.round(size * 0.38)}px`;
+        if (person && person.avatarUrl) return `<img class="avatar" src="${escHtml(new URL(person.avatarUrl.replace(/^\//, ''), ROOT).href)}" alt="" style="${style}">`;
+        const ini = String(name).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+        return `<span class="avatar" aria-hidden="true" style="${style};background:#FFB700;color:#1E2A38">${escHtml(ini)}</span>`;
+    }
+
+    // "Confirm your email" notice; says how many invitations are waiting for it
+    function verifyBanner(m) {
+        if (!m || !m.user || m.user.emailVerified) return '';
+        const w = m.waiting || { projects: 0, companies: 0 };
+        const parts = [w.projects && `${w.projects} project invitation${w.projects > 1 ? 's' : ''}`, w.companies && `${w.companies} company invitation${w.companies > 1 ? 's' : ''}`].filter(Boolean);
+        return `<div class="note warn upload-note" role="status" style="margin-bottom: 1rem;"><span>✉️ <strong>${parts.length ? `${parts.join(' and ')} waiting for you.` : 'Confirm your email.'}</strong>
+            ${parts.length ? 'Open them by confirming your email:' : ''} we sent a link to <strong>${escHtml(m.user.email)}</strong>. Check your inbox (and spam folder).</span>
+            <button class="btn btn-ghost btn-sm" type="button" data-resend-verify>Send the link again</button></div>`;
+    }
+    document.addEventListener('click', async e => {
+        const b = e.target.closest('[data-resend-verify]');
+        if (!b) return;
+        b.disabled = true;
+        try { await api('POST', '/auth/verify/resend', {}); b.textContent = 'Sent ✓ Check your inbox'; }
+        catch (err) { b.textContent = err.userMessage || 'Could not send. Try again later.'; b.disabled = false; }
+    });
+
+    window.PMAccount = { ROOT, api, available, me, signInUrl, safeNext, signOut, syncCourse, courseChanged, avatarHtml, verifyBanner };
 })();

@@ -488,8 +488,7 @@
                 <p>It may have been deleted, or it was created in another browser.</p><p style="margin-top: 1rem;"><a class="btn btn-primary" href="index.html">Go to your projects</a></p></div></main>`;
             return;
         }
-        A.P = P;
-        P.settings.tools = P.settings.tools || {};
+        A.P = normalize(P);
         A.refreshFeatures();
         A.migrate();
         if (PMT.cloud) startCloud();
@@ -510,8 +509,7 @@
             const fresh = await PMT.store.get(A.P.id);
             if (!fresh) { toast('This project was deleted in another tab.', 'bad'); return; }
             if (fresh.updatedAt !== A.P.updatedAt) {
-                A.P = fresh;
-                fresh.settings.tools = fresh.settings.tools || {};
+                A.P = normalize(fresh);
                 A.refreshFeatures();
                 render();
                 toast('Updated with changes from another tab.');
@@ -521,6 +519,15 @@
         setSaved(false);
     }
     A.boot = boot;
+
+    // Fill in anything a project document is missing (older exports, documents made by other tools)
+    function normalize(P) {
+        ['items', 'members', 'milestones', 'iterations', 'changes', 'risks', 'events', 'activity'].forEach(k => { if (!Array.isArray(P[k])) P[k] = []; });
+        P.settings = Object.assign({ iterationDays: 10, wipLimit: 3 }, P.settings);
+        P.settings.tools = P.settings.tools || {};
+        P.startDate = P.startDate || PMT.dates.todayISO();
+        return P;
+    }
 
     // ─── Server mode: role, view-only, and other people's saves ───
     function startCloud() {
@@ -539,8 +546,7 @@
                 if (!remote) return;
                 const fresh = await PMT.store.get(A.P.id);
                 if (!fresh) return;
-                A.P = fresh;
-                fresh.settings.tools = fresh.settings.tools || {};
+                A.P = normalize(fresh);
                 A.refreshFeatures();
                 A.migrate();
                 A.snapshot = JSON.stringify(A.P);

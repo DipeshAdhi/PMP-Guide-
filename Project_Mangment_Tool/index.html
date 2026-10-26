@@ -254,6 +254,7 @@ window.addEventListener('hashchange', route);
 PMT.ready.then(() => {
     if (PMT.cloud) {
         PMT.userMenu(document.getElementById('userChip'));
+        PMAccount.me().then(m => { document.getElementById('uploadNote').insertAdjacentHTML('beforebegin', PMAccount.verifyBanner(m)); });
         document.getElementById('storageNote').textContent = 'Projects are saved to your account. Open a project\'s Team page to choose who else can open it.';
     }
     route();

@@ -97,7 +97,7 @@
         if (!PMT.cloud) return '';
         const { esc, initials } = PMT.ui;
         const u = PMT.user, root = Acc.ROOT;
-        return `<div class="user-chip"><details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(initials(u.name))}</span><span>${esc(u.name)}</span></summary>
+        return `<div class="user-chip"><details><summary>${Acc.avatarHtml(u, 28)}<span>${esc(u.name)}</span></summary>
             <div class="menu"><div class="who">${esc(u.email)}</div>
             <a href="${root}account/index.html">My account &amp; companies</a>
             <a href="${root}learn/index.html">Course</a>

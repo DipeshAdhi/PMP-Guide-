@@ -189,7 +189,7 @@
                 const u = me.user;
                 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
                 const ini = u.name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
-                box.innerHTML = `<details class="sn-acct"><summary aria-label="Account menu for ${esc(u.name)}"><span class="sn-av" aria-hidden="true">${esc(ini)}</span></summary>
+                box.innerHTML = `<details class="sn-acct"><summary aria-label="Account menu for ${esc(u.name)}">${u.avatarUrl ? A.avatarHtml(u, 28) : `<span class="sn-av" aria-hidden="true">${esc(ini)}</span>`}</summary>
                     <div class="sn-menu" role="menu"><div class="who"><strong>${esc(u.name)}</strong><br>${esc(u.email)}</div>
                     <a role="menuitem" href="${url('account/index.html')}">My account</a>
                     <a role="menuitem" href="${url(PM_TOOL)}">My projects</a>

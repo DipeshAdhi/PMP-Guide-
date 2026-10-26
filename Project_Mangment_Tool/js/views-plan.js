@@ -354,7 +354,7 @@
             <p class="muted small" style="margin-bottom: 0.7rem;">${Object.entries(PMT.ROLE_HELP).map(([k, v]) => `<strong>${ROLES()[k]}</strong>: ${v.toLowerCase()}`).join(' · ')}.${A.meta.companyName ? ` Owners and admins of ${esc(A.meta.companyName)} can also manage it.` : ''}</p>
             ${c.error ? `<p class="note warn">${esc(c.error)}</p>` : ''}
             <div class="table-wrap"><table class="tbl access-tbl"><thead><tr><th>Person</th><th>Email</th><th>Access</th><th>Status</th><th></th></tr></thead><tbody>
-            ${c.people.map(a => `<tr><td>${esc(a.name || (P => P ? P.name : '—')(A.P.members.find(m => (m.email || '').toLowerCase() === a.email)))}${a.isYou ? ' <span class="pill">You</span>' : ''}</td><td>${esc(a.email)}</td><td>${roleSelect(a)}</td>
+            ${c.people.map(a => `<tr><td><span style="display: inline-flex; gap: 0.5rem; align-items: center;">${PMAccount.avatarHtml(a, 26)}${esc(a.name || (P => P ? P.name : '—')(A.P.members.find(m => (m.email || '').toLowerCase() === a.email)))}${a.isYou ? ' <span class="pill">You</span>' : ''}</span></td><td>${esc(a.email)}</td><td>${roleSelect(a)}</td>
                 <td>${a.status === 'pending' ? '<span class="pill doing">Invited by email</span>' : '<span class="pill done">Active</span>'}</td><td style="white-space: nowrap;">${rowActions(a)}</td></tr>`).join('')}
             </tbody></table></div>
             ${manage ? `<form class="team-add" data-form="accessAdd" style="margin-top: 0.8rem;">

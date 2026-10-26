@@ -35,7 +35,7 @@ async function load() {
     const m = await A.me();
     if (!m) { location.replace(A.signInUrl()); return; }
     me = m.user;
-    document.getElementById('chip').innerHTML = `<details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(PMT.ui.initials(me.name))}</span><span>${esc(me.name)}</span></summary>
+    document.getElementById('chip').innerHTML = `<details><summary>${A.avatarHtml(me, 28)}<span>${esc(me.name)}</span></summary>
         <div class="menu"><div class="who">${esc(me.email)}</div>${me.platformRole === 'admin' ? '<a href="../admin/index.html">Admin dashboard</a>' : ''}<button type="button" id="signOut">Sign out</button></div></details>`;
     document.getElementById('signOut').addEventListener('click', () => A.signOut());
     try { data = await A.api('GET', `/companies/${encodeURIComponent(id)}`); }
@@ -69,7 +69,7 @@ function render() {
                 <p class="muted small" style="margin: -0.4rem 0 0.9rem;">People who already have an account are added straight away and get an email. Everyone else gets an <strong>invitation email</strong> with a link to create their account. <strong>Admins</strong> see and manage every company project and its staff; <strong>staff members</strong> open the projects they're added to.</p>` : ''}
             <div class="table-wrap"><table class="tbl"><thead><tr><th>Person</th><th>Email</th><th>Role</th><th>Status</th><th>Projects</th><th>Last active</th><th></th></tr></thead><tbody>
             ${members.map(m => `<tr>
-                <td>${m.name ? esc(m.name) : '<span class="muted">—</span>'}${m.isYou ? ' <span class="pill">You</span>' : ''}</td>
+                <td><span style="display: inline-flex; gap: 0.5rem; align-items: center;">${A.avatarHtml(m, 28)}${m.name ? esc(m.name) : '<span class="muted">—</span>'}${m.isYou ? ' <span class="pill">You</span>' : ''}</span></td>
                 <td>${esc(m.email)}</td>
                 <td>${admin && m.role !== 'owner' && !m.isYou ? `<select class="select" data-role="${m.id}" aria-label="Role for ${esc(m.email)}"><option value="member" ${m.role === 'member' ? 'selected' : ''}>Staff member</option><option value="admin" ${m.role === 'admin' ? 'selected' : ''}>Admin</option></select>` : ROLE[m.role]}</td>
                 <td>${m.status === 'pending' ? `<span class="pill doing">Invited ${when(m.createdAt)}</span>` : '<span class="pill done">Active</span>'}</td>

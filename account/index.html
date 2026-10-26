@@ -28,10 +28,10 @@
 const A = window.PMAccount;
 const { esc, toast } = PMT.ui;
 const ROLE = { owner: 'Owner', admin: 'Admin', member: 'Member', manager: 'Manager', viewer: 'Viewer' };
-let me, companies = [];
+let me, meData, companies = [];
 
 function chip(user) {
-    document.getElementById('chip').innerHTML = `<details><summary><span class="avatar" style="background:#FFB700;color:#1E2A38">${esc(PMT.ui.initials(user.name))}</span><span>${esc(user.name)}</span></summary>
+    document.getElementById('chip').innerHTML = `<details><summary>${A.avatarHtml(user, 28)}<span>${esc(user.name)}</span></summary>
         <div class="menu"><div class="who">${esc(user.email)}</div>
         ${user.platformRole === 'admin' ? '<a href="../admin/index.html">Admin dashboard</a>' : ''}
         <button type="button" id="signOut">Sign out</button></div></details>`;
@@ -46,6 +46,7 @@ async function load() {
     const m = await A.me(true);
     if (!m) { location.replace(A.signInUrl()); return; }
     me = m.user;
+    meData = m;
     chip(me);
     const [cs, ps, course] = await Promise.all([A.api('GET', '/companies'), A.api('GET', '/projects'), A.api('GET', '/me/course')]);
     companies = cs.companies;
@@ -57,7 +58,7 @@ function render(projects, course) {
     document.getElementById('main').innerHTML = `
         <div class="page-head"><div><h1>Hello, ${esc(me.name.split(' ')[0])}</h1>
             <p class="muted">${me.accountType === 'company' ? 'Company account' : 'Personal account'} · ${esc(me.email)} · joined ${new Date(me.createdAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}</p></div></div>
-        ${me.emailVerified ? '' : `<div class="note warn upload-note" style="margin-bottom: 1rem;"><span>✉️ <strong>Confirm your email.</strong> We sent a link to ${esc(me.email)}${sessionStorage.getItem('pmVerifySent') ? ' just now' : ''}. Invitations to projects and companies open after you confirm.</span><button class="btn btn-ghost btn-sm" type="button" id="resendVerify">Send again</button></div>`}
+        ${A.verifyBanner(meData)}
         <div class="acct-grid">
             <section class="card">
                 <h2>📘 Course</h2>
@@ -86,14 +87,24 @@ function render(projects, course) {
 
             <section class="card">
                 <h2>👤 Profile</h2>
+                <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                    ${A.avatarHtml(me, 72)}
+                    <div class="toolbar" style="flex-wrap: wrap;">
+                        <label class="btn btn-ghost btn-sm" for="avatarFile">📷 ${me.avatarUrl ? 'Change picture' : 'Add a picture'}</label>
+                        <input type="file" id="avatarFile" accept="image/jpeg,image/png,image/webp" hidden>
+                        ${me.avatarUrl ? '<button class="btn btn-ghost btn-sm" type="button" id="avatarRemove">Remove</button>' : ''}
+                        <span class="hint" style="flex-basis: 100%;">JPEG, PNG or WebP. It's cropped to a square and shown to people you work with.</span>
+                    </div>
+                </div>
                 <form class="inline-form" id="profile"><div class="field"><label for="pfName">Name</label><input class="input" id="pfName" name="name" maxlength="80" value="${esc(me.name)}" required></div><button class="btn btn-ghost" type="submit">Save</button></form>
             </section>
             <section class="card">
-                <h2>🔒 Password</h2>
+                <h2>🔒 ${me.hasPassword ? 'Password' : 'Set a password'}</h2>
+                ${me.google ? '<p class="muted small" style="margin-bottom: 0.6rem;">You can sign in with Google' + (me.hasPassword ? ' or with your email and password.' : '. Set a password to also sign in with your email.') + '</p>' : ''}
                 <form id="password">
-                    <div class="field"><label for="pwCur">Current password</label><input class="input" type="password" id="pwCur" name="current" autocomplete="current-password" required></div>
+                    ${me.hasPassword ? '<div class="field"><label for="pwCur">Current password</label><input class="input" type="password" id="pwCur" name="current" autocomplete="current-password" required></div>' : ''}
                     <div class="field" style="margin-top: 0.6rem;"><label for="pwNew">New password</label><input class="input" type="password" id="pwNew" name="next" minlength="8" autocomplete="new-password" required><span class="hint">At least 8 characters. Other devices will be signed out.</span></div>
-                    <button class="btn btn-ghost" type="submit" style="margin-top: 0.6rem;">Change password</button>
+                    <button class="btn btn-ghost" type="submit" style="margin-top: 0.6rem;">${me.hasPassword ? 'Change password' : 'Set password'}</button>
                 </form>
             </section>
         </div>`;
@@ -104,8 +115,33 @@ const run = async (fn, okMsg) => {
     try { await fn(); if (okMsg) toast(okMsg, 'good'); await load(); }
     catch (e) { toast(e.userMessage || 'Something went wrong.', 'bad'); }
 };
+// ─── Profile picture: crop to a 256 px square in the browser, then upload ───
+async function squareJpeg(file) {
+    const img = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error('That file is not a picture we can read.'));
+        i.src = URL.createObjectURL(file);
+    });
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 256;
+    const g = cv.getContext('2d');
+    g.fillStyle = '#fff';
+    g.fillRect(0, 0, 256, 256);
+    g.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
+    URL.revokeObjectURL(img.src);
+    return cv.toDataURL('image/jpeg', 0.85);
+}
+document.addEventListener('change', async e => {
+    if (e.target.id !== 'avatarFile' || !e.target.files[0]) return;
+    const file = e.target.files[0];
+    if (file.size > 15 * 1024 * 1024) { toast('Choose a picture smaller than 15 MB.', 'warn'); return; }
+    try { const image = await squareJpeg(file); await run(() => A.api('PUT', '/auth/me/avatar', { image }), 'Picture saved'); }
+    catch (err) { toast(err.message, 'bad'); }
+});
 document.addEventListener('click', e => {
-    if (e.target.id === 'resendVerify') run(() => A.api('POST', '/auth/verify/resend', {}), 'Confirmation email sent');
+    if (e.target.id === 'avatarRemove') run(() => A.api('DELETE', '/auth/me/avatar'), 'Picture removed');
 });
 document.addEventListener('submit', e => {
     const f = e.target, v = Object.fromEntries(new FormData(f));
